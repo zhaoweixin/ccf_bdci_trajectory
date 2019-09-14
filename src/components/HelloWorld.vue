@@ -1,58 +1,79 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div style="height:500px;width:100%;text-align:left;">
+    <div ref="basicMapbox" style="height:500px;width:100%;"></div>
+    <pre id='info'></pre>
+    <!-- <pre id='coordinates' class='coordinates'></pre> -->
   </div>
 </template>
-
 <script>
+import mapboxgl from 'mapbox-gl'
+
 export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+  data () {
+    return {
+    }
+  },
+  mounted () {
+    this.init()
+  },
+  methods: {
+    // 初始化
+    init () {
+        mapboxgl.accessToken = 'pk.eyJ1Ijoid2VpeGluemhhbyIsImEiOiJjazBqYnFwY3owOGV4M25uMXlnc2tweTcxIn0.7Pk6JhKBB-nogxXiNTGnZQ'
+        var coordinates = document.getElementById('coordinates');
+        const map = new mapboxgl.Map({
+          container: this.$refs.basicMapbox,
+          style: 'mapbox://styles/mapbox/dark-v9',
+          center: [104.701478,31.543871], // 设置地图中心
+          zoom: 8,  // 设置地图比例
+        })
+        
+        // 使用定位模块
+        map.addControl(new mapboxgl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true,
+            showUserLocation: true,
+            zoom: 14,
+        }))
+        
+        // 建立一个标记点
+        var marker = new mapboxgl.Marker({
+            draggable: true
+        })
+        function onDragEnd() {
+            var lngLat = marker.getLngLat();
+            coordinates.style.display = 'block';
+            coordinates.innerHTML = 'Longitude: ' + lngLat.lng + '<br />Latitude: ' + lngLat.lat;
+        }
+        marker.on('dragend', onDragEnd);
+
+        // 点击获取经纬度模块&点击标记点
+        map.on('click', function (e) {
+            document.getElementById('info').innerHTML = JSON.stringify(e.point) + '<br />' + JSON.stringify(e.lngLat)
+            marker.setLngLat([e.lngLat.lng,e.lngLat.lat]).addTo(map)
+        })
+        
+    }
+  },
+  computed: {
   }
 }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
+<style>
+@import url('../../node_modules/mapbox-gl/dist/mapbox-gl.css');
+.coordinates {
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding:5px 10px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 18px;
+    border-radius: 3px;
+    display: none;
 }
 </style>
