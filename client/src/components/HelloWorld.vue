@@ -24,7 +24,7 @@ export default {
         const map = new mapboxgl.Map({
           container: this.$refs.basicMapbox,
           style: 'mapbox://styles/mapbox/dark-v9',
-          center: [104.701478,31.543871], // 设置地图中心
+          center: [110.296322,20.018466], // 设置地图中心
           zoom: 8,  // 设置地图比例
         })
         
@@ -37,10 +37,45 @@ export default {
             showUserLocation: true,
             zoom: 14,
         }))
+        // 使用距离
+        map.addControl(new mapboxgl.ScaleControl({
+          maxWidth: 80, // 空间最大宽度，单位像素
+          unit: 'metric'
+        }))
         
         // 建立一个标记点
         var marker = new mapboxgl.Marker({
             draggable: true
+        })
+
+        // 画一根线
+        map.on('load', function(){
+          map.addLayer({
+            'id': "route",
+            "type": "line",
+            "source": {
+              "type": "geojson",
+              "data": {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                  "type": "LineString",
+                  "coordinates":[
+                    [110.3645,20.0353],
+                    [110.3665,22]
+                  ]
+                }
+              }
+            },
+            "layout": {
+              "line-join": "round",
+              "line-cap": "round"
+              },
+              "paint": {
+              "line-color": "#888",
+              "line-width": 8
+            }
+          })
         })
         function onDragEnd() {
             var lngLat = marker.getLngLat();
@@ -55,6 +90,9 @@ export default {
             marker.setLngLat([e.lngLat.lng,e.lngLat.lat]).addTo(map)
         })
         
+    },
+    drawgrid(){
+
     }
   },
   computed: {
