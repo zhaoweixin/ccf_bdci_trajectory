@@ -5,7 +5,7 @@
 <script>
     import mapboxgl from 'mapbox-gl'
     import ngeohash from 'ngeohash'
-    import d3 from 'd3'
+    import { scale } from 'd3'
     export default {
         name: "grid_map",
         data() {
@@ -36,12 +36,14 @@
             },
             draw_grid() {
 
+                let self = this;
+
                 let feature_points = [];
                 //let featture_polygon = [];
 
                 let color_scale = ["#23D561","#9CD523","#F1E229","#FFBF3A","#FB8C00","#FF5252"];
 
-                let threshold=d3.scale.threshold()
+                let threshold=scale.threshold()
                     .domain([.1,.3,.5,.7,.9])
                     .range(color_scale);
 
@@ -79,7 +81,7 @@
                         context.arc(this.width / 2, this.height / 2, radius, 0, Math.PI * 2);
                         context.fillStyle = 'rgba(255, 100, 100, 1)';
                         context.strokeStyle = 'white';
-                        context.lineWidth = 2 + 4 * (1 - t);
+                        context.lineWidth = 0 + 4 * (1 - t);
                         context.fill();
                         context.stroke();
 
@@ -87,7 +89,7 @@
                         this.data = context.getImageData(0, 0, this.width, this.height).data;
 
                         // keep the map repainting
-                        this.map.triggerRepaint();
+                        self.map.triggerRepaint();
 
                         // return `true` to let the map know that the image was updated
                         return true;
@@ -316,6 +318,7 @@
             get_data() {
                 this.$http.get('query?name=start_geohash').then((res) => {
                     this.start_geohash = res.body;
+                    //console.log(res.body);
                     this.draw_grid();
                 });
             }
