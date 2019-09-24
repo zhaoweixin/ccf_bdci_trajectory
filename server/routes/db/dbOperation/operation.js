@@ -1,25 +1,28 @@
-var express = require('express');
-var router = express.Router();
 var mysql = require('mysql');
-
 var config = require('./dbconfig');
-var $sql = require('./sql');
+var $sql = require('./start_geohash');
 
 var pool = mysql.createPool( config.mysql );
+
+  // pool.query('SELECT * FROM db_traffic.start_geohash',(err,rows)=>{
+  //   if(err) throw err;
+  //   console.log(rows);
+  //   //res.send(rows);
+  // });
+
 
 module.exports = {
     add: function (req, res, next) {
         pool.getConnection(function(err, connection) {
             var param = req.query || req.params;
- 
+
             connection.query($sql.insert, [param.name, param.age], function(err, result) {
                 if(err) {
-                    res.send(err); 
+                    res.send(err);
                 }else{
                     res.send('add success');
                 }
- 
-                // 释放连接 
+                // 释放连接
                 connection.release();
             });
         });
@@ -27,11 +30,9 @@ module.exports = {
     query: function (req, res, next) {
         pool.getConnection(function(err, connection) {
             connection.query($sql.queryAll, function(err, result) {
-                if(err) {
-                    res.send(err); 
-                }else{
-                    res.send(result);
-                }
+                if(err) throw err;
+                //console.log(result);
+                res.send(result);
                 connection.release();
             });
         });
@@ -39,10 +40,10 @@ module.exports = {
     update: function (req, res, next) {
         pool.getConnection(function(err, connection) {
             var param = req.query || req.params;
-            
+
             connection.query($sql.update, [param.name, param.age, +param.id], function(err, result) {
                 if(err) {
-                    res.send(err); 
+                    res.send(err);
                 }else{
                     res.send('update success');
                 }
@@ -56,7 +57,7 @@ module.exports = {
             var id = +req.query.id;
             connection.query($sql.delete, id, function(err, result) {
                 if(err) {
-                    res.send(err); 
+                    res.send(err);
                 }else{
                     res.send('delete success');
                 }
