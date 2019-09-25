@@ -6,15 +6,14 @@
     import mapboxgl from 'mapbox-gl'
     import ngeohash from 'ngeohash'
     import { scale } from 'd3'
+
     export default {
-        name: "grid_map",
+        name: "AppMap",
         data() {
             return {
                 map: null,
                 accessToken: 'pk.eyJ1Ijoid2VpeGluemhhbyIsImEiOiJjazBqYnFwY3owOGV4M25uMXlnc2tweTcxIn0.7Pk6JhKBB-nogxXiNTGnZQ',
-                start_geohash: null,
-                end_geohash:null,
-                timeout:null
+                data:null
             }
         },
         created() {
@@ -34,7 +33,14 @@
                     //pitch:50
                 });
             },
-            draw_grid() {
+            get_data(name = 'start_geohash') {
+                this.$http.get(`query?name=${ name }`).then((res) => {
+                    this.data = res.body;
+                    //console.log(res.body);
+                    this.draw_map();
+                });
+            },
+            draw_map() {
 
                 let self = this;
 
@@ -47,7 +53,7 @@
                     .domain([.1,.3,.5,.7,.9])
                     .range(color_scale);
 
-                let size = 200;
+                let size = 50;
 
                 let pulsingDot = {
                     width: size,
@@ -76,14 +82,14 @@
                         context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
                         context.fill();
 
-                        // draw inner circle
-                        context.beginPath();
-                        context.arc(this.width / 2, this.height / 2, radius, 0, Math.PI * 2);
-                        context.fillStyle = 'rgba(255, 100, 100, 1)';
-                        context.strokeStyle = 'white';
-                        context.lineWidth = 0 + 4 * (1 - t);
-                        context.fill();
-                        context.stroke();
+                        // // draw inner circle
+                        // context.beginPath();
+                        // context.arc(this.width / 2, this.height / 2, radius, 0, Math.PI * 2);
+                        // context.fillStyle = 'rgba(255, 100, 100, 0)';
+                        // context.strokeStyle = 'white';
+                        // context.lineWidth = 0 + 4 * (1 - t);
+                        // context.fill();
+                        // context.stroke();
 
                         // update this image's data with data from the canvas
                         this.data = context.getImageData(0, 0, this.width, this.height).data;
@@ -96,9 +102,9 @@
                     }
                 };
 
-                this.start_geohash.forEach(d =>{
+                this.data.forEach(d =>{
 
-                    let lnglat = ngeohash.decode(d.geohash_start_index);
+                    let lnglat = ngeohash.decode(d[Object.keys(d)[0]]);
                     //let bbox = ngeohash.decode_bbox(d.geohash_start_index);
 
                     feature_points.push({
@@ -314,29 +320,17 @@
                 //     requestAnimationFrame(rotateCamera);
                 // }
 
-            },
-            get_data() {
-                this.$http.get('query?name=start_geohash').then((res) => {
-                    this.start_geohash = res.body;
-                    //console.log(res.body);
-                    this.draw_grid();
-                });
             }
-        }
+        },
     }
 </script>
 
 <style>
-
     @import url('../../node_modules/mapbox-gl/dist/mapbox-gl.css');
-
-    html,body{
-        padding: 0;
-        margin: 0;
-    }
     #map{
-        position: fixed;
-        width: 100vw;
-        height: 100vh;
+        position: relative;
+        float: left;
+        width: 55%;
+        height: 65%;
     }
 </style>
