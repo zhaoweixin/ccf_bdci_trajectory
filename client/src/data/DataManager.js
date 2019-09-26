@@ -2,7 +2,11 @@ import axios from 'axios';
 
 export default class DataManager {
     static getTestData(){
-        return axios.get('http://localhost:3000/test')
+        return axios.get('http://localhost:3000/query')
+    }
+
+    static getGeoStartData(){
+      return axios.get('http://localhost:3000/query')
     }
     /*
     static getTestData(){

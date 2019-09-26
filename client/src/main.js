@@ -15,10 +15,12 @@ Vue.use(Resource);
 Vue.use(Vuex);
 Vue.use(iView);
 
+//Vue.use(axios);
+
 Vue.config.productionTip = false;
 Vue.http.options.root = 'http://localhost:3000/';
 Vue.http.options.emulateJson = true;
-Vue.use(axios)
+
 
 new Vue({
   render: h => h(App),
