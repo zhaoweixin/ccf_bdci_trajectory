@@ -12,7 +12,8 @@ class MysqlPool {
     constructor(){
         this.flag = true;
         this.pool = mysql.createPool({
-            host:'127.0.0.1',
+            connectionLimit: 100,
+            host:'119.23.31.186',
             user:'root',
             password:'123456',
             database:'db_traffic',

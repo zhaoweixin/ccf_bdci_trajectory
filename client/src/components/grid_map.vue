@@ -5,7 +5,6 @@
 <script>
     import mapboxgl from 'mapbox-gl'
     import ngeohash from 'ngeohash'
-    import { scale } from 'd3'
     export default {
         name: "grid_map",
         data() {
@@ -316,11 +315,13 @@
 
             },
             get_data() {
+                /*
                 this.$http.get('query?name=start_geohash').then((res) => {
                     this.start_geohash = res.body;
                     //console.log(res.body);
                     this.draw_grid();
                 });
+                */
             }
         }
     }
@@ -335,7 +336,7 @@
         margin: 0;
     }
     #map{
-        position: fixed;
+        position: absolute;
         width: 100vw;
         height: 100vh;
     }

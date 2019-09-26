@@ -1,8 +1,9 @@
 var mysql = require('mysql');
-var config = require('./dbconfig');
 var $sql = require('./start_geohash');
+var MysqlPool = require('./mysql_pool.js');
 
-var pool = mysql.createPool( config.mysql );
+var mysqlPool = new MysqlPool();
+var pool = mysqlPool.getPool();
 
   // pool.query('SELECT * FROM db_traffic.start_geohash',(err,rows)=>{
   //   if(err) throw err;
@@ -54,8 +55,7 @@ module.exports = {
     },
     delete: function (req, res, next) {
         pool.getConnection(function(err, connection) {
-            var id = +req.query.id;
-            connection.query($sql.delete, id, function(err, result) {
+            connection.query($sql.delete, function(err, result) {
                 if(err) {
                     res.send(err);
                 }else{
@@ -64,8 +64,24 @@ module.exports = {
                 connection.release();
             });
         });
+    },
+    test: function(req, res, next){
+        pool.getConnection(function(err, connection) {
+            if(err){
+                console.log(err)
+            } else {
+                const sql = mysql.format('select * from data')
+                connection.query(sql, function(err, result) {
+                    if(err) {
+                        res.send(err);
+                    }else{
+                        res.send(result);
+                    }
+                });
+                pool.releaseConnection(connection);
+            }
+        })
     }
-
 };
 
 

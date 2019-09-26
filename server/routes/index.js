@@ -1,15 +1,10 @@
 var express = require('express');
 var router = express.Router();
-
+var d3 = require('d3')
+var MysqlPool = require('./db/dbOperation/mysql_pool')
 // var urlModule = require('url');//pathname  query
 
 var sql_operation = require('./db/dbOperation/operation');
-
-//测试
-// var MysqlPool = require('./mysql/mysql_pool.js');
-// var mysqlPool = new MysqlPool();
-// var pool = mysqlPool.getPool();
-
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -44,5 +39,10 @@ router.get('/update', function(req, res, next){
 router.get('/delete', function(req, res, next){
   sql_operation.delete(req, res, next)
 });
+
+router.get('/test', function(req, res, next){
+  //res.setHeader("Access-Control-Allow-Origin", '*')
+  sql_operation.test(req, res, next)
+})
 
 module.exports = router;
