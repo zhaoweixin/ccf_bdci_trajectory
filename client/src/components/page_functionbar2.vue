@@ -6,9 +6,8 @@
   </div>
 </template>
 <script>
-  //import DataManager from './DataManager'
   import * as d3 from 'd3'
-  import DataManager from '../data/DataManager'
+  //import DataManager from '../data/DataManager'
   export default{
     name: 'page_functionbar2',
     data(){
