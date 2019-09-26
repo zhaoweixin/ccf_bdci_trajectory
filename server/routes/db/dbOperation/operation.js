@@ -31,7 +31,7 @@ module.exports = {
     query: function (req, res, next) {
         pool.getConnection(function(err, connection) {
             connection.query($sql.queryAll, function(err, result) {
-                if(err) throw err;
+                if(err) res.send(err);
                 //console.log(result);
                 res.send(result);
                 connection.release();
