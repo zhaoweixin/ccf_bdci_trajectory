@@ -8,7 +8,7 @@
 <script>
     //import DataManager from './DataManager'
     import * as d3 from 'd3'
-    import DataManager from './DataManager'
+    import DataManager from '../data/DataManager'
     export default{
         name: 'page_functionbar2',
         data(){
@@ -56,7 +56,7 @@
                         .style("text-anchor", "middle")
                         .attr("transform", "translate(" + gridSize / 2 + ", -6)")
                         .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
-            
+
                 var heatmapChart = function(tsvFile) {
                     (async function(){
                         const response = await DataManager.getTestData()
@@ -95,7 +95,7 @@
                         */
 
                         cards.select("title").text(function(d) { return d.value; });
-                        
+
                         cards.exit().remove();
 
                         var legend = svg.selectAll(".legend")
@@ -121,7 +121,7 @@
                     })()
                 };
                 heatmapChart(datasets[0]);
-                
+
                 var datasetpicker = d3.select("#dataset-picker").selectAll(".dataset-button")
                     .data(datasets);
 
@@ -157,7 +157,7 @@
 
 rect.bordered {
         stroke: #E6E6E6;
-        stroke-width:2px;   
+        stroke-width:2px;
       }
 
       text.mono {
