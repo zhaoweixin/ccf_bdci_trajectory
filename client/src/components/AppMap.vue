@@ -321,4 +321,11 @@
     width: 100%;
     height: 100%;
   }
+
+  .mapboxgl-ctrl-bottom-left,
+  .mapboxgl-ctrl-bottom-right,
+  .mapboxgl-ctrl-logo{
+    display: none;
+  }
+
 </style>
