@@ -21,7 +21,7 @@
     },
     mounted() {
       this.map_config();
-      //this.load_map();
+      this.load_map();
     },
     methods: {
       map_config() {
@@ -36,13 +36,11 @@
       },
       load_map() {
         this.$http.get('query').then((res) => {
-          //this.flag?this.map_init(res.body):this.map_update(res.body);
-          //this.flag = false;
-          this.map_init(res.body);
-          console.log(res.body);
+          this.map_draw(res.body);
+          //console.log(res.body);
         });
       },
-      map_init(data) {
+      map_draw(data) {
 
         let self = this;
         let feature_points = [];

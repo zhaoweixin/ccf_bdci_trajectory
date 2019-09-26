@@ -1,8 +1,5 @@
 var express = require('express');
 var router = express.Router();
-var d3 = require('d3')
-var MysqlPool = require('./db/dbOperation/mysql_pool')
-// var urlModule = require('url');//pathname  query
 
 var sql_operation = require('./db/dbOperation/operation');
 
