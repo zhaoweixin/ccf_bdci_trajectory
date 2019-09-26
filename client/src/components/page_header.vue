@@ -16,8 +16,9 @@
 }
 
 .header_warp p {
-	font-size:16px;
+	font-size:20px;
 	color:white;
+	padding: 5px 0px;
 	font-variant-ligatures:common-ligatures
                                     discretionary-ligatures
                                     historical-ligatures;
