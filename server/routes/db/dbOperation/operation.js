@@ -1,16 +1,10 @@
 var mysql = require('mysql');
-var $sql = require('./start_geohash');
+var $sql = require('./sql');
 var MysqlPool = require('./mysql_pool.js');
+var urlModule = require('url');
 
 var mysqlPool = new MysqlPool();
 var pool = mysqlPool.getPool();
-
-  // pool.query('SELECT * FROM db_traffic.start_geohash',(err,rows)=>{
-  //   if(err) throw err;
-  //   console.log(rows);
-  //   //res.send(rows);
-  // });
-
 
 module.exports = {
     add: function (req, res, next) {
@@ -29,8 +23,9 @@ module.exports = {
         });
     },
     query: function (req, res, next) {
+        var {url:url,query} = urlModule.parse(req.url,true)
         pool.getConnection(function(err, connection) {
-            connection.query($sql.queryAll, function(err, result) {
+            connection.query($sql.queryAll + query.t, function(err, result) {
                 if(err) res.send(err);
                 //console.log(result);
                 res.send(result);
