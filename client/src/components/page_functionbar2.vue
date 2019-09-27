@@ -1,5 +1,8 @@
 <template>
   <div class="funcbar2_warp">
+    <div id="charts" style="width:12%; height:100%; float:left">
+      <PieChart></PieChart>
+    </div>
     <div id="heatmap" style="width:50%; height:100%; float:right">
       <div id="chart"></div>
     </div>
@@ -7,11 +10,15 @@
 </template>
 <script>
   import * as d3 from 'd3'
+  import PieChart from "../components/PieChart"
   //import DataManager from '../data/DataManager'
   export default{
     name: 'page_functionbar2',
     data(){
       return {}
+    },
+    components: {
+      PieChart
     },
     computed:{},
     watch:{},
