@@ -12,6 +12,7 @@
     data() {
       return {
         map: null,
+        district:[],
         accessToken: 'pk.eyJ1Ijoid2VpeGluemhhbyIsImEiOiJjazBqYnFwY3owOGV4M25uMXlnc2tweTcxIn0.7Pk6JhKBB-nogxXiNTGnZQ'
       }
     },
@@ -21,7 +22,8 @@
     },
     mounted() {
       this.map_config();
-      this.load_map();
+      //this.load_map();
+      this.load_district();
     },
     methods: {
       map_config() {
@@ -29,15 +31,102 @@
         this.map = new mapboxgl.Map({
           container: this.$refs.basicMapbox,
           style: 'mapbox://styles/mapbox/dark-v9',
-          center: [110.296322, 20.018466], // 设置地图中心
+          center: [110.3521728515625,19.882490358764613], // 设置地图中心
           zoom: 10  // 设置地图比例
           //pitch:50
         });
       },
+      load_district(){
+        this.$http.get('district').then((res) => {
+          this.district = res.body;
+          this.district.forEach((d)=>{
+            d.polyline = d.polyline.split(';').map((d)=>{
+              return d.split(',');
+            });
+          });
+          this.district_draw();
+          //console.log(this.district);
+        });
+      },
+      district_draw(){
+
+        //console.log(data);
+        let feature_lines = [];
+        let feature_polygons = [];
+        let district_color = ['#ff722c','#ff4f6a','#48b6ff','#3dffaf'];
+
+        this.district.forEach((d,i)=>{
+          feature_lines.push({
+            "type": "Feature",
+            "properties": {
+              color:district_color[i]
+            },
+            "geometry": {
+              "type": "LineString",
+              "coordinates": d.polyline
+            }
+          });
+
+          feature_polygons.push({
+            'type': 'Feature',
+            "properties": {
+              'color': district_color[i],
+            },
+            'geometry': {
+              'type': 'Polygon',
+              'coordinates': [d.polyline]
+            }
+          });
+        });
+
+        this.map.on('load',  ()=>{
+          this.map.addSource('district_polygon_source',{
+              'type': 'geojson',
+              'data': {
+                  "type": "FeatureCollection",
+                  "features": feature_polygons
+              }
+          });
+
+          this.map.addLayer({
+              'id': 'district_polygon_layer',
+              'type': 'fill',
+              'source': 'district_polygon_source',
+              'layout': {},
+              'paint': {
+                  'fill-color': ['get','color'],
+                  //'fill-outline-color':'#FFFFFF',
+                  'fill-opacity': .1,
+              }
+          });
+
+          //district outline
+          this.map.addSource('district_source',{
+            "type": "geojson",
+            "data": {
+              "type": "FeatureCollection",
+              "features": feature_lines
+            }
+          });
+          this.map.addLayer({
+            "id": "district_layer",
+            "type": "line",
+            "source":'district_source',
+            "layout": {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            "paint": {
+              "line-color": ['get','color'],
+              "line-width": 1
+            }
+          });
+        });
+      },
       load_map() {
-        this.$http.get('query').then((res) => {
+        this.$http.get('query?t=geo_20170501').then((res) => {
           this.map_draw(res.body);
-          //console.log(res.body);
+          console.log(res.body);
         });
       },
       map_draw(data) {
