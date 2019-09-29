@@ -36,8 +36,6 @@ router.get('/add', function(req, res, next){
 });
 
 router.get('/query', function(req, res, next){
-
-  res.setHeader("Access-Control-Allow-Origin", "*");
   sql_operation.query(req, res, next);
 
 });
@@ -53,6 +51,10 @@ router.get('/delete', function(req, res, next){
 router.get('/test', function(req, res, next){
   //res.setHeader("Access-Control-Allow-Origin", '*')
   sql_operation.test(req, res, next)
+})
+
+router.post('/basic_line', function(req, res, next){
+  sql_operation.basic_line(req, res, next)
 })
 
 module.exports = router;

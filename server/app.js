@@ -3,6 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var bodyParser = require('body-parser')
 
 var app = express();
 
@@ -12,6 +13,11 @@ var corser = require('corser');
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -29,7 +35,7 @@ app.use(function(req, res, next) {
 //设置跨域访问
 
 app.all('*', function (req, res, next){
-  res.header("Access-Control-Allow-Origin", '*')
+  res.setHeader("Access-Control-Allow-Origin", "*");
   res.header('Access-Control-Allow-Credentials', "true");
   res.header('Access-Control-Allow-Origin', req.headers.origin);
   res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With, yourHeaderFeild');
