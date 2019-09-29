@@ -29,7 +29,14 @@
         lc_line: undefined,
         lc_dataset: undefined,
         lc_svg: undefined,
-
+        lc_svg_g: undefined,
+        lc_legend: undefined,
+        lc_legend_circle: undefined,
+        lc_legend_text: undefined,
+        lc_path: undefined,
+        lc_circle: undefined,
+        lc_linecolor: ['#99C779','#94FA4D', '#949369', '#564AA1', '#253494'],
+        lc_linecount:0
       }
     },
     components: {
@@ -163,7 +170,8 @@
           DataManager.getLineChartData().then((res) => {
             let info = {
               'status': 0,
-              'data': res.data
+              'data': res.data,
+              'config': opt.config
             }
             that.draw_linechart(info)
           }).catch(err => {
@@ -183,7 +191,7 @@
         if(opt.status == 0){
           this.lc_FullWidth = document.getElementById('line').clientWidth,
           this.lc_FullHeight = document.getElementById('line').clientHeight,
-          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.1, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.05 },
+          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.05 },
           this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           // The number of datapoints
@@ -209,12 +217,40 @@
           this.lc_svg = d3.select("#line_chart").append("svg")
               .attr("width", that.lc_width + that.lc_margin.left + that.lc_margin.right)
               .attr("height", that.lc_height + that.lc_margin.top + that.lc_margin.bottom)
-              .append("g")
+
+          // Add the g to contain legend
+          this.lc_legend = this.lc_svg.append('g')
+            .attr('id', 'line_chart_legend')
+            .attr('transform', () =>{
+              let x = +that.lc_margin.left + +that.lc_width,
+                y = +that.lc_margin.top
+                return 'translate(' + x + ',' + y + ')'
+            })
+          let legend = this.lc_legend.selectAll('.line_legend')
+            .data(opt.config.legend)
+            .enter()
+          
+          this.lc_legend_circle = legend.append('circle')
+              .attr("class", "line_legend") // Assign a class for styling
+              .attr("cx", (d, i) => { return that.lc_width * 0.04 })
+              .attr("cy", (d, i) => { return that.lc_height * 0.15 * i + 20})
+              .attr("r", 4)
+              .style('fill', (d, i) => {return that.lc_linecolor[i]})
+              .on('mouseover', circle_handleMouseOver)
+              .on('mouseout', circle_handleMouseOut)
+
+          this.lc_legend_text = legend.append('text')
+              .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
+              .text((d,i) => {return d})
+              .attr('class', 'legend_text')
+
+          this.lc_svg_g = this.lc_svg.append("g")
               .attr('id', 'line_chart_g')
               .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")");
 
           // 3. Call the x axis in a group tag
-          this.lc_svg.append("g")
+          this.lc_svg_g.append("g")
               .attr("class", "x axis")
               .attr("transform", "translate( 0," + +that.lc_height + ")")
               .transition()
@@ -223,14 +259,14 @@
                 
 
           // 4. Call the y axis in a group tag
-          this.lc_svg.append("g")
+          this.lc_svg_g.append("g")
               .attr("class", "y axis")
               .transition()
               .duration(3000)
               .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
 
           //13. append chart title
-          this.lc_svg.append('text')
+          this.lc_svg_g.append('text')
             .attr('id', "lc_title")
             .attr('x', that.lc_width/2)
             .attr('y', 0)
@@ -241,29 +277,34 @@
               return 'TITLE'  // Value of the text
             });
 
-
-
           // 9. Append the path, bind the data, and call the line generator 
-          this.lc_svg.append("path")
-              .datum(dataset) // 10. Binds data to the line
+          this.lc_path = this.lc_svg_g.append("path")
+              .datum(opt.data) // 10. Binds data to the line
               .transition()
               .duration(1000)
-              .attr("class", "line") // Assign a class for styling
               .attr("d", that.lc_line) // 11. Calls the line generator 
+              .attr('class', 'line') // Assign a class for styling
+              .style('fill', 'none')
+              .style('stroke', that.lc_linecolor[that.lc_linecount])
+              .style("stroke-width", '3px')
 
           // 12. Appends a circle for each datapoint 
-          this.lc_svg.selectAll(".dot")
-              .data(dataset)
+          this.lc_circle = this.lc_svg_g.selectAll(".dot")
+              .data(opt.data)
             .enter().append("circle")
             // Uses the enter().append() method
               .attr("class", "dot") // Assign a class for styling
               .attr("cx", function(d, i) { return that.lc_xScale(i) })
               .attr("cy", function(d) { return that.lc_yScale(d.y) })
               .attr("r", 4)
+              .style('fill', that.lc_linecolor[that.lc_linecount])
+              .style('stroke', '#fff')
+              .style('stroke-width', '1.5px')
               .on('mouseover', circle_handleMouseOver)
               .on('mouseout', circle_handleMouseOut)
 
-
+          //change color
+          this.lc_linecount = this.lc_linecount + 1
         }
         
         // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
@@ -273,7 +314,7 @@
           d3.select(this)
           .transition()
           .duration(300)
-          .attr('r', 8)
+          .attr('r', 6)
           // Specify where to put label of text
           d3.select('#line_chart_g').append("text")
             .attr('id', "t-" + i)
@@ -293,13 +334,19 @@
           // Select text by id and then remove
           d3.select("#t-" + i).remove();  // Remove text location
         }
+
               
       }
     },
     mounted(){
       this.init_heatmap()
       this.handle_linechart({
-        'status': 0
+        'status': 0,
+        'config': {
+          'legend': ['line1'],
+          'xAxisText': 'xAxis',
+          'yAxisText': 'yAxis'
+        }
         //'config': ''
         // 0 init 1 add line 2 delete line
       })
@@ -345,10 +392,8 @@
   }
   
 /*line chart*/
-  .line {
-    fill: none;
-    stroke: steelblue;
-    stroke-width: 3;
+.line {
+
 }
   
 .overlay {
@@ -366,7 +411,6 @@
 .focus circle {
   fill: none;
   stroke: steelblue;
-  
 }
 
 .axis{
@@ -379,5 +423,9 @@
     fill: #aaa;
 }
 
+.legend_text {
+  fill: white;
+  font-family: initial;
+}
 
 </style>
