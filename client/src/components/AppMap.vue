@@ -6,6 +6,7 @@
   import mapboxgl from 'mapbox-gl'
   import ngeohash from 'ngeohash'
   import { scaleThreshold } from 'd3'
+  import coordtrans from 'coordtransform'
 
   export default {
     name: "AppMap",
@@ -23,7 +24,8 @@
     mounted() {
       this.map_config();
       //this.load_map();
-      this.load_district();
+      //this.load_district();
+      this.load_buses();
     },
     methods: {
       map_config() {
@@ -35,6 +37,100 @@
           zoom: 10  // 设置地图比例
           //pitch:50
         });
+      },
+      load_buses(){
+        this.$http.get('buses').then((res) => {
+          //console.log(res.body);
+          this.buses_draw(res.body[0]);
+        });
+      },
+      buses_draw(data){
+        //console.log(data);
+        let feature_buslines = [];
+        let feature_buspoints = [];
+        let stations = [];
+        data.values.forEach(d=>{
+
+          //station geo data
+          d.stations.forEach(s=>{
+            if(stations.indexOf(s.name) === -1){
+              stations.push(s.name);
+              feature_buspoints.push({
+                "type": "Feature",
+                "properties": {
+                  "color": '#ff4f6a',
+                  "opacity":0.5,
+                  "radius":2
+                },
+                "geometry": {
+                  "type": "Point",
+                  "coordinates": this.coordtrans_bdtowgs84(s.position)
+                }
+              });
+            }
+            else {
+            }
+          });
+          //buses line data
+          feature_buslines.push({
+            "type": "Feature",
+            "properties": {
+              color:'#82ff70'
+            },
+            "geometry": {
+              "type": "LineString",
+              "coordinates": d.path.map(s =>{
+                let bd09togcj02=coordtrans.bd09togcj02(s[0],s[1]);
+                return coordtrans.gcj02towgs84(bd09togcj02[0],bd09togcj02[1])
+              })
+            }
+          });
+        });
+        this.map.on('load',  ()=>{
+
+          this.map.addSource("station_points_source", {
+            "type": "geojson",
+            'data':  {
+              "type": "FeatureCollection",
+              "features": feature_buspoints
+            }
+          });
+          this.map.addLayer({
+            'id':'station_points_layer',
+            'source': 'station_points_source',
+            "type": "circle",
+            'layout': {},
+            'paint': {
+              'circle-color': ['get','color'],
+              'circle-opacity': ['get','opacity'],
+              'circle-radius':['get','radius']
+            }
+          });
+
+          this.map.addSource('buses_source',{
+            "type": "geojson",
+            "data": {
+              "type": "FeatureCollection",
+              "features": feature_buslines
+            }
+          });
+          this.map.addLayer({
+            "id": "buses_layer",
+            "type": "line",
+            "source":'buses_source',
+            "layout": {
+              "line-join": "round",
+              "line-cap": "round"
+            },
+            "paint": {
+              "line-color": ['get','color'],
+              "line-width": 0.3,
+              "line-opacity": 0.4
+            }
+          });
+
+        });
+
       },
       load_district(){
         this.$http.get('district').then((res) => {
@@ -81,23 +177,23 @@
 
         this.map.on('load',  ()=>{
           this.map.addSource('district_polygon_source',{
-              'type': 'geojson',
-              'data': {
-                  "type": "FeatureCollection",
-                  "features": feature_polygons
-              }
+            'type': 'geojson',
+            'data': {
+              "type": "FeatureCollection",
+              "features": feature_polygons
+            }
           });
 
           this.map.addLayer({
-              'id': 'district_polygon_layer',
-              'type': 'fill',
-              'source': 'district_polygon_source',
-              'layout': {},
-              'paint': {
-                  'fill-color': ['get','color'],
-                  //'fill-outline-color':'#FFFFFF',
-                  'fill-opacity': .1,
-              }
+            'id': 'district_polygon_layer',
+            'type': 'fill',
+            'source': 'district_polygon_source',
+            'layout': {},
+            'paint': {
+              'fill-color': ['get','color'],
+              //'fill-outline-color':'#FFFFFF',
+              'fill-opacity': .1,
+            }
           });
 
           //district outline
@@ -398,6 +494,10 @@
           // });
         });
       },
+      coordtrans_bdtowgs84(lnglat){
+        let bd09togcj02 = coordtrans.bd09togcj02(lnglat[0], lnglat[1]);
+        return coordtrans.gcj02towgs84(bd09togcj02[0], bd09togcj02[1])
+      }
       // map_update(data){}
     }
   }
