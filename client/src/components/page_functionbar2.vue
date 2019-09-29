@@ -350,9 +350,6 @@
         //'config': ''
         // 0 init 1 add line 2 delete line
       })
-    },
-    panel_handle(){
-
     }
   }
 </script>
@@ -363,13 +360,14 @@
     z-index: 1;
     width:98%;
     max-height: 90%;
-    transform: translate(1%, 0);
-    height:20%;
+    transform: translate(1%, -5%);
+    height:22%;
     bottom: 0;
-    background:hsla(0,0%,100%,.25) border-box;
     overflow:hidden;
     border-radius:.3em;
     box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px)
   }
 
   rect.bordered {

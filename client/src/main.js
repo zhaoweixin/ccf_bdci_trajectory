@@ -8,6 +8,8 @@ import Router from 'vue-router'
 import Vuex from 'vuex'
 import store from './vuex/store'
 import iView from 'iview'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap/dist/js/bootstrap.min.js'
 import 'iview/dist/styles/iview.css'
 
 Vue.use(Router);

@@ -28,9 +28,10 @@
     z-index: 1;
     transform: translate(1%, 0);
     width:98%;
-    background:hsla(0,0%,100%,.25) border-box;
     overflow:hidden;
     border-radius:.3em;
     box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
 </style>
