@@ -4,6 +4,7 @@ var MysqlPool = require('./mysql_pool.js');
 
 var mysqlPool = new MysqlPool();
 var pool = mysqlPool.getPool();
+var d3 = require('d3')
 
   // pool.query('SELECT * FROM db_traffic.start_geohash',(err,rows)=>{
   //   if(err) throw err;
@@ -70,6 +71,8 @@ module.exports = {
             if(err){
                 console.log(err)
             } else {
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.setHeader("Content-Type", "application/json");
                 const sql = mysql.format('select * from data')
                 connection.query(sql, function(err, result) {
                     if(err) {
@@ -79,6 +82,19 @@ module.exports = {
                     }
                 });
                 pool.releaseConnection(connection);
+            }
+        })
+    },
+    basic_line: function(req, res, next){
+        pool.getConnection(function(err, connection){
+            if(err){
+                console.log(err)
+                return;
+            } else {
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.setHeader("Content-Type", "application/json");
+                const dataset = d3.range(21).map(function(d,i) { return {"y": d3.randomUniform(1)() ,"x": i} })
+                res.send(dataset)
             }
         })
     }

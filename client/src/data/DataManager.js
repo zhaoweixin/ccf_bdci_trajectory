@@ -1,12 +1,14 @@
 import axios from 'axios';
 
 export default class DataManager {
-    static getTestData(){
-        return axios.get('http://localhost:3000/query')
+    static getLineChartData(){
+        return axios.post('http://127.0.0.1:3000/basic_line')
     }
-
     static getGeoStartData(){
-      return axios.get('http://localhost:3000/query')
+      return axios.get('http://127.0.0.1:3000/query')
+    }
+    static getHeatmapData(){
+        return axios.get('http://127.0.0.1:3000/test')
     }
     /*
     static getTestData(){
