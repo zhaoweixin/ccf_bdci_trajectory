@@ -23,6 +23,24 @@
           <label for="myCheckbox2">Checkbox unchecked</label>
           <span></span>
         </div>
+        
+        <div>
+          <!-- Group of default radios - option 1 -->
+          <div class="custom-control custom-radio">
+            <input type="radio" class="custom-control-input" id="defaultGroupExample1" name="groupOfDefaultRadios" value="Day" v-model="picked">
+            <label class="custom-control-label" for="defaultGroupExample1">Day</label>
+          </div>
+
+          <!-- Group of default radios - option 2 -->
+          <div class="custom-control custom-radio">
+            <input type="radio" class="custom-control-input" id="defaultGroupExample2" name="groupOfDefaultRadios" checked value="Month" v-model="picked">
+            <label class="custom-control-label" for="defaultGroupExample2">Month</label>
+          </div>
+        </div>
+        
+
+        <span>Picked: {{ picked }}</span>
+        <br>
         <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px">Example button</button>
       </div>
     </div>
@@ -39,7 +57,8 @@
     name: 'page_funtionbar',
     data(){
       return {
-        checkedNames: []
+        checkedNames: [],
+        picked: 'Month',
       }
     },
     components:{},
@@ -168,4 +187,26 @@
   border-color: grey;
 }
 
+
+/*radio*/
+.custom-control-input {
+  display: flex !important;
+  min-height: 32px !important;
+  padding-left: 1.4rem !important;
+}
+.custom-control-label {
+  padding-left: 10px !important;
+  padding-top: 2px !important;
+  display: relative !important;
+  color: white !important;
+  font-family: initial !important;
+}
+.custom-control {
+  display: flex !important;
+  padding-left: 1.4rem !important;
+  min-height: 32px !important;
+}
+.custom-control-label::before{
+  background-color: black !important;
+}
 </style>
