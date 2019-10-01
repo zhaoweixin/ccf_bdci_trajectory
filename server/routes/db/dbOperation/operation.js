@@ -86,10 +86,20 @@ module.exports = {
                 console.log(err)
                 return;
             } else {
+                let count = req.body.legend.length,
+                    resData = []
+                for(var i=0; i<count; i++){
+                    let scale = d3.scaleLinear().domain([0, 20]).range([0,1])
+                    let t = d3.range(21).map(function(d,i) { return {"y": d3.randomUniform(1)() ,"x": scale(i)} })
+                    resData.push({
+                        'name': req.body.legend[i],
+                        'values': t
+                    })
+                }
+                
                 res.setHeader("Access-Control-Allow-Origin", "*");
-                res.setHeader("Content-Type", "application/json");
-                const dataset = d3.range(21).map(function(d,i) { return {"y": d3.randomUniform(1)() ,"x": i} })
-                res.send(dataset)
+                //res.setHeader("Content-Type", "application/json");
+                res.send(resData)
             }
         })
     }

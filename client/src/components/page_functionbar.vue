@@ -14,34 +14,47 @@
     <div class="bg">
       <div>
         <div class="chiller_cb">
-          <input id="myCheckbox" type="checkbox"  value="1" checked v-model="checkedNames">
-          <label for="myCheckbox">Checkbox checked</label>
+          <input id="myCheckbox" type="checkbox"  value="0" checked v-model="config.checkedNames">
+          <label for="myCheckbox">运输需求量</label>
           <span></span>
         </div>
         <div class="chiller_cb">
-          <input id="myCheckbox2" type="checkbox"  value="2" v-model="checkedNames">
-          <label for="myCheckbox2">Checkbox unchecked</label>
+          <input id="myCheckbox2" type="checkbox"  value="1" v-model="config.checkedNames">
+          <label for="myCheckbox2">运输距离</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox3" type="checkbox"  value="2" v-model="config.checkedNames">
+          <label for="myCheckbox3">运输流向</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox4" type="checkbox"  value="3" v-model="config.checkedNames">
+          <label for="myCheckbox4">起运时间</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox5" type="checkbox"  value="4" v-model="config.checkedNames">
+          <label for="myCheckbox5">到达时间</label>
           <span></span>
         </div>
         
         <div>
           <!-- Group of default radios - option 1 -->
           <div class="custom-control custom-radio">
-            <input type="radio" class="custom-control-input" id="defaultGroupExample1" name="groupOfDefaultRadios" value="Day" v-model="picked">
+            <input type="radio" class="custom-control-input" id="defaultGroupExample1" name="groupOfDefaultRadios" value="Day" v-model="config.picked">
             <label class="custom-control-label" for="defaultGroupExample1">Day</label>
           </div>
 
           <!-- Group of default radios - option 2 -->
           <div class="custom-control custom-radio">
-            <input type="radio" class="custom-control-input" id="defaultGroupExample2" name="groupOfDefaultRadios" checked value="Month" v-model="picked">
+            <input type="radio" class="custom-control-input" id="defaultGroupExample2" name="groupOfDefaultRadios" checked value="Month" v-model="config.picked">
             <label class="custom-control-label" for="defaultGroupExample2">Month</label>
           </div>
         </div>
         
-
-        <span>Picked: {{ picked }}</span>
         <br>
-        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px">Example button</button>
+        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Example button</button>
       </div>
     </div>
 
@@ -53,19 +66,64 @@
   </div>
 </template>
 <script>
+  import DataManager from '../data/DataManager'
   export default{
     name: 'page_funtionbar',
     data(){
       return {
-        checkedNames: [],
-        picked: 'Month',
+        config: {
+          checkedNames:['0'],
+          //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 到达时间
+          picked: 'Month',
+          status: '3' // update all
+        }
       }
     },
     components:{},
-    computed:{},
+    computed:{
+      
+    },
     watch: {},
-    methods:{},
-    mounted(){}
+    methods:{
+      handle_clickbutton(){
+        let that = this;
+        //直接全部重画
+        if(JSON.stringify(this.$store.state.operater_state) != JSON.stringify(this.config)){
+          this.$store.commit('operater_state', this.config)
+        } else {
+
+        }
+        
+        /*
+        增加或删除某线
+        if(Object.keys(config).length == 0){
+          this.config.checkedNames = this.checkedNames
+          this.config.picked = this.picked
+          //request data
+          //generate related graph
+        } else{
+          //change time unit, need to refresh all
+          let info = instend(this.config.checkedNames, this.checkedNames)
+        }
+
+        function instend(one,tow){
+          let same = [],
+           diff = [],
+           o = {};
+          if(one.toString() == tow.toString()){
+            return {'diff': diff, 'same': same, 'isSame': true}
+          }
+          for (var i = 0; i< one.length; i++) (one[i] in o) ? o[one[i]] ++ : o[one[i]] = 1;
+          for (var i = 0; i< tow.length; i++) (tow[i] in o) ? same.push(tow[i]) : diff.push(tow[i]);
+          return {'diff': diff, 'same': same, 'isSame': false};
+        }
+        */
+
+      }
+    },
+    mounted(){
+      
+    }
   }
 </script>
 <style>
@@ -208,5 +266,15 @@
 }
 .custom-control-label::before{
   background-color: black !important;
+  border: white solid 1px !important;
+}
+
+.custom-control-input:checked~.custom-control-label::before{
+  border-color: #99C779 !important;
+}
+
+.chiller_cb input:checked ~ span{
+  background: #99C779 !important;
+  border-color: #99C779 !important;
 }
 </style>

@@ -15,10 +15,13 @@
   import * as d3 from 'd3'
   import PieChart from "../components/PieChart"
   import DataManager from '../data/DataManager'
+  import var_config from '../assets/var_config.js'
+  import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
     data(){
       return {
+        var_config: var_config,
         lc_FullWidth : 0,
         lc_FullHeight: 0,
         lc_margin:{},
@@ -34,16 +37,25 @@
         lc_legend_circle: undefined,
         lc_legend_text: undefined,
         lc_path: undefined,
+        lc_pathcount: 0,
         lc_circle: undefined,
-        lc_linecolor: ['#99C779','#94FA4D', '#949369', '#564AA1', '#253494'],
+        lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
         lc_linecount:0
       }
     },
     components: {
       PieChart
     },
-    computed:{},
-    watch:{},
+    computed:{
+      operater_state () {
+        return this.$store.state.operater_state
+      }
+    },
+    watch:{
+      operater_state: function(val, oldVal){
+        this.handle_operater_state()
+      }
+    },
     methods:{
       init_heatmap(){
         var FullWidth = document.getElementById('heatmap').clientWidth,
@@ -163,11 +175,29 @@
             heatmapChart(d);
           });
       },
+      handle_operater_state(){
+        let that = this
+        let opt = {
+          'status': this.operater_state.status,
+          'config': {
+            'legend':[],
+            'xAxisText': 'xAxis',
+            'yAxisText': 'yAxis'
+          }
+        }
+        this.operater_state.checkedNames.forEach((d,i) => {
+          opt.config.legend.push(that.var_config.operater[d].legend)
+        })
+        this.handle_linechart(opt)
+      },
       handle_linechart(opt){
         let that = this
-        if(opt.status == 0){
+        if(opt.status == '0'){
           //init
-          DataManager.getLineChartData().then((res) => {
+          let req = {
+            'legend': opt.config.legend
+          }
+          DataManager.getLineChartData(req).then((res) => {
             let info = {
               'status': 0,
               'data': res.data,
@@ -180,10 +210,29 @@
               return;
             }
           })
-        } else if(opt.status == 1){
+        } else if(opt.status == '1'){
           //add
-        } else if(opt.status == 2){
+        } else if(opt.status == '2'){
           //delete
+        } else if(opt.status == '3'){
+          //updates all
+          let req = {
+            'legend': opt.config.legend
+          }
+          DataManager.getLineChartData(req).then((res) => {
+            let info = {
+              'status': opt.status,
+              'data': res.data,
+              'config': opt.config
+            }
+            that.draw_linechart(info)
+          }).catch(err => {
+            if(err){
+              console.log(err)
+              return;
+            }
+          })
+
         }
       },
       draw_linechart(opt){
@@ -198,7 +247,7 @@
           let n = 21;
           // 5. X scale will use the index of our data
           this.lc_xScale = d3.scaleLinear()
-              .domain([0, n-1]) // input
+              .domain([0, 1]) // input
               .range([0, that.lc_width]); // output
 
           // 6. Y scale will use the randomly generate number 
@@ -208,11 +257,10 @@
 
           // 7. d3's line generator
           this.lc_line = d3.line()
-              .x(function(d, i) { return that.lc_xScale(i); }) // set the x values for the line generator
+              .x(function(d, i) { return that.lc_xScale(d.x); }) // set the x values for the line generator
               .y(function(d) { return that.lc_yScale(d.y); }) // set the y values for the line generator
               .curve(d3.curveMonotoneX) // apply smoothing to the line
 
-          let dataset = opt.data
           // 1. Add the SVG to the page and employ #2
           this.lc_svg = d3.select("#line_chart").append("svg")
               .attr("width", that.lc_width + that.lc_margin.left + that.lc_margin.right)
@@ -221,29 +269,36 @@
           // Add the g to contain legend
           this.lc_legend = this.lc_svg.append('g')
             .attr('id', 'line_chart_legend')
-            .attr('transform', () =>{
+            .attr('transform', () => {
               let x = +that.lc_margin.left + +that.lc_width,
                 y = +that.lc_margin.top
                 return 'translate(' + x + ',' + y + ')'
             })
-          let legend = this.lc_legend.selectAll('.line_legend')
+          let legend = this.lc_legend.selectAll('.legend_line')
             .data(opt.config.legend)
             .enter()
           
           this.lc_legend_circle = legend.append('circle')
-              .attr("class", "line_legend") // Assign a class for styling
+              .attr("class", "legend_line") // Assign a class for styling
               .attr("cx", (d, i) => { return that.lc_width * 0.04 })
               .attr("cy", (d, i) => { return that.lc_height * 0.15 * i + 20})
-              .attr("r", 4)
+              .attr("r", 2)
               .style('fill', (d, i) => {return that.lc_linecolor[i]})
-              .on('mouseover', circle_handleMouseOver)
-              .on('mouseout', circle_handleMouseOut)
+              .style('opacity', 0)
+              .transition()
+              .duration(3000)
+              .style('opacity', 1)
+              
 
           this.lc_legend_text = legend.append('text')
               .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
               .text((d,i) => {return d})
+              .style('opacity', 0)
               .attr('class', 'legend_text')
+              .transition()
+              .duration(3000)
+              .style('opacity', 1)
 
           this.lc_svg_g = this.lc_svg.append("g")
               .attr('id', 'line_chart_g')
@@ -256,7 +311,6 @@
               .transition()
               .duration(3000)
               .call(d3.axisBottom(that.lc_xScale)) // Create an axis component with d3.axisBottom
-                
 
           // 4. Call the y axis in a group tag
           this.lc_svg_g.append("g")
@@ -278,35 +332,113 @@
             });
 
           // 9. Append the path, bind the data, and call the line generator 
-          this.lc_path = this.lc_svg_g.append("path")
-              .datum(opt.data) // 10. Binds data to the line
-              .transition()
-              .duration(1000)
-              .attr("d", that.lc_line) // 11. Calls the line generator 
-              .attr('class', 'line') // Assign a class for styling
+          
+          // 12. Appends a circle for each datapoint
+          this.lc_pathcount = opt.data.length
+          for(var i=0; i<opt.data.length; i++){
+            let draw_data = opt.data[i].values
+            
+            this.lc_svg_g.append("path")
+              .data(draw_data) // 10. Binds data to the line
+              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator 
+              .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
               .style('fill', 'none')
-              .style('stroke', that.lc_linecolor[that.lc_linecount])
-              .style("stroke-width", '3px')
+              .style('stroke', that.lc_linecolor[i])
+              .style("stroke-width", '1px')
+              .style('opacity', 0)
+              .transition()
+              .duration(1500)
+              .style('opacity', 1)
+              
 
-          // 12. Appends a circle for each datapoint 
-          this.lc_circle = this.lc_svg_g.selectAll(".dot")
-              .data(opt.data)
+            this.lc_svg_g.selectAll(".ddot")
+              .data(draw_data)
             .enter().append("circle")
             // Uses the enter().append() method
-              .attr("class", "dot") // Assign a class for styling
-              .attr("cx", function(d, i) { return that.lc_xScale(i) })
-              .attr("cy", function(d) { return that.lc_yScale(d.y) })
-              .attr("r", 4)
-              .style('fill', that.lc_linecolor[that.lc_linecount])
+              .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+              .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
+              .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+              .attr("r", 2)
+              .attr("linenum", i)
+              .style('fill', that.lc_linecolor[i])
               .style('stroke', '#fff')
               .style('stroke-width', '1.5px')
               .on('mouseover', circle_handleMouseOver)
               .on('mouseout', circle_handleMouseOut)
-
+              .style('opacity', 0)
+              .transition()
+              .duration(1500)
+              .style('opacity', 1)
+          }
           //change color
           this.lc_linecount = this.lc_linecount + 1
+        } else if(opt.status == 3){
+          d3.selectAll('.line').transition().duration(1000).style('opacity', 0).remove()
+          d3.selectAll('.dot').transition().duration(1000).style('opacity', 0).remove()
+          d3.selectAll('.legend_text').transition().duration(1500).style('opacity', 0).remove()
+          d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
+
+          this.lc_pathcount = opt.data.length
+          for(var i=0; i<opt.data.length; i++){
+            let draw_data = opt.data[i].values
+            
+            this.lc_svg_g.append("path")
+              .data(draw_data) // 10. Binds data to the line
+              .transition()
+              .duration(1500)
+              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator 
+              .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+              .style('fill', 'none')
+              .style('stroke', that.lc_linecolor[i])
+              .style("stroke-width", '1px')
+
+            this.lc_svg_g.selectAll(".ddot")
+              .data(draw_data)
+            .enter().append("circle")
+            // Uses the enter().append() method
+              .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+              .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
+              .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+              .attr("r", 2)
+              .attr("linenum", i)
+              .style('fill', that.lc_linecolor[i])
+              .style('stroke', '#fff')
+              .style('stroke-width', '1.5px')
+              .on('mouseover', circle_handleMouseOver)
+              .on('mouseout', circle_handleMouseOut)
+              .style('opacity', 0)
+              .transition()
+              .duration(2000)
+              .style('opacity', 1)
+          }
+
+          this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
+          let legend = this.lc_legend.selectAll('.legend_line')
+            .data(opt.config.legend)
+            .enter()
+          
+          this.lc_legend_circle = legend.append('circle')
+              .attr("class", "legend_line") // Assign a class for styling
+              .attr("cx", (d, i) => { return that.lc_width * 0.04 })
+              .attr("cy", (d, i) => { return that.lc_height * 0.15 * i + 20})
+              .attr("r", 2)
+              .style('fill', (d, i) => {return that.lc_linecolor[i]})
+              .style('opacity', 0)
+              .transition()
+              .duration(1500)
+              .style('opacity', 1)
+              
+
+          this.lc_legend_text = legend.append('text')
+              .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
+              .text((d,i) => {return d})
+              .style('opacity', 0)
+              .attr('class', 'legend_text')
+              .transition()
+              .duration(1500)
+              .style('opacity', 1)
         }
-        
         // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
 
         function circle_handleMouseOver(d, i){
@@ -315,40 +447,73 @@
           .transition()
           .duration(300)
           .attr('r', 6)
+
+          //use D3 to select line, change stroke
+          let line_num = d3.select(this).attr('linenum')
+          for(var i=0; i<that.lc_pathcount; i++){
+            let lineclass = 'line-' + i,
+              dotclass = 'dot-' + i
+            if(line_num == i){
+              d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
+            } else {
+              d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
+              d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
+            }
+          }
+
+
           // Specify where to put label of text
           d3.select('#line_chart_g').append("text")
-            .attr('id', "t-" + i)
+            .attr('id', "lt_label")
             .attr('x', that.lc_xScale(d.x) - 30)
             .attr('y', that.lc_yScale(d.y) - 15)
             .attr('fill', 'white')
             .text(function() {
-                return "X: " + d.x + " Y: " + +d.y.toFixed(2);  // Value of the text
+                if(typeof(d) != 'object'){
+                  return;
+                } else {
+                  return "X: " + d.x + " Y: " + +d.y.toFixed(2);  // Value of the text
+                }
               });
         }
 
-        function circle_handleMouseOut(d, i){
+        function circle_handleMouseOut(d){
           d3.select(this)
           .transition()
           .duration(300)
-          .attr('r', 4)
+          .attr('r', 2)
           // Select text by id and then remove
-          d3.select("#t-" + i).remove();  // Remove text location
-        }
+          d3.select("#lt_label").remove();  // Remove text location
 
-              
-      }
+          //cancel line opacity, change stroke
+          let line_num = d3.select(this).attr('linenum')
+
+          for(var i=0; i<that.lc_pathcount; i++){
+            let lineclass = 'line-' + i,
+              dotclass = 'dot-' + i
+            if(line_num == i){
+              d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '1px')
+            } else {
+              d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 1)
+              d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 1)
+            }
+          }
+
+        }
+        //end of function draw_linechart     
+      },
+      
     },
     mounted(){
       this.init_heatmap()
       this.handle_linechart({
-        'status': 0,
+        'status': '0',
         'config': {
-          'legend': ['line1'],
+          'legend': ['运输需求量'],
           'xAxisText': 'xAxis',
           'yAxisText': 'yAxis'
         }
         //'config': ''
-        // 0 init 1 add line 2 delete line
       })
     }
   }

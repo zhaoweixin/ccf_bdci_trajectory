@@ -10,7 +10,10 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
     // 定义状态
     state: {
-        author: 'Wise Wrong'
+        operater_state:{
+            'checkedNames': [],
+            'picked': ''
+        }
     },
     mutations:mutation,
     actions:action,
