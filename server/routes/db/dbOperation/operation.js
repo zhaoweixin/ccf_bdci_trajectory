@@ -81,25 +81,79 @@ module.exports = {
         })
     },
     basic_line: function(req, res, next){
+        
+        console.log(req.body)
         pool.getConnection(function(err, connection){
             if(err){
                 console.log(err)
                 return;
             } else {
-                let count = req.body.legend.length,
-                    resData = []
-                for(var i=0; i<count; i++){
-                    let scale = d3.scaleLinear().domain([0, 20]).range([0,1])
-                    let t = d3.range(21).map(function(d,i) { return {"y": d3.randomUniform(1)() ,"x": scale(i)} })
-                    resData.push({
-                        'name': req.body.legend[i],
-                        'values': t
-                    })
+                let typeDict = {
+                    '0': {
+                        'name': '运输需求量',
+                        'halftable': 'ordercount_mean'
+                    },
+                    '1': {
+                        'name': '运输距离',
+                        'halftable': 'distance_mean'
+                    },
+                    '2': {
+                        'name': '运输流向',
+                        'halftable': 'angle'
+                    },
+                    '3': {
+                        'name': '起运时间',
+                        'halftable': 'time_mean'
+                    }
                 }
-                
-                res.setHeader("Access-Control-Allow-Origin", "*");
-                //res.setHeader("Content-Type", "application/json");
-                res.send(resData)
+
+                let dataType = req.body.config.legend_val,
+                    unit = req.body.config.unit == 'Hour' ? 'h_' : 'd_',
+                    sql = '',
+                    resData = []
+                dataType.forEach((d,i) => {
+                    sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
+                })
+                connection.query(sql, function(err, result){
+                    if(err){
+                        res.send(err);
+                    } else {
+                        //res.setHeader("Access-Control-Allow-Origin", "*");
+                        //res.send(result)
+                        result = JSON.parse(JSON.stringify(result))
+                        if(dataType.length == 1){
+                            result = [result]
+                        }
+
+                        result.forEach((d,i) => {
+                            xScale = d.map( v => +v.x)
+                            yScale = d.map( v => +v.y)
+                            xScale_max = Math.max.apply(null,xScale)
+                            xScale_min = Math.min.apply(null,xScale)
+                            yScale_max = Math.max.apply(null,yScale)
+                            yScale_min = Math.min.apply(null,yScale)
+
+                            _yscale = d3.scaleLinear().domain([yScale_min, yScale_max]).range([0, 1])
+                            _xscale = d3.scaleLinear().domain([xScale_min, xScale_max]).range([0, 1])
+
+                            for(var j=0; j< d.length; j++){
+                                d[j].x = _xscale(+d[j].x)
+                                d[j].y = _yscale(+d[j].y)
+                            }
+
+                            resData.push({
+                                'name': req.body.config.legend[i],
+                                'values': d,
+                                'xScale': [xScale_min, xScale_max],
+                                'yScale': [yScale_min, yScale_max]
+                            })
+                        })
+                        res.setHeader("Access-Control-Allow-Origin", "*");
+                        res.send(resData)
+                    }
+                })
+                //let t = d3.range(21).map(function(d,i) { return {"y": d3.randomUniform(1)() ,"x": scale(i)} })
+
             }
         })
     }

@@ -17,7 +17,8 @@ class MysqlPool {
             user:'root',
             password:'123456',
             database:'db_traffic',
-            port:3306
+            port:3306,
+            multipleStatements: true
         });
     }
     getPool(){

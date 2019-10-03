@@ -180,24 +180,34 @@
         let opt = {
           'status': this.operater_state.status,
           'config': {
-            'legend':[],
-            'xAxisText': 'xAxis',
-            'yAxisText': 'yAxis'
+            'legend': [],
+            'legend_val': [],
+            'unit': this.operater_state.picked
           }
-        }
-        this.operater_state.checkedNames.forEach((d,i) => {
+        },
+        except_angle_index = null,
+        t_operater_state = this.operater_state.checkedNames.filter(d => d != '2')
+        //划分出piechart 的数据 需要在handle_piechart内处理
+        opt.config.legend_val = t_operater_state
+  
+        t_operater_state.forEach((d,i) => {
           opt.config.legend.push(that.var_config.operater[d].legend)
         })
+        
+
         this.handle_linechart(opt)
+
+        //this.handle_piechart(opt)
       },
       handle_linechart(opt){
         let that = this
         if(opt.status == '0'){
           //init
           let req = {
-            'legend': opt.config.legend
+            'legend': opt.config.legend,
+            'unit': opt.config.unit
           }
-          DataManager.getLineChartData(req).then((res) => {
+          DataManager.getLineChartData(opt).then((res) => {
             let info = {
               'status': 0,
               'data': res.data,
@@ -217,9 +227,10 @@
         } else if(opt.status == '3'){
           //updates all
           let req = {
-            'legend': opt.config.legend
+            'legend': opt.config.legend_val,
+            'unit': opt.config.unit
           }
-          DataManager.getLineChartData(req).then((res) => {
+          DataManager.getLineChartData(opt).then((res) => {
             let info = {
               'status': opt.status,
               'data': res.data,
@@ -510,8 +521,8 @@
         'status': '0',
         'config': {
           'legend': ['运输需求量'],
-          'xAxisText': 'xAxis',
-          'yAxisText': 'yAxis'
+          'legend_val': [0],
+          'unit': 'Day'
         }
         //'config': ''
       })
