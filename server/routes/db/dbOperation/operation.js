@@ -2,10 +2,10 @@ var mysql = require('mysql');
 var $sql = require('./sql');
 var MysqlPool = require('./mysql_pool.js');
 var urlModule = require('url');
+var d3 = require('d3');
 
 var mysqlPool = new MysqlPool();
 var pool = mysqlPool.getPool();
-var d3 = require('d3')
 
 module.exports = {
     add: function (req, res, next) {
@@ -25,8 +25,9 @@ module.exports = {
     },
     query: function (req, res, next) {
         var {url:url,query} = urlModule.parse(req.url,true)
+        console.log(query.t);
         pool.getConnection(function(err, connection) {
-            connection.query($sql.queryAll + query.t, function(err, result) {
+            connection.query($sql.queryAll, function(err, result) {
                 if(err) res.send(err);
                 //console.log(result);
                 res.send(result);
@@ -81,8 +82,7 @@ module.exports = {
         })
     },
     basic_line: function(req, res, next){
-        
-        console.log(req.body)
+        //console.log(req.body)
         pool.getConnection(function(err, connection){
             if(err){
                 console.log(err)
@@ -156,6 +156,18 @@ module.exports = {
 
             }
         })
+    },
+    poi_haikou:function (req, res, next) {
+        // pool.getConnection(function (err, connection) {
+        //     connection.query('select * from poi_haikou', function (err, result) {
+        //         if (err) res.send(err);
+        //         //console.log(result);
+        //         res.send(result);
+        //         connection.release();
+        //     });
+        // });
+        console.log(req.body);
+        res.end('200');
     }
 };
 
