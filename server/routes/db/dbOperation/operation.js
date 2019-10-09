@@ -27,7 +27,7 @@ module.exports = {
         var {url:url,query} = urlModule.parse(req.url,true)
         console.log(query.t);
         pool.getConnection(function(err, connection) {
-            connection.query($sql.queryAll, function(err, result) {
+            connection.query($sql.queryAll+query.t, function(err, result) {
                 if(err) res.send(err);
                 //console.log(result);
                 res.send(result);
@@ -158,16 +158,14 @@ module.exports = {
         })
     },
     poi_haikou:function (req, res, next) {
-        // pool.getConnection(function (err, connection) {
-        //     connection.query('select * from poi_haikou', function (err, result) {
-        //         if (err) res.send(err);
-        //         //console.log(result);
-        //         res.send(result);
-        //         connection.release();
-        //     });
-        // });
-        console.log(req.body);
-        res.end('200');
+        pool.getConnection(function (err, connection) {
+            connection.query(`select * from poi_haikou ${req.query.sql}`, function (err, result) {
+                if (err) res.send(err);
+                //console.log(result);
+                res.send(result);
+                connection.release();
+            });
+        });
     }
 };
 
