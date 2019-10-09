@@ -4,7 +4,7 @@
       <h4> PANEL </h4>
       <div class="line-separator-1"></div>
     </div>
-    
+
 
     <div class="funcbar_warp_header">
       <h5> OPERATER </h5>
@@ -33,7 +33,7 @@
           <label for="myCheckbox4">起运时间</label>
           <span></span>
         </div>
-        
+
         <div>
           <!-- Group of default radios - option 1 -->
           <div class="custom-control custom-radio">
@@ -47,7 +47,7 @@
             <label class="custom-control-label" for="defaultGroupExample2">Day</label>
           </div>
         </div>
-        
+
         <br>
         <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Example button</button>
       </div>
@@ -58,10 +58,37 @@
       <div class="line-separator-2"></div>
     </div>
 
+    <div class="bg">
+
+      <div>
+        <div class="chiller_cb">
+          <input id="btn-grid-layer" type="checkbox" checked >
+          <label for="btn-grid-layer">地图网格图层</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="btn-heatmap-layer" type="checkbox"  value="1" >
+          <label for="btn-heatmap-layer">热力图图层</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="btn-poi-layer" type="checkbox"  value="2" >
+          <label for="btn-poi-layer">POI图层</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="btn-buses-layer" type="checkbox"  value="3">
+          <label for="btn-buses-layer">公交路网图层</label>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 <script>
   import DataManager from '../data/DataManager'
+
   export default{
     name: 'page_funtionbar',
     data(){
@@ -74,9 +101,10 @@
         }
       }
     },
-    components:{},
+    components:{
+    },
     computed:{
-      
+
     },
     watch: {},
     methods:{
@@ -88,7 +116,7 @@
         } else {
 
         }
-        
+
         /*
         增加或删除某线
         if(Object.keys(config).length == 0){
@@ -117,11 +145,13 @@
       }
     },
     mounted(){
-      
+
     }
   }
 </script>
 <style>
+
+  @import url('../../node_modules/iview/dist/styles/iview.css');
 
   .funcbar_warp{
     position: absolute;
@@ -132,9 +162,9 @@
     height:70%;
     overflow:hidden;
     border-radius:.3em;
-    box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    /*box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);*/
+    /*-webkit-backdrop-filter: blur(10px);*/
+    /*backdrop-filter: blur(10px);*/
   }
   .funcbar_warp_header {
     padding-top: 10px;
