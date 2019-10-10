@@ -8,16 +8,18 @@ import getter from './getter'
 Vue.use(Vuex);
 
 const store = new Vuex.Store({
-    // 定义状态
-    state: {
-        operater_state:{
-            'checkedNames': [],
-            'picked': ''
-        }
+  // 定义状态
+  state: {
+    operater_state:{
+      'checkedNames': [],
+      'picked': ''
     },
-    mutations:mutation,
-    actions:action,
-    getters:getter
+    map_state:{
+    }
+  },
+  mutations:mutation,
+  actions:action,
+  getters:getter
 });
 
 export default store

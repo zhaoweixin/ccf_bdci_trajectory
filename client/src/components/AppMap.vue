@@ -21,12 +21,8 @@
         },
         mounted() {
             this.map_config();
-            this.load_buses();
-            //this.load_district();
-            //this.load_poi();
-            //this.load_geohash();
+            this.load_geohash();
             //this.load_geodataDay();
-            //this.arc_test();
         },
         methods: {
 
@@ -52,7 +48,7 @@
             /-----------------------------------------*/
             load_buses(){
                 this.$http.get('dataset/buses_data/buses_data.json').then((res) => {
-                    //console.log(res.body);
+                    //.log(res.body);
                     this.buses_draw(res.body);
                 });
             },
@@ -98,9 +94,9 @@
                         }
                     });
                 });
-                this.map.on('load',  ()=>{
+                //this.map.on('load',  ()=>{
 
-                    this.map.addSource("station_points_source", {
+                    this.map.addSource("buses_stations_source", {
                         "type": "geojson",
                         'data':  {
                             "type": "FeatureCollection",
@@ -108,8 +104,8 @@
                         }
                     });
                     this.map.addLayer({
-                        'id':'station_points_layer',
-                        'source': 'station_points_source',
+                        'id':'buses_stations_layer',
+                        'source': 'buses_stations_source',
                         "type": "circle",
                         'layout': {},
                         'paint': {
@@ -119,7 +115,7 @@
                         }
                     });
 
-                    this.map.addSource('buses_source',{
+                    this.map.addSource('buses_routes_source',{
                         "type": "geojson",
                         "data": {
                             "type": "FeatureCollection",
@@ -127,9 +123,9 @@
                         }
                     });
                     this.map.addLayer({
-                        "id": "buses_layer",
+                        "id": "buses_routes_layer",
                         "type": "line",
-                        "source":'buses_source',
+                        "source":'buses_routes_source',
                         "layout": {
                             "line-join": "round",
                             "line-cap": "round"
@@ -141,7 +137,7 @@
                         }
                     });
 
-                });
+                //});
             },
 
             /*----------------------------------------/
@@ -212,7 +208,7 @@
                     });
 
                     //district outline
-                    this.map.addSource('district_source',{
+                    this.map.addSource('district_outline_source',{
                         "type": "geojson",
                         "data": {
                             "type": "FeatureCollection",
@@ -220,9 +216,9 @@
                         }
                     });
                     this.map.addLayer({
-                        "id": "district_layer",
+                        "id": "district_outline_layer",
                         "type": "line",
-                        "source":'district_source',
+                        "source":'district_outline_source',
                         "layout": {
                             "line-join": "round",
                             "line-cap": "round"
@@ -275,25 +271,25 @@
 
                 //this.map.on('load',()=>{
 
-                    this.map.addSource("poi_points_source", {
-                        "type": "geojson",
-                        'data':  {
-                            "type": "FeatureCollection",
-                            "features": poi_points
-                        }
-                    });
-                    this.map.addLayer({
-                        'id':'poi_points_layer',
-                        'source': 'poi_points_source',
-                        "type": "circle",
-                        'layout': {},
-                        'paint': {
-                            'circle-color': ['get','color'],
-                            'circle-opacity': ['get','opacity'],
-                            'circle-radius':['get','radius']
-                        }
-                    });
-               // });
+                this.map.addSource("poi_points_source", {
+                    "type": "geojson",
+                    'data':  {
+                        "type": "FeatureCollection",
+                        "features": poi_points
+                    }
+                });
+                this.map.addLayer({
+                    'id':'poi_points_layer',
+                    'source': 'poi_points_source',
+                    "type": "circle",
+                    'layout': {},
+                    'paint': {
+                        'circle-color': ['get','color'],
+                        'circle-opacity': ['get','opacity'],
+                        'circle-radius':['get','radius']
+                    }
+                });
+                // });
             },
             poi_heatmap(data){
 
@@ -375,10 +371,11 @@
 
             },
 
+            //--------------施工现场！！！！-----------------------------//
             load_geohash() {
                 this.$http.get('query?t=start_geohash').then((res) => {
-                    this.geohash_draw(res.body);
-                    //console.log(res.body);
+                    //this.geohash_draw(res.body);
+                    console.log(res.body);
                 });
             },
             geohash_draw(data) {
@@ -659,8 +656,6 @@
                     //console.log(res.body);
                 });
             },
-
-
             coordtrans_bdtowgs84(lnglat){
                 let bd09togcj02 = coordtrans.bd09togcj02(lnglat[0], lnglat[1]);
                 return coordtrans.gcj02towgs84(bd09togcj02[0], bd09togcj02[1])
@@ -683,46 +678,30 @@
                     }
                 }
                 return data;
-            },
-            arc_test(){
-                var start = { x: -122, y: 48 };
-                var end = { x: -77, y: 39 };
-                let generator = new arc.GreatCircle(start, end, { name: 'Seattle to DC' });
-                let line = generator.Arc(1000, { offset: 10 });
-                console.log(line.json());
+            }
+        },
+        watch:{
+            //监控控制面板图层按钮
+            '$store.state.map_state':{
+                handler(){
+                    //console.log(this.$store.state.map_state);
+                    let map_state = this.$store.state.map_state;
 
-                this.map.on('load',()=>{
+                    //公交路网
+                    map_state.buses_layer? this.load_buses():
+                        this.map.removeLayer('buses_routes_layer')&this.map.removeLayer('buses_stations_layer')&
+                        this.map.removeSource('buses_routes_source')&this.map.removeSource('buses_stations_source');
 
-                    this.map.addSource('buses_source',{
-                        "type": "geojson",
-                        "data": {
-                            "type": "FeatureCollection",
-                            "features": [line.json()]
-                        }
-                    });
-                    this.map.addLayer({
-                        "id": "buses_layer",
-                        "type": "line",
-                        "source":'buses_source',
-                        "layout": {
-                            "line-join": "round",
-                            "line-cap": "round"
-                        },
-                        "paint": {
-                            "line-color": "#46ff40",
-                            "line-width": 1,
-                            "line-opacity": 1
-                        }
-                    });
 
-                });
-
+                },
+                deep:true
             }
         }
     }
 </script>
 
 <style>
+
   @import url('../../node_modules/mapbox-gl/dist/mapbox-gl.css');
   #map{
     position: absolute;

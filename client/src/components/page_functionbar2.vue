@@ -212,7 +212,7 @@
             'unit': opt.config.unit
           }
           DataManager.getLineChartData(opt).then((res) => {
-            console.log(res.data)
+            //console.log(res.data)
             let info = {
               'status': 0,
               'data': res.data,
@@ -236,7 +236,7 @@
             'unit': opt.config.unit
           }
           DataManager.getLineChartData(opt).then((res) => {
-            console.log(res.data)
+            //console.log(res.data)
             let info = {
               'status': opt.status,
               'data': res.data,
@@ -270,7 +270,7 @@
 
           // 6. Y scale will use the randomly generate number
           this.lc_yScale = d3.scaleLinear()
-              .domain([0, 1]) // input 
+              .domain([0, 1]) // input
               .range([that.lc_height, 0]); // output
 
           // 7. d3's line generator
@@ -306,7 +306,7 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-              
+
           //title
           this.lc_legend_text = legend.append('text')
               .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
@@ -318,7 +318,7 @@
               .duration(3000)
               .style('opacity', 1)
 
-          console.log('321', opt)
+         // console.log('321', opt)
 
 
           this.lc_svg_g = this.lc_svg.append("g")
@@ -376,7 +376,7 @@
 
             this.lc_svg_g.append("path")
               .data(draw_data) // 10. Binds data to the line
-              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator 
+              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
               .attr('num', i)
               .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
               .style('fill', 'none')
@@ -420,7 +420,7 @@
           this.lc_yScale_arr = []
           this.lc_xScaleText_arr = []
           this.lc_yScaleText_arr = []
-          
+
           //redraw axis
           // 3. Call the x axis in a group tag
           d3.selectAll('.x.axis').transition()
@@ -450,12 +450,12 @@
               yScaleMax = opt.data[i].yScale[1],
               xScaleMin = opt.data[i].xScale[0],
               xScaleMax = opt.data[i].xScale[1]
-            
+
             this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
             this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
             this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
             this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
-            
+
             this.lc_svg_g.append("path")
               .data(draw_data) // 10. Binds data to the line
               .transition()
@@ -545,19 +545,19 @@
                   .transition()
                   .duration(1000)
                   .call(d3.axisBottom(that.lc_xScale_arr[i])) // Create an axis component with d3.axisBottom
-              
+
               that.lc_svg_g.append("g")
                   .attr("class", "y axis")
                   .transition()
                   .duration(1000)
                   .call(d3.axisLeft(that.lc_yScale_arr[i])) // Create an axis component with d3.axisBottom
                    // Create an axis component with d3.axisBottom
-              
+
               d3.selectAll('.yAxisLabel').transition()
                   .duration(300).remove()
               d3.selectAll('.xAxisLabel').transition()
                   .duration(300).remove()
-                            
+
               that.lc_svg.append('text')
                 .attr('x', function(d, i) { return that.lc_margin.left })
                 .attr("y", function(d, i) { return 15})
@@ -579,7 +579,7 @@
                 .transition()
                 .duration(1000)
                 .style('opacity', 1)
-              
+
               let xfunc = that.lc_xScaleText_arr[i],
                   yfunc = that.lc_yScaleText_arr[i]
 
@@ -596,7 +596,7 @@
                       return "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2);  // Value of the text
                     }
                   });
-              
+
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
