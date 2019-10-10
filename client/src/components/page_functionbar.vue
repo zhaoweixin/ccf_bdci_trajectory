@@ -162,9 +162,9 @@
     height:70%;
     overflow:hidden;
     border-radius:.3em;
-    /*box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);*/
-    /*-webkit-backdrop-filter: blur(10px);*/
-    /*backdrop-filter: blur(10px);*/
+    box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
   .funcbar_warp_header {
     padding-top: 10px;
