@@ -112,7 +112,7 @@
                 value: +d.value
               })
             })
-            
+
             var colorScale = d3.scaleQuantile()
               .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
               .range(colors);
@@ -193,11 +193,11 @@
         t_operater_state = this.operater_state.checkedNames.filter(d => d != '2')
         //划分出piechart 的数据 需要在handle_piechart内处理
         opt.config.legend_val = t_operater_state
-  
+
         t_operater_state.forEach((d,i) => {
           opt.config.legend.push(that.var_config.operater[d].legend)
         })
-        
+
 
         this.handle_linechart(opt)
 
@@ -268,7 +268,7 @@
               .domain([0, 1]) // input
               .range([0, that.lc_width]); // output
 
-          // 6. Y scale will use the randomly generate number 
+          // 6. Y scale will use the randomly generate number
           this.lc_yScale = d3.scaleLinear()
               .domain([0, 1]) // input 
               .range([that.lc_height, 0]); // output
@@ -295,7 +295,7 @@
           let legend = this.lc_legend.selectAll('.legend_line')
             .data(opt.config.legend)
             .enter()
-          
+
           this.lc_legend_circle = legend.append('circle')
               .attr("class", "legend_line") // Assign a class for styling
               .attr("cx", (d, i) => { return that.lc_width * 0.04 })
@@ -352,8 +352,8 @@
               return 'TITLE'  // Value of the text
             });
 
-          // 9. Append the path, bind the data, and call the line generator 
-          
+          // 9. Append the path, bind the data, and call the line generator
+
           // 12. Appends a circle for each datapoint
           this.lc_pathcount = opt.data.length
           for(var i=0; i<opt.data.length; i++){
@@ -386,7 +386,7 @@
               .transition()
               .duration(1500)
               .style('opacity', 1)
-              
+
 
             this.lc_svg_g.selectAll(".ddot")
               .data(draw_data)
@@ -460,7 +460,7 @@
               .data(draw_data) // 10. Binds data to the line
               .transition()
               .duration(1500)
-              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator 
+              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
               .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
               .style('fill', 'none')
               .style('stroke', that.lc_linecolor[i])
@@ -490,7 +490,7 @@
           let legend = this.lc_legend.selectAll('.legend_line')
             .data(opt.config.legend)
             .enter()
-          
+
           this.lc_legend_circle = legend.append('circle')
               .attr("class", "legend_line") // Assign a class for styling
               .attr("cx", (d, i) => { return that.lc_width * 0.04 })
@@ -501,7 +501,7 @@
               .transition()
               .duration(1500)
               .style('opacity', 1)
-              
+
 
           this.lc_legend_text = legend.append('text')
               .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
@@ -628,9 +628,9 @@
           }
 
         }
-        //end of function draw_linechart     
+        //end of function draw_linechart
       },
-      
+
     },
     mounted(){
       this.init_heatmap()
@@ -681,12 +681,12 @@
   text.axis-worktime {
     fill: #000;
   }
-  
+
 /*line chart*/
 .line {
 
 }
-  
+
 .overlay {
   fill: none;
   pointer-events: all;

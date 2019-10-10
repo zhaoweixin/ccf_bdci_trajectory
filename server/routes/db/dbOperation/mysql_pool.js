@@ -1,7 +1,6 @@
 
 /*
 * 数据库线程池
-* 测试用
 * 2019/9/25
 * —— whale-52hz
 * */
@@ -12,8 +11,9 @@ class MysqlPool {
     constructor(){
         this.flag = true;
         this.pool = mysql.createPool({
-            connectionLimit: 100,
+            //connectionLimit: 100,
             host:'119.23.31.186',
+            //host:'localhost',
             user:'root',
             password:'123456',
             database:'db_traffic',
