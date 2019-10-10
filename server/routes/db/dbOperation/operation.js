@@ -24,10 +24,9 @@ module.exports = {
         });
     },
     query: function (req, res, next) {
-        var {url:url,query} = urlModule.parse(req.url,true)
-        console.log(query.t);
         pool.getConnection(function(err, connection) {
-            connection.query($sql.queryAll+query.t, function(err, result) {
+            console.log(req.query);
+            connection.query($sql.queryAll+req.query.table, function(err, result) {
                 if(err) res.send(err);
                 //console.log(result);
                 res.send(result);
@@ -120,16 +119,16 @@ module.exports = {
                     unit = req.body.config.unit == 'Hour' ? 'h_' : 'd_',
                     sql = '',
                     resData = []
-                
+
                 //update unit in typeDict
                 for(key in typeDict){
                     typeDict[key].yLabel = typeDict[key].yLabel + ' / ' + req.body.config.unit
                 }
-                
+
                 dataType.forEach((d,i) => {
                     sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                 })
-                
+
                 connection.query(sql, function(err, result){
                     if(err){
                         res.send(err);
@@ -140,7 +139,7 @@ module.exports = {
                         if(dataType.length == 1){
                             result = [result]
                         }
-                        
+
                         result.forEach((d,i) => {
                             xScale = d.map( v => +v.x)
                             yScale = d.map( v => +v.y)
