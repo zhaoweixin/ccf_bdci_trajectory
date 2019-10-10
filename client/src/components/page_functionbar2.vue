@@ -29,6 +29,10 @@
         lc_height: 0,
         lc_xScale: undefined,
         lc_yScale: undefined,
+        lc_xScale_arr:[],
+        lc_yScale_arr: [],
+        lc_xScaleText_arr:[],
+        lc_yScaleText_arr: [],
         lc_line: undefined,
         lc_dataset: undefined,
         lc_svg: undefined,
@@ -208,6 +212,7 @@
             'unit': opt.config.unit
           }
           DataManager.getLineChartData(opt).then((res) => {
+            console.log(res.data)
             let info = {
               'status': 0,
               'data': res.data,
@@ -231,11 +236,13 @@
             'unit': opt.config.unit
           }
           DataManager.getLineChartData(opt).then((res) => {
+            console.log(res.data)
             let info = {
               'status': opt.status,
               'data': res.data,
               'config': opt.config
             }
+
             that.draw_linechart(info)
           }).catch(err => {
             if(err){
@@ -251,7 +258,7 @@
         if(opt.status == 0){
           this.lc_FullWidth = document.getElementById('line').clientWidth,
           this.lc_FullHeight = document.getElementById('line').clientHeight,
-          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.05 },
+          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.13 },
           this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           // The number of datapoints
@@ -264,7 +271,7 @@
           // 6. Y scale will use the randomly generate number 
           this.lc_yScale = d3.scaleLinear()
               .domain([0, 1]) // input 
-              .range([that.lc_height, 0]); // output 
+              .range([that.lc_height, 0]); // output
 
           // 7. d3's line generator
           this.lc_line = d3.line()
@@ -300,7 +307,7 @@
               .duration(3000)
               .style('opacity', 1)
               
-
+          //title
           this.lc_legend_text = legend.append('text')
               .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
@@ -310,6 +317,9 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
+
+          console.log('321', opt)
+
 
           this.lc_svg_g = this.lc_svg.append("g")
               .attr('id', 'line_chart_g')
@@ -348,10 +358,26 @@
           this.lc_pathcount = opt.data.length
           for(var i=0; i<opt.data.length; i++){
             let draw_data = opt.data[i].values
-            
+            let yScaleMin = opt.data[i].yScale[0],
+              yScaleMax = opt.data[i].yScale[1],
+              xScaleMin = opt.data[i].xScale[0],
+              xScaleMax = opt.data[i].xScale[1]
+
+            this.lc_xScale_arr = []
+            this.lc_yScale_arr = []
+            this.lc_xScaleText_arr = []
+            this.lc_yScaleText_arr = []
+
+            this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
+            this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
+            this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
+            this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
+
+
             this.lc_svg_g.append("path")
               .data(draw_data) // 10. Binds data to the line
               .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator 
+              .attr('num', i)
               .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
               .style('fill', 'none')
               .style('stroke', that.lc_linecolor[i])
@@ -390,8 +416,45 @@
           d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
 
           this.lc_pathcount = opt.data.length
+          this.lc_xScale_arr = []
+          this.lc_yScale_arr = []
+          this.lc_xScaleText_arr = []
+          this.lc_yScaleText_arr = []
+          
+          //redraw axis
+          // 3. Call the x axis in a group tag
+          d3.selectAll('.x.axis').transition()
+                  .duration(300).remove()
+
+          d3.selectAll('.y.axis').transition()
+                   .duration(300).remove()
+
+          this.lc_svg_g.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate( 0," + +that.lc_height + ")")
+              .transition()
+              .duration(3000)
+              .call(d3.axisBottom(that.lc_xScale)) // Create an axis component with d3.axisBottom
+
+          // 4. Call the y axis in a group tag
+          this.lc_svg_g.append("g")
+              .attr("class", "y axis")
+              .transition()
+              .duration(3000)
+              .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
+
+
           for(var i=0; i<opt.data.length; i++){
             let draw_data = opt.data[i].values
+            let yScaleMin = opt.data[i].yScale[0],
+              yScaleMax = opt.data[i].yScale[1],
+              xScaleMin = opt.data[i].xScale[0],
+              xScaleMax = opt.data[i].xScale[1]
+            
+            this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
+            this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
+            this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
+            this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
             
             this.lc_svg_g.append("path")
               .data(draw_data) // 10. Binds data to the line
@@ -465,27 +528,81 @@
             let lineclass = 'line-' + i,
               dotclass = 'dot-' + i
             if(line_num == i){
+              //selected line get more wide
               d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
+              //select scale
+              //that.lc_xScale_arr[i] that.lc_yScale_arr[i]
+              // 3. Call the x axis in a group tag
+              d3.selectAll('.x.axis').transition()
+                  .duration(300).remove()
+
+              d3.selectAll('.y.axis').transition()
+                  .duration(300).remove()
+
+              that.lc_svg_g.append("g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate( 0," + +that.lc_height + ")")
+                  .transition()
+                  .duration(1000)
+                  .call(d3.axisBottom(that.lc_xScale_arr[i])) // Create an axis component with d3.axisBottom
+              
+              that.lc_svg_g.append("g")
+                  .attr("class", "y axis")
+                  .transition()
+                  .duration(1000)
+                  .call(d3.axisLeft(that.lc_yScale_arr[i])) // Create an axis component with d3.axisBottom
+                   // Create an axis component with d3.axisBottom
+              
+              d3.selectAll('.yAxisLabel').transition()
+                  .duration(300).remove()
+              d3.selectAll('.xAxisLabel').transition()
+                  .duration(300).remove()
+                            
+              that.lc_svg.append('text')
+                .attr('x', function(d, i) { return that.lc_margin.left })
+                .attr("y", function(d, i) { return 15})
+                .text((d,j) => {return opt['data'][i].yLabel})
+                .style('opacity', 0)
+                .attr('class', 'legend_text yAxisLabel')
+                .transition()
+                .duration(1000)
+                .style('opacity', 1)
+
+              console.log(opt['data'][i].yLabel, opt['data'][i].xLabel)
+
+              that.lc_svg.append('text')
+                .attr('x', function(d, i) { return that.lc_margin.left + that.lc_width + 10})
+                .attr("y", function(d, i) { return that.lc_margin.top + that.lc_height })
+                .text((d,j) => {return opt['data'][i].xLabel})
+                .style('opacity', 0)
+                .attr('class', 'legend_text xAxisLabel')
+                .transition()
+                .duration(1000)
+                .style('opacity', 1)
+              
+              let xfunc = that.lc_xScaleText_arr[i],
+                  yfunc = that.lc_yScaleText_arr[i]
+
+              // Specify where to put label of text
+              d3.select('#line_chart_g').append("text")
+                .attr('id', "lt_label")
+                .attr('x', that.lc_xScale(d.x) - 30)
+                .attr('y', that.lc_yScale(d.y) - 15)
+                .attr('fill', 'white')
+                .text(function() {
+                    if(typeof(d) != 'object'){
+                      return;
+                    } else {
+                      return "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2);  // Value of the text
+                    }
+                  });
+              
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
             }
           }
 
-
-          // Specify where to put label of text
-          d3.select('#line_chart_g').append("text")
-            .attr('id', "lt_label")
-            .attr('x', that.lc_xScale(d.x) - 30)
-            .attr('y', that.lc_yScale(d.y) - 15)
-            .attr('fill', 'white')
-            .text(function() {
-                if(typeof(d) != 'object'){
-                  return;
-                } else {
-                  return "X: " + d.x + " Y: " + +d.y.toFixed(2);  // Value of the text
-                }
-              });
         }
 
         function circle_handleMouseOut(d){

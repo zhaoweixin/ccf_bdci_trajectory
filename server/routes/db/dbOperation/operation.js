@@ -81,8 +81,7 @@ module.exports = {
         })
     },
     basic_line: function(req, res, next){
-        
-        console.log(req.body)
+        console.log('request from basic_line')
         pool.getConnection(function(err, connection){
             if(err){
                 console.log(err)
@@ -91,19 +90,27 @@ module.exports = {
                 let typeDict = {
                     '0': {
                         'name': '运输需求量',
-                        'halftable': 'ordercount_mean'
+                        'halftable': 'ordercount_mean',
+                        'yLabel': 'Sum', // 'Sum / Day' or 'Sum / Week'
+                        'xLabel': 'Day'
                     },
                     '1': {
                         'name': '运输距离',
-                        'halftable': 'distance_mean'
+                        'halftable': 'distance_mean',
+                        'yLabel': 'Distance', // 'Distance / Day' or 'Distance / Week'
+                        'xLabel': 'Day'
                     },
                     '2': {
                         'name': '运输流向',
-                        'halftable': 'angle'
+                        'halftable': 'angle',
+                        'yLabel': 'Angle',
+                        'xLabel': 'Day'
                     },
                     '3': {
                         'name': '起运时间',
-                        'halftable': 'time_mean'
+                        'halftable': 'time_mean',
+                        'yLabel': 'Time', // 'Time / Day' or 'Time / Week'
+                        'xLabel': 'Day'
                     }
                 }
 
@@ -111,9 +118,16 @@ module.exports = {
                     unit = req.body.config.unit == 'Hour' ? 'h_' : 'd_',
                     sql = '',
                     resData = []
+                
+                //update unit in typeDict
+                for(key in typeDict){
+                    typeDict[key].yLabel = typeDict[key].yLabel + ' / ' + req.body.config.unit
+                }
+                
                 dataType.forEach((d,i) => {
                     sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                 })
+                
                 connection.query(sql, function(err, result){
                     if(err){
                         res.send(err);
@@ -124,14 +138,14 @@ module.exports = {
                         if(dataType.length == 1){
                             result = [result]
                         }
-
+                        
                         result.forEach((d,i) => {
                             xScale = d.map( v => +v.x)
                             yScale = d.map( v => +v.y)
-                            xScale_max = Math.max.apply(null,xScale)
-                            xScale_min = Math.min.apply(null,xScale)
-                            yScale_max = Math.max.apply(null,yScale)
-                            yScale_min = Math.min.apply(null,yScale)
+                            xScale_max = parseInt(Math.max.apply(null,xScale))
+                            xScale_min = parseInt(Math.min.apply(null,xScale))
+                            yScale_max = parseInt(Math.max.apply(null,yScale))
+                            yScale_min = parseInt(Math.min.apply(null,yScale))
 
                             _yscale = d3.scaleLinear().domain([yScale_min, yScale_max]).range([0, 1])
                             _xscale = d3.scaleLinear().domain([xScale_min, xScale_max]).range([0, 1])
@@ -140,13 +154,20 @@ module.exports = {
                                 d[j].x = _xscale(+d[j].x)
                                 d[j].y = _yscale(+d[j].y)
                             }
-
                             resData.push({
                                 'name': req.body.config.legend[i],
                                 'values': d,
                                 'xScale': [xScale_min, xScale_max],
-                                'yScale': [yScale_min, yScale_max]
+                                'yScale': [yScale_min, yScale_max],
+                                'xLabel': '',
+                                'yLabel': ''
                             })
+                        })
+
+                        resData.forEach((d,i) => {
+                            let ind = req.body.config.legend_val[i]
+                            d.xLabel = typeDict[ind].xLabel
+                            d.yLabel = typeDict[ind].yLabel
                         })
                         res.setHeader("Access-Control-Allow-Origin", "*");
                         res.send(resData)
