@@ -1,7 +1,7 @@
 <template>
   <div class="funcbar2_warp">
-    <div id="charts" style="width:12%; height:100%; float:left">
-      <PieChart></PieChart>
+    <div id="pie" style="width:12%; height:100%; float:left">
+      <div id="pie_chart"></div>
     </div>
     <div id="line" style="width:35%;height:100%;float:left">
       <div id="line_chart"></div>
@@ -13,7 +13,6 @@
 </template>
 <script>
   import * as d3 from 'd3'
-  import PieChart from "../components/PieChart"
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import $ from 'jquery'
@@ -48,7 +47,6 @@
       }
     },
     components: {
-      PieChart
     },
     computed:{
       operater_state () {
@@ -630,10 +628,105 @@
         }
         //end of function draw_linechart
       },
+      init_piechart() {
+          let pie_width = document.getElementById('pie').clientWidth;
+          let pie_height = document.getElementById('pie').clientHeight;
+          let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
+          let rdata = [1,1,1,1,1,1,1,1,1,1,1,1]
+          let max_index = 0, min_index = 0;
+          for (let index = 0; index < dataset.length; index++) {
+            if(dataset[index] == d3.max(dataset)){
+              max_index = index
+              break
+            }
+          }
+          for (let index = 0; index < dataset.length; index++) {
+            if(dataset[index] == d3.min(dataset)){
+              min_index = index
+              break
+            }
+          }
 
+          let pie_svg = d3.select("#pie_chart")
+            .append("svg")
+            .attr("width", pie_width)
+            .attr("height", pie_width);
+          let pie = d3.pie();
+          let piedata = pie(rdata);
+          let outerRadius = pie_width/3; //外半径
+          let innerRadius = outerRadius/1.7; //内半径
+          let markerSize = innerRadius;//三角标记大小
+          
+          let KOUSHAOLV = d3.rgb(93, 190, 138)
+          let HEYELV = d3.rgb(26, 104, 64)
+          let color = d3.interpolate(KOUSHAOLV, HEYELV);
+          let linear = d3.scaleLinear()
+            .domain([0, 1200])
+            .range([0, 1])
+          let arc = d3.arc() //弧生成器
+            .innerRadius(innerRadius) //设置内半径
+            .outerRadius(outerRadius); //设置外半径
+          let arcs = pie_svg.selectAll("g")
+            .attr("class","chart")
+            .data(piedata)
+            .enter()
+            .append("g")
+            .attr("transform", "translate(" + (pie_width / 2) + "," + (pie_width / 2) + ")");
+          arcs.append("path")
+            .attr("fill", function (d,i) {
+              return color(linear(dataset[i]));
+            })
+            .attr("d", function (d) {
+              return arc(d);
+            });
+          let marker = d3.symbol()
+            .size(markerSize)
+            .type(d3.symbolTriangle)
+          pie_svg.append("g")
+            .attr("transform", function () {
+                let widthT = Math.sin((piedata[max_index].startAngle + piedata[max_index].endAngle)/2) * (innerRadius-10)
+                let heightT = Math.cos((piedata[max_index].startAngle + piedata[max_index].endAngle)/2) * (innerRadius-10)
+                return "translate(" + (pie_width / 2 + widthT)+ "," + (pie_width / 2 - heightT) + ")"
+            })
+            .append("path")
+            .attr("d",marker)
+            .attr("fill",color(linear(dataset[max_index])))
+            .attr("transform", function () {
+                let ang = (max_index - 0.5)*(2 * Math.PI) /12
+                return "rotate(" + (ang - Math.PI / 2) / Math.PI * 180 + ")";
+            })
+          pie_svg.append("g")
+            .attr("transform", function () {
+                let widthT = Math.sin((piedata[min_index].startAngle + piedata[min_index].endAngle)/2) * (innerRadius-10)
+                let heightT = Math.cos((piedata[min_index].startAngle + piedata[min_index].endAngle)/2) * (innerRadius-10)
+                return "translate(" + (pie_width / 2 + widthT)+ "," + (pie_width / 2 - heightT) + ")"
+            })
+            .append("path")
+            .attr("d",marker)
+            .attr("fill",color(linear(dataset[min_index])))
+            .attr("transform", function () {
+                let ang = (min_index - 0.5)*(2 * Math.PI) /12
+                return "rotate(" + (ang - Math.PI / 2) / Math.PI * 180 + ")";
+            })
+          let updataMark = pie_svg.selectAll("g")
+            .attr("class","chart")
+            .data(piedata)
+            .enter()
+            .append("g")
+            .attr("transform", "translate(" + (pie_width / 2) + "," + (pie_width / 2) + ")")
+          updataMark.append("path")
+            .attr("d", function (d) {
+                return marker(d);
+            })
+            .attr("fill", function (d,i) {
+                return color(linear(dataset[i]));
+            })
+      }
+      
     },
     mounted(){
       this.init_heatmap()
+      this.init_piechart()
       this.handle_linechart({
         'status': '0',
         'config': {
