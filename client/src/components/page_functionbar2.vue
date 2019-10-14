@@ -15,6 +15,7 @@
   import * as d3 from 'd3'
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
+  import calendar from "@/vuex/Calendar.js"
   import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
@@ -725,7 +726,24 @@
       
     },
     mounted(){
-      this.init_heatmap()
+      // this.init_heatmap()
+       calendar.init_heatmap()
+       var heatmapChart = function(tsvFile) {
+      (async function() {
+        const response = await DataManager.getHeatmapData();
+        let data = [];
+        response.data.forEach((d, i) => {
+          data.push({
+            day: +d.day,
+            hour: +d.hour,
+            value: +d.value
+          })
+        })
+        calendar.adddata(data);
+      })()
+      }
+     heatmapChart("http://localhost:3000/test")
+      // calendar.adddata()
       this.init_piechart()
       this.handle_linechart({
         'status': '0',
@@ -740,44 +758,43 @@
   }
 </script>
 <style>
+.funcbar2_warp {
+  position: absolute;
+  z-index: 1;
+  width: 98%;
+  max-height: 90%;
+  transform: translate(1%, -5%);
+  height: 22%;
+  bottom: 0;
+  overflow: hidden;
+  border-radius: 0.3em;
+  box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
+    0 0.5em 1em rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
 
-  .funcbar2_warp{
-    position: absolute;
-    z-index: 1;
-    width:98%;
-    max-height: 90%;
-    transform: translate(1%, -5%);
-    height:22%;
-    bottom: 0;
-    overflow:hidden;
-    border-radius:.3em;
-    box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px)
-  }
+rect.bordered {
+  stroke: #e6e6e6;
+  stroke-width: 2px;
+}
 
-  rect.bordered {
-    stroke: #E6E6E6;
-    stroke-width:2px;
-  }
+text.mono {
+  font-size: 9pt;
+  font-family: Consolas, courier;
+  fill: #aaa;
+}
 
-  text.mono {
-    font-size: 9pt;
-    font-family: Consolas, courier;
-    fill: #aaa;
-  }
+text.axis-workweek {
+  fill: #000;
+}
 
-  text.axis-workweek {
-    fill: #000;
-  }
-
-  text.axis-worktime {
-    fill: #000;
-  }
+text.axis-worktime {
+  fill: #000;
+}
 
 /*line chart*/
 .line {
-
 }
 
 .overlay {
@@ -787,9 +804,9 @@
 
 /* Style the dots by assigning a fill and stroke */
 .dot {
-    fill: rgb(34 ,94, 168);
-    stroke: #fff;
-    stroke-width: 2;
+  fill: rgb(34, 94, 168);
+  stroke: #fff;
+  stroke-width: 2;
 }
 
 .focus circle {
@@ -797,14 +814,14 @@
   stroke: steelblue;
 }
 
-.axis{
-    color: rgb(170,170,170)
+.axis {
+  color: rgb(170, 170, 170);
 }
 
-.tick{
+.tick {
   font-size: 9pt;
-    font-family: Consolas, courier;
-    fill: #aaa;
+  font-family: Consolas, courier;
+  fill: #aaa;
 }
 
 .legend_text {
