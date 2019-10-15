@@ -6,6 +6,12 @@ import Resource from 'vue-resource'
 import Router from 'vue-router'
 import Vuex from 'vuex'
 import store from './vuex/store'
+import ViewUI from 'view-design';
+
+// import style
+import 'view-design/dist/styles/iview.css';
+
+Vue.use(ViewUI);
 
 import axios from 'axios'
 import qs from 'qs'

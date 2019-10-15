@@ -62,7 +62,6 @@
         <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
       </div>
     </div>
-
     <div class="funcbar_warp_header">
       <h5> WEATHER </h5>
       <div class="line-separator-2"></div>
@@ -101,7 +100,7 @@
         </div>
         <div class="chiller_cb">
           <input id="btn-poi-layer" type="checkbox"  value="poi_layer" v-model="map_config.checkedNames">
-          <label for="btn-poi-layer">&nbsp;POI数据图层</label>
+          <label for="btn-poi-layer">POI&nbsp;数据图层</label>
           <span></span>
         </div>
         <div class="chiller_cb">
@@ -117,10 +116,20 @@
       </div>
     </div>
 
+    <div class="funcbar_warp_header">
+      <h5> OPERATER </h5>
+      <div class="line-separator-2"></div>
+    </div>
+
+    <div class="bg">
+    </div>
+
+    <DatePicker type="date" placeholder="Select date" style="width: 150px" placement="right-end"></DatePicker>
+
   </div>
 </template>
 <script>
-  import DataManager from '../data/DataManager'
+    import DataManager from '../data/DataManager'
 
     export default{
         name: 'page_funtionbar',
@@ -219,7 +228,7 @@
     max-height: 90%;
     transform: translate(20px, 60px);
     height:70%;
-    overflow:hidden;
+    /*overflow:hidden;*/
     border-radius:.3em;
     box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
     -webkit-backdrop-filter: blur(10px);
