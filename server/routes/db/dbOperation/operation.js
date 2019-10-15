@@ -88,7 +88,6 @@ module.exports = {
                 console.log(err)
                 return;
             } else {
-                console.log(req.body.config)
                 let typeDict = {
                     '0': {
                         'name': '运输需求量',

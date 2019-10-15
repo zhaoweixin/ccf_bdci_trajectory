@@ -7,7 +7,7 @@
 
 
     <div class="funcbar_warp_header">
-      <h5> OPERATER </h5>
+      <h5> LINE </h5>
       <div class="line-separator-2"></div>
     </div>
 
@@ -59,18 +59,35 @@
           </div>
         </div>
 
-        <br>
-        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Example button</button>
+        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
       </div>
     </div>
 
     <div class="funcbar_warp_header">
-      <h5> OPERATER </h5>
+      <h5> WEATHER </h5>
+      <div class="line-separator-2"></div>
+    </div>
+    <div class="bg">
+      <div>
+        <div class="chiller_cb">
+          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
+          <label for="weatherCheckbox1">天气</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="weatherCheckbox2" type="checkbox" value="1" v-model="weather_config.checkedNames">
+          <label for="weatherCheckbox2">风力</label>
+          <span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="funcbar_warp_header">
+      <h5> MAP </h5>
       <div class="line-separator-2"></div>
     </div>
 
     <div class="bg">
-
       <div>
         <div class="chiller_cb">
           <input id="btn-grid-layer" type="checkbox" value="grid_layer" v-model="map_config.checkedNames">
@@ -118,6 +135,11 @@
                 map_config:{
                     checkedNames:[],
                     //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层 4 公交路网图层
+                },
+                weather_config:{
+                  checkedNames:[],
+                  status: '3' // update all
+                  // 0 天气 1 风力
                 },
                 layer_config:{}
             }
@@ -328,7 +350,7 @@
     min-height: 32px !important;
   }
   .custom-control-label::before{
-    background-color: black !important;
+    background-color: rgba(0,0,0,0) !important;
     border: white solid 1px !important;
   }
 

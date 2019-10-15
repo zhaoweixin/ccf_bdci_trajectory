@@ -21,6 +21,8 @@
     font-variant-ligatures:common-ligatures
     discretionary-ligatures
     historical-ligatures;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
   }
 
   .header_warp {

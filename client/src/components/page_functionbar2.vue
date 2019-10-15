@@ -1,9 +1,9 @@
 <template>
   <div class="funcbar2_warp">
-    <div id="pie" style="width:12%; height:100%; float:left">
+    <!-- <div id="pie" style="width:12%; height:100%; float:left">
       <div id="pie_chart"></div>
-    </div>
-    <div id="line" style="width:35%;height:100%;float:left">
+    </div> -->
+    <div id="line" style="width:49%;height:100%;float:left">
       <div id="line_chart"></div>
     </div>
     <div id="heatmap" style="width:50%; height:100%; float:right">
@@ -258,7 +258,7 @@
         if(opt.status == 0){
           this.lc_FullWidth = document.getElementById('line').clientWidth,
           this.lc_FullHeight = document.getElementById('line').clientHeight,
-          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.13 },
+          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
           this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           // The number of datapoints
@@ -317,9 +317,6 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-
-         // console.log('321', opt)
-
 
           this.lc_svg_g = this.lc_svg.append("g")
               .attr('id', 'line_chart_g')
@@ -664,6 +661,7 @@
                     } else {
                       let tex = ''
                       if(typeof(d.x) == 'object'){
+                        
                         tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
                       } else {
                         tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
@@ -820,7 +818,7 @@
     //   }
     //  heatmapChart("http://localhost:3000/test")
       // calendar.adddata()
-      this.init_piechart()
+      //this.init_piechart()
       this.handle_linechart({
         'status': '0',
         'config': {
