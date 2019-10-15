@@ -13,7 +13,7 @@ var data = {
             'legend': '起运时间'
         },
         4 : {
-            'legend': '到达时间'
+            'legend': '运行速度'
         }
     }
 }

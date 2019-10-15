@@ -217,6 +217,7 @@
               'data': res.data,
               'config': opt.config
             }
+            
             that.draw_linechart(info)
           }).catch(err => {
             if(err){
@@ -241,7 +242,7 @@
               'data': res.data,
               'config': opt.config
             }
-
+            console.log(info)
             that.draw_linechart(info)
           }).catch(err => {
             if(err){
@@ -346,7 +347,7 @@
             .attr('y', 0)
             .attr('font-size', '15px')
             .attr('font-weight', 'bold')
-            .attr('fill', 'white')
+            .attr('fill', 'rgb(170, 170, 170)')
             .text(function() {
               return 'TITLE'  // Value of the text
             });
@@ -444,45 +445,100 @@
 
 
           for(var i=0; i<opt.data.length; i++){
-            let draw_data = opt.data[i].values
-            let yScaleMin = opt.data[i].yScale[0],
-              yScaleMax = opt.data[i].yScale[1],
-              xScaleMin = opt.data[i].xScale[0],
-              xScaleMax = opt.data[i].xScale[1]
+            // if x is not date
+            let draw_data = opt.data[i].values,
+              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
+              yScaleMax = Math.max.apply(null, opt.data[i].yScale)
+              this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
+              this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
 
-            this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
-            this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
-            this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
-            this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
+            if(opt.data[i].xLabel != 'date'){
+              let xScaleMin = Math.min.apply(null, opt.data[i].xScale),
+                xScaleMax = Math.max.apply(null, opt.data[i].xScale)
+              this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
+              this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
 
-            this.lc_svg_g.append("path")
-              .data(draw_data) // 10. Binds data to the line
-              .transition()
-              .duration(1500)
-              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
-              .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-              .style('fill', 'none')
-              .style('stroke', that.lc_linecolor[i])
-              .style("stroke-width", '1px')
+              this.lc_svg_g.append("path")
+                .data(draw_data) // 10. Binds data to the line
+                .transition()
+                .duration(1500)
+                .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
+                .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                .style('fill', 'none')
+                .style('stroke', that.lc_linecolor[i])
+                .style("stroke-width", '1px')
+              
+              this.lc_svg_g.selectAll(".ddot")
+                .data(draw_data)
+              .enter().append("circle")
+              // Uses the enter().append() method
+                .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+                .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
+                .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+                .attr("r", 2)
+                .attr("linenum", i)
+                .style('fill', that.lc_linecolor[i])
+                .style('stroke', '#fff')
+                .style('stroke-width', '1.5px')
+                .on('mouseover', circle_handleMouseOver)
+                .on('mouseout', circle_handleMouseOut)
+                .style('opacity', 0)
+                .transition()
+                .duration(2000)
+                .style('opacity', 1)
 
-            this.lc_svg_g.selectAll(".ddot")
-              .data(draw_data)
-            .enter().append("circle")
-            // Uses the enter().append() method
-              .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-              .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
-              .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
-              .attr("r", 2)
-              .attr("linenum", i)
-              .style('fill', that.lc_linecolor[i])
-              .style('stroke', '#fff')
-              .style('stroke-width', '1.5px')
-              .on('mouseover', circle_handleMouseOver)
-              .on('mouseout', circle_handleMouseOut)
-              .style('opacity', 0)
-              .transition()
-              .duration(2000)
-              .style('opacity', 1)
+            } else if(opt.data[i].xLabel == 'date'){
+              
+              for(let j=0; j<opt.data[i].values.length; j++){
+                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
+              }
+
+              for(let j=0; j<opt.data[i].xScale.length; j++){
+                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
+              }
+
+              draw_data = opt.data[i].values
+              let lc_xScale_date_l = d3.scaleTime().range([0, that.lc_width]).domain(d3.extent(opt.data[i].values, (d) => {return d.x})),
+                lc_xScale_date_t = d3.scaleLinear().domain([0, 1]).range(d3.extent(opt.data[i].xScale))
+
+              this.lc_xScale_arr.push(lc_xScale_date_l)
+              this.lc_xScaleText_arr.push(lc_xScale_date_t)
+              let draw_data = opt.data[i].values
+
+              let lc_date_line = d3.line()
+                .x((d, i) => {return lc_xScale_date_l(d.x)})
+                .y((d) => { return that.lc_yScale(d.y)})
+                .curve(d3.curveMonotoneX)
+
+              this.lc_svg_g.append("path")
+                .data(draw_data) // 10. Binds data to the line
+                .transition()
+                .duration(1500)
+                .attr("d", lc_date_line(draw_data)) // 11. Calls the line generator
+                .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                .style('fill', 'none')
+                .style('stroke', that.lc_linecolor[i])
+                .style("stroke-width", '1px')
+              
+              this.lc_svg_g.selectAll(".ddot")
+                .data(draw_data)
+              .enter().append("circle")
+              // Uses the enter().append() method
+                .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+                .attr("cx", function(d, i) { return lc_xScale_date_l(d.x) })
+                .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+                .attr("r", 2)
+                .attr("linenum", i)
+                .style('fill', that.lc_linecolor[i])
+                .style('stroke', '#fff')
+                .style('stroke-width', '1.5px')
+                .on('mouseover', circle_handleMouseOver)
+                .on('mouseout', circle_handleMouseOut)
+                .style('opacity', 0)
+                .transition()
+                .duration(2000)
+                .style('opacity', 1)
+            }
           }
 
           this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
@@ -538,12 +594,21 @@
               d3.selectAll('.y.axis').transition()
                   .duration(300).remove()
 
-              that.lc_svg_g.append("g")
+              if(typeof(d.x) == 'object'){
+                that.lc_svg_g.append("g")
                   .attr("class", "x axis")
                   .attr("transform", "translate( 0," + +that.lc_height + ")")
                   .transition()
                   .duration(1000)
-                  .call(d3.axisBottom(that.lc_xScale_arr[i])) // Create an axis component with d3.axisBottom
+                  .call(d3.axisBottom(that.lc_xScale_arr[i]).ticks(8))
+              }else{
+                that.lc_svg_g.append("g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate( 0," + +that.lc_height + ")")
+                  .transition()
+                  .duration(1000)
+                  .call(d3.axisBottom(that.lc_xScale_arr[i]))
+              }
 
               that.lc_svg_g.append("g")
                   .attr("class", "y axis")
@@ -567,8 +632,6 @@
                 .duration(1000)
                 .style('opacity', 1)
 
-              console.log(opt['data'][i].yLabel, opt['data'][i].xLabel)
-
               that.lc_svg.append('text')
                 .attr('x', function(d, i) { return that.lc_margin.left + that.lc_width + 10})
                 .attr("y", function(d, i) { return that.lc_margin.top + that.lc_height })
@@ -585,14 +648,27 @@
               // Specify where to put label of text
               d3.select('#line_chart_g').append("text")
                 .attr('id', "lt_label")
-                .attr('x', that.lc_xScale(d.x) - 30)
+                .attr('x', () => {
+                  if(typeof(d.x) == 'object'){
+                    return that.lc_xScale_arr[i](d.x)
+                  } else {
+                    return that.lc_xScale(d.x) - 30
+                  }
+                  
+                })
                 .attr('y', that.lc_yScale(d.y) - 15)
                 .attr('fill', 'white')
                 .text(function() {
                     if(typeof(d) != 'object'){
                       return;
                     } else {
-                      return "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2);  // Value of the text
+                      let tex = ''
+                      if(typeof(d.x) == 'object'){
+                        tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
+                      } else {
+                        tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
+                      }
+                      return tex;
                     }
                   });
 
@@ -825,8 +901,9 @@ text.axis-worktime {
 }
 
 .legend_text {
-  fill: white;
+  fill:rgb(170, 170, 170);
   font-family: initial;
+  font-size: 12px;
 }
 
 </style>

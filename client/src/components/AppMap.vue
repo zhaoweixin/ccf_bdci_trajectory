@@ -36,8 +36,8 @@
                 this.map = new mapboxgl.Map({
                     container: this.$refs.basicMapbox,
                     style: 'mapbox://styles/mapbox/dark-v9',
-                    center: [110.302071,20.023594], // 设置地图中心
-                    zoom: 12  // 设置地图比例
+                    center: [110.302071,19.9], // 设置地图中心
+                    zoom: 11  // 设置地图比例
                     //pitch:50
                 });
             },

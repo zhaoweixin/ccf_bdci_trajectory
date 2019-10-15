@@ -20,17 +20,22 @@
         </div>
         <div class="chiller_cb">
           <input id="myCheckbox2" type="checkbox"  value="1" v-model="config.checkedNames">
-          <label for="myCheckbox2">运输距离</label>
+          <label for="myCheckbox2">运行距离</label>
           <span></span>
         </div>
         <div class="chiller_cb">
           <input id="myCheckbox3" type="checkbox"  value="2" v-model="config.checkedNames">
-          <label for="myCheckbox3">运输流向</label>
+          <label for="myCheckbox3">运行流向</label>
           <span></span>
         </div>
         <div class="chiller_cb">
           <input id="myCheckbox4" type="checkbox"  value="3" v-model="config.checkedNames">
-          <label for="myCheckbox4">起运时间</label>
+          <label for="myCheckbox4">运行时间</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox5" type="checkbox"  value="4" v-model="config.checkedNames">
+          <label for="myCheckbox5">运行速度</label>
           <span></span>
         </div>
 
@@ -45,6 +50,12 @@
           <div class="custom-control custom-radio">
             <input type="radio" class="custom-control-input" id="defaultGroupExample2" name="groupOfDefaultRadios" checked value="Day" v-model="config.picked">
             <label class="custom-control-label" for="defaultGroupExample2">Day</label>
+          </div>
+
+          <!-- Group of default radios - option 3 -->
+          <div class="custom-control custom-radio">
+            <input type="radio" class="custom-control-input" id="defaultGroupExample3" name="groupOfDefaultRadios" checked value="All" v-model="config.picked">
+            <label class="custom-control-label" for="defaultGroupExample3">All</label>
           </div>
         </div>
 
@@ -100,13 +111,13 @@
             return {
                 config: {
                     checkedNames:['0'],
-                    //0 运输需求量 1 运输距离 2 运输流向 3 起运时间
+                    //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
                     picked: 'Day',
                     status: '3' // update all
                 },
                 map_config:{
                     checkedNames:[],
-                    //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层4 公交路网图层
+                    //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层 4 公交路网图层
                 },
                 layer_config:{}
             }
