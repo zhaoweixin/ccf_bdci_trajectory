@@ -5,6 +5,10 @@ const mutation = {
     },
     map_state(state,payload){
       state.map_state = JSON.parse(JSON.stringify(payload))
+    },
+    weather_change_state(state, payload){
+      state.weather_change_state = JSON.parse(JSON.stringify(payload))
+      console.log(state.weather_change_state)
     }
 };
 export default mutation;

@@ -2,7 +2,6 @@ import axios from 'axios';
 import qs from 'qs'
 export default class DataManager {
     static getLineChartData(data){
-        console.log(data)
         return axios.post('http://127.0.0.1:3000/basic_line',qs.stringify(data), {
             'header': {
                 'Content-Type': 'application/x-www-form-urlencoded'

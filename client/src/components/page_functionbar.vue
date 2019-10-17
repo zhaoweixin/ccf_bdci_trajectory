@@ -150,7 +150,11 @@
                   status: '3' // update all
                   // 0 天气 1 风力
                 },
-                layer_config:{}
+                layer_config:{},
+                his_weather_config:{
+                  checkedNames:[],
+                  status: '3'
+                }
             }
         },
         components:{
@@ -167,14 +171,39 @@
                         'poi_layer': false,
                         'buses_layer': false
                     };
-                    //console.log(newValue.checkedNames);
                     newValue.checkedNames.forEach(d=>{
                         this.layer_config[d] = !this.layer_config[d];
                     });
                     this.$store.commit('map_state', this.layer_config);
-                    //console.log(this.$store.state.map_state);
                 },
                 deep: true
+            },
+            weather_config:{
+              handler(newValue, oldValue){
+                let res = {
+                  'status': '3',
+                  'config': {
+                    'add': [],
+                    'remove': []
+                  }
+                }
+                newValue.checkedNames.forEach((d,i) => {
+                  if(this.his_weather_config.checkedNames.indexOf(newValue.checkedNames[i]) == -1){
+                    res.config.add.push(newValue.checkedNames[i])
+                  }
+                })
+                
+                this.his_weather_config.checkedNames.forEach((d,i) => {
+                  if(newValue.checkedNames.indexOf(this.his_weather_config.checkedNames[i]) == -1){
+                    res.config.remove.push(this.his_weather_config.checkedNames[i])
+                  }//旧数组中不存在该元素，需添加
+                })
+                //新数组中存在该元素，需
+                //console.log(newValue, oldValue)
+                this.his_weather_config = JSON.parse(JSON.stringify(newValue))
+                this.$store.commit('weather_change_state', newValue)
+              },
+              deep: true
             }
         },
         methods:{
@@ -186,32 +215,6 @@
                 } else {
 
                 }
-
-                /*
-                增加或删除某线
-                if(Object.keys(config).length == 0){
-                  this.config.checkedNames = this.checkedNames
-                  this.config.picked = this.picked
-                  //request data
-                  //generate related graph
-                } else{
-                  //change time unit, need to refresh all
-                  let info = instend(this.config.checkedNames, this.checkedNames)
-                }
-
-                function instend(one,tow){
-                  let same = [],
-                   diff = [],
-                   o = {};
-                  if(one.toString() == tow.toString()){
-                    return {'diff': diff, 'same': same, 'isSame': true}
-                  }
-                  for (var i = 0; i< one.length; i++) (one[i] in o) ? o[one[i]] ++ : o[one[i]] = 1;
-                  for (var i = 0; i< tow.length; i++) (tow[i] in o) ? same.push(tow[i]) : diff.push(tow[i]);
-                  return {'diff': diff, 'same': same, 'isSame': false};
-                }
-                */
-
             }
         },
         mounted(){

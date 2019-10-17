@@ -38,7 +38,6 @@ const calendar = {
       // alternatively colorbrewer.YlGnBu[9]
       days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
       datasets = ["http://localhost:3000/test", "http://localhost:3000/test"];
-    console.log(datasets);
     svg = d3
       .select("#heatmap_chart")
       .selectAll("svg")
@@ -174,7 +173,6 @@ const calendar = {
       .attr("d", pathMonth);
   },
   adddata(data) {
-    console.log(data);
     var colorScale = d3
       .scaleQuantile()
       .domain([
@@ -208,7 +206,6 @@ const calendar = {
     //   console.log(d);
     //   return colorScale(index++);
     // });
-    console.log(testcolor);
     rect.selectAll("rect").attr("fill", function(d) {
       return colorScale(testcolor[index++]);
     });

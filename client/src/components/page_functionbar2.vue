@@ -27,24 +27,23 @@
         lc_margin:{},
         lc_width: 0,
         lc_height: 0,
-        lc_xScale: undefined,
-        lc_yScale: undefined,
-        lc_xScale_arr:[],
-        lc_yScale_arr: [],
-        lc_xScaleText_arr:[],
-        lc_yScaleText_arr: [],
-        lc_line: undefined,
-        lc_dataset: undefined,
-        lc_svg: undefined,
-        lc_svg_g: undefined,
-        lc_legend: undefined,
-        lc_legend_circle: undefined,
-        lc_legend_text: undefined,
-        lc_path: undefined,
-        lc_pathcount: 0,
-        lc_circle: undefined,
+        lc_xScale: undefined, //线图默认x轴比例尺 0-1 / 0-width
+        lc_yScale: undefined, //线图默认y轴比例尺 0-1 / height-0
+        lc_xScaleText_arr:[], //存储线图中不同线段的x对应真实数值的比例尺 0-1 / datamin-datamax
+        lc_yScaleText_arr: [], //存储线图中不同线段的y对应真实数值的比例尺 0-1 / datamin-datamax
+        lc_line_generator:{},
+        lc_line: undefined,  //初始线段生成器
+        lc_svg: undefined, //legend and svg container
+        lc_svg_g: undefined, // axis and path container
+        lc_legend: undefined, // legend container
+        lc_legend_circle: undefined, // legend circle
+        lc_legend_text: undefined, // legend text
+        lc_pathcount: 0, //line path count
         lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
-        lc_linecount:0
+        his_weather_config:{
+                  checkedNames:[],
+                  status: '3'
+                }
       }
     },
     components: {
@@ -52,11 +51,17 @@
     computed:{
       operater_state () {
         return this.$store.state.operater_state
+      },
+      weather_change_state () {
+        return this.$store.state.weather_change_state
       }
     },
     watch:{
       operater_state: function(val, oldVal){
         this.handle_operater_state()
+      },
+      weather_change_state (val, oldVal) {
+        this.handle_weather_change_state()
       }
     },
     methods:{
@@ -197,7 +202,6 @@
           opt.config.legend.push(that.var_config.operater[d].legend)
         })
 
-
         this.handle_linechart(opt)
 
         //this.handle_piechart(opt)
@@ -242,7 +246,6 @@
               'data': res.data,
               'config': opt.config
             }
-            console.log(info)
             that.draw_linechart(info)
           }).catch(err => {
             if(err){
@@ -256,6 +259,7 @@
       draw_linechart(opt){
         let that = this
         if(opt.status == 0){
+          let that = this
           this.lc_FullWidth = document.getElementById('line').clientWidth,
           this.lc_FullHeight = document.getElementById('line').clientHeight,
           this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
@@ -278,6 +282,14 @@
               .x(function(d, i) { return that.lc_xScale(d.x); }) // set the x values for the line generator
               .y(function(d) { return that.lc_yScale(d.y); }) // set the y values for the line generator
               .curve(d3.curveMonotoneX) // apply smoothing to the line
+          
+          if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
+            let unit = opt.config.unit
+            this.lc_line_generator[unit] = {}
+            this.lc_line_generator[unit]['xScale'] = this.lc_xScale
+            this.lc_line_generator[unit]['yScale'] = this.lc_yScale
+            this.lc_line_generator[unit]['generator'] = this.lc_line
+          }
 
           // 1. Add the SVG to the page and employ #2
           this.lc_svg = d3.select("#line_chart").append("svg")
@@ -292,6 +304,7 @@
                 y = +that.lc_margin.top
                 return 'translate(' + x + ',' + y + ')'
             })
+
           let legend = this.lc_legend.selectAll('.legend_line')
             .data(opt.config.legend)
             .enter()
@@ -360,20 +373,15 @@
               xScaleMin = opt.data[i].xScale[0],
               xScaleMax = opt.data[i].xScale[1]
 
-            this.lc_xScale_arr = []
-            this.lc_yScale_arr = []
             this.lc_xScaleText_arr = []
             this.lc_yScaleText_arr = []
 
-            this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
-            this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
             this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
             this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
 
-
             this.lc_svg_g.append("path")
               .data(draw_data) // 10. Binds data to the line
-              .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
+              .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
               .attr('num', i)
               .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
               .style('fill', 'none')
@@ -394,6 +402,7 @@
               .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
               .attr("r", 2)
               .attr("linenum", i)
+              .attr('unit', opt.config.unit)
               .style('fill', that.lc_linecolor[i])
               .style('stroke', '#fff')
               .style('stroke-width', '1.5px')
@@ -413,8 +422,6 @@
           d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
 
           this.lc_pathcount = opt.data.length
-          this.lc_xScale_arr = []
-          this.lc_yScale_arr = []
           this.lc_xScaleText_arr = []
           this.lc_yScaleText_arr = []
 
@@ -440,78 +447,52 @@
               .duration(3000)
               .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
 
-
           for(var i=0; i<opt.data.length; i++){
-            // if x is not date
-            let draw_data = opt.data[i].values,
-              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
-              yScaleMax = Math.max.apply(null, opt.data[i].yScale)
-              this.lc_yScale_arr.push(d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0]))
-              this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
-
-            if(opt.data[i].xLabel != 'date'){
-              let xScaleMin = Math.min.apply(null, opt.data[i].xScale),
-                xScaleMax = Math.max.apply(null, opt.data[i].xScale)
-              this.lc_xScale_arr.push(d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]))
-              this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
-
-              this.lc_svg_g.append("path")
-                .data(draw_data) // 10. Binds data to the line
-                .transition()
-                .duration(1500)
-                .attr("d", that.lc_line(draw_data)) // 11. Calls the line generator
-                .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-                .style('fill', 'none')
-                .style('stroke', that.lc_linecolor[i])
-                .style("stroke-width", '1px')
-              
-              this.lc_svg_g.selectAll(".ddot")
-                .data(draw_data)
-              .enter().append("circle")
-              // Uses the enter().append() method
-                .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-                .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
-                .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
-                .attr("r", 2)
-                .attr("linenum", i)
-                .style('fill', that.lc_linecolor[i])
-                .style('stroke', '#fff')
-                .style('stroke-width', '1.5px')
-                .on('mouseover', circle_handleMouseOver)
-                .on('mouseout', circle_handleMouseOut)
-                .style('opacity', 0)
-                .transition()
-                .duration(2000)
-                .style('opacity', 1)
-
-            } else if(opt.data[i].xLabel == 'date'){
-              
+            if(opt.data[i].xLabel == 'date'){
               for(let j=0; j<opt.data[i].values.length; j++){
                 opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
               }
-
               for(let j=0; j<opt.data[i].xScale.length; j++){
                 opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
               }
+            }
+            //calculate line generator
+            if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
+              let unit = opt.config.unit
+              if(unit == 'Hour' || unit == 'Day'){
+                this.lc_line_generator[unit] = {}
+                this.lc_line_generator[unit]['xScale'] = this.lc_xScale
+                this.lc_line_generator[unit]['yScale'] = this.lc_yScale
+                this.lc_line_generator[unit]['generator'] = this.lc_line
+              } else if(unit == 'All'){
+                let _xscale = d3.scaleTime().range([0, that.lc_width]).domain(d3.extent(opt.data[0].values, (d) => {return d.x})),
+                  _yscale = this.lc_yScale,
+                  _lc_date_line = d3.line()
+                    .x((d, i) => {return _xscale(d.x)})
+                    .y((d) => { return _yscale(d.y)})
+                    .curve(d3.curveMonotoneX)
 
-              draw_data = opt.data[i].values
-              let lc_xScale_date_l = d3.scaleTime().range([0, that.lc_width]).domain(d3.extent(opt.data[i].values, (d) => {return d.x})),
-                lc_xScale_date_t = d3.scaleLinear().domain([0, 1]).range(d3.extent(opt.data[i].xScale))
+                this.lc_line_generator[unit] = {}
+                this.lc_line_generator[unit]['xScale'] = _xscale
+                this.lc_line_generator[unit]['yScale'] = _yscale
+                this.lc_line_generator[unit]['generator'] = _lc_date_line
+              }
+            }
+            // if x is not date
+            let draw_data = opt.data[i].values,
+              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
+              yScaleMax = Math.max.apply(null, opt.data[i].yScale),
+              xScaleMin = Math.min.apply(null, opt.data[i].xScale),
+              xScaleMax = Math.max.apply(null, opt.data[i].xScale)
 
-              this.lc_xScale_arr.push(lc_xScale_date_l)
-              this.lc_xScaleText_arr.push(lc_xScale_date_t)
-              let draw_data = opt.data[i].values
+              this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
+              this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
 
-              let lc_date_line = d3.line()
-                .x((d, i) => {return lc_xScale_date_l(d.x)})
-                .y((d) => { return that.lc_yScale(d.y)})
-                .curve(d3.curveMonotoneX)
-
-              this.lc_svg_g.append("path")
+            this.lc_svg_g.append("path")
                 .data(draw_data) // 10. Binds data to the line
                 .transition()
                 .duration(1500)
-                .attr("d", lc_date_line(draw_data)) // 11. Calls the line generator
+                .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
                 .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
                 .style('fill', 'none')
                 .style('stroke', that.lc_linecolor[i])
@@ -522,10 +503,11 @@
               .enter().append("circle")
               // Uses the enter().append() method
                 .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-                .attr("cx", function(d, i) { return lc_xScale_date_l(d.x) })
-                .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+                .attr("cx", function(d, i) { return that.lc_line_generator[opt.config.unit].xScale(d.x) })
+                .attr("cy", function(d, i) { return that.lc_line_generator[opt.config.unit].yScale(d.y) })
                 .attr("r", 2)
                 .attr("linenum", i)
+                .attr('unit', opt.config.unit)
                 .style('fill', that.lc_linecolor[i])
                 .style('stroke', '#fff')
                 .style('stroke-width', '1.5px')
@@ -535,7 +517,6 @@
                 .transition()
                 .duration(2000)
                 .style('opacity', 1)
-            }
           }
 
           this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
@@ -575,7 +556,9 @@
           .attr('r', 6)
 
           //use D3 to select line, change stroke
-          let line_num = d3.select(this).attr('linenum')
+          let line_num = d3.select(this).attr('linenum'),
+             unit = d3.select(this).attr('unit')
+
           for(var i=0; i<that.lc_pathcount; i++){
             let lineclass = 'line-' + i,
               dotclass = 'dot-' + i
@@ -583,35 +566,28 @@
               //selected line get more wide
               d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
               //select scale
-              //that.lc_xScale_arr[i] that.lc_yScale_arr[i]
               // 3. Call the x axis in a group tag
+              
               d3.selectAll('.x.axis').transition()
                   .duration(300).remove()
 
               d3.selectAll('.y.axis').transition()
                   .duration(300).remove()
 
-              if(typeof(d.x) == 'object'){
-                that.lc_svg_g.append("g")
+              that.lc_svg_g.append("g")
                   .attr("class", "x axis")
                   .attr("transform", "translate( 0," + +that.lc_height + ")")
                   .transition()
                   .duration(1000)
-                  .call(d3.axisBottom(that.lc_xScale_arr[i]).ticks(8))
-              }else{
-                that.lc_svg_g.append("g")
-                  .attr("class", "x axis")
-                  .attr("transform", "translate( 0," + +that.lc_height + ")")
-                  .transition()
-                  .duration(1000)
-                  .call(d3.axisBottom(that.lc_xScale_arr[i]))
-              }
-
+                  .call(d3.axisBottom(that.lc_line_generator[unit].xScale).ticks(8))
+              
+              let _yScaleMin = Math.min.apply(null, opt['data'][i].yScale),
+                _yScaleMax = Math.max.apply(null, opt['data'][i].yScale)
               that.lc_svg_g.append("g")
                   .attr("class", "y axis")
                   .transition()
                   .duration(1000)
-                  .call(d3.axisLeft(that.lc_yScale_arr[i])) // Create an axis component with d3.axisBottom
+                  .call(d3.axisLeft(d3.scaleLinear().domain([_yScaleMin, _yScaleMax]).range([that.lc_height, 0])))
                    // Create an axis component with d3.axisBottom
 
               d3.selectAll('.yAxisLabel').transition()
@@ -647,11 +623,10 @@
                 .attr('id', "lt_label")
                 .attr('x', () => {
                   if(typeof(d.x) == 'object'){
-                    return that.lc_xScale_arr[i](d.x)
+                    return that.lc_line_generator[unit].xScale(d.x)
                   } else {
-                    return that.lc_xScale(d.x) - 30
+                    return that.lc_line_generator[unit].xScale(d.x) - 30
                   }
-                  
                 })
                 .attr('y', that.lc_yScale(d.y) - 15)
                 .attr('fill', 'white')
@@ -661,7 +636,6 @@
                     } else {
                       let tex = ''
                       if(typeof(d.x) == 'object'){
-                        
                         tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
                       } else {
                         tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
@@ -796,11 +770,57 @@
             .attr("fill", function (d,i) {
                 return color(linear(dataset[i]));
             })
+      },
+      handle_weather_change_state(){
+        // 前提：在有线图的基础上进行添加色块
+        // 收集基本信息 存储参数的变量
+        // 获取已经绘制线图的类型 
+        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形 颜色渐变
+        // 在线图添加提示 颜色渐变
+        // 添加交互 鼠标点击矩形块时，非此矩形块内的圆变小，再点退出
+        // 
+        //this.weather_change_state
+        // weather_config:{
+        //           checkedNames:[],
+        //           status: '3' // update all
+        //           // 0 天气 1 风力
+        //         },
+        
+        let that = this
+        action_handle()
+        function action_handle(){
+          let res = {
+            'status': '3',
+            'config': {
+              'add': [],
+              'remove': []
+            }
+          }
+          //计算增加或者删除块
+          that.weather_change_state.checkedNames.forEach((d,i) => {
+            if(that.his_weather_config.checkedNames.indexOf(that.weather_change_state.checkedNames[i]) == -1){
+              res.config.add.push(that.weather_change_state.checkedNames[i])
+            }
+          })
+
+          that.his_weather_config.checkedNames.forEach((d,i) => {
+            if(that.weather_change_state.checkedNames.indexOf(that.his_weather_config.checkedNames[i]) == -1){
+              res.config.remove.push(that.his_weather_config.checkedNames[i])
+            }
+          })
+          that.his_weather_config = JSON.parse(JSON.stringify(that.weather_change_state))
+          
+          //X坐标轴是否变化
+          
+        }
+        function removeWeatherRect(){}
+        function addWeatherRect(){}
+        function getWeatherRectStatus(){}
       }
       
     },
     mounted(){
-      // this.init_heatmap()
+      // this.init_heatmap() //previous
     //    calendar.init_heatmap()
     //    var heatmapChart = function(tsvFile) {
     //   (async function() {
@@ -817,8 +837,8 @@
     //   })()
     //   }
     //  heatmapChart("http://localhost:3000/test")
-      // calendar.adddata()
-      //this.init_piechart()
+    //   calendar.adddata()
+    //this.init_piechart()
       this.handle_linechart({
         'status': '0',
         'config': {

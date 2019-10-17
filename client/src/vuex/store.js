@@ -14,6 +14,13 @@ const store = new Vuex.Store({
       'checkedNames': [],
       'picked': ''
     },
+    weather_change_state:{
+      'status':'3',
+      'config': {
+        'add': [],
+        'remove': []
+      }
+    },
     map_state:{
     }
   },
