@@ -212,7 +212,6 @@
             'unit': opt.config.unit
           }
           DataManager.getLineChartData(opt).then((res) => {
-            //console.log(res.data)
             let info = {
               'status': 0,
               'data': res.data,
@@ -794,22 +793,21 @@
             })
       },
       handle_weather_change_state(){
-        // 前提：在有线图的基础上进行添加色块
+        // 前提：在有线图All的基础上进行添加色块
         // 收集基本信息 存储参数的变量
         // 获取已经绘制线图的类型 
-        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形 颜色渐变
-        // 在线图添加提示 颜色渐变
-        // 添加交互 鼠标点击矩形块时，非此矩形块内的圆变小，再点退出
+        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形 
+        // 在线图添加提示
+        // 添加交互 鼠标mouseover矩形块时，矩形块边框高亮
         // 
         
         let that = this
         action_handle()
         function action_handle(){
           //仅对坐标轴为All时绘制天气Rect
-          if(that.last_axis_type == 'All'){
+          if(that.last_axis_type == 'All' && that.weather_change_state.checkedNames.length !=0){
             DataManager.getWeather().then((res) => {
               addWeatherRect(res.data)
-              console.log(res)
             }).catch(err => {
               if(err){
                 console.log(err)
@@ -820,32 +818,95 @@
             removeWeatherRect()
           }
         }
-        function removeWeatherRect(){}
+        function removeWeatherRect(){
+          d3.selectAll('.weatherRect_disselect').data([]).exit().transition().duration(300).remove()
+          d3.selectAll('.legend_weather_text').remove()
+        }
         function addWeatherRect(weather){
-          let xScale = that.lc_line_generator['All']['xScale'],
-            yScale = that.lc_line_generator['All']['yScale']
+          let xScaleAxis = that.lc_line_generator['All']['xScaleAxis'],
+            yScaleAxis = that.lc_line_generator['All']['yScaleAxis']
             //width = xScale / 2
             // height = lc_height
+            let half_rect_interval = (xScaleAxis(new Date(weather[1].time)) - xScaleAxis(new Date(weather[0].time))) / 2,
+              g = that.lc_svg.append('g')
+                  .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")")
+                  .attr('id', 'weatherRect')
+            
             for(let i=0;i<weather.length;i++){
               weather[i]['Time'] = new Date(weather[i].time)
+              weather[i]['x'] = xScaleAxis(weather[i]['Time']) - half_rect_interval
+              weather[i]['y'] = 0
+              weather[i]['width'] = half_rect_interval * 2
+              weather[i]['height'] = that.lc_height
             }
-            console.log(xScale(weather[0]['Time']))
-            console.log(xScale(weather[1]['Time']))
             
-            /*
             //construct data
-            //draw rect
-            let g = d3.select('#line_chart_g')
-            d3.selectAll('.xRect')
-              .data()
+            //draw bar
+            g.selectAll('.xRect')
+              .data(weather)
               .enter()
               .append('rect')
-              .attr((d,i) => {
-                return {'x': 10, 'y': 10, 'width': 10, 'height': 10}
-                //x,y 为左上角
+              .attr('x', (d,i) => {return d.x})
+              .attr('y', (d,i) => {return d.y})
+              .attr('width', (d,i) => {return d.width})
+              .attr('height', (d,i) => {return d.height})
+              .attr('date', (d,i) => {return d.time})
+              .attr('class', 'weatherRect_disselect')
+              .style('opacity', (d,i) => {if(d.rain == 1){return 0.4} else return 0})
+              .on('mouseover', rect_handleMouseOver)
+              .on('mouseout', rect_handleMouseOut)
+            
+            //legend
+            g.selectAll('.xRectLegend')
+              .data([0,1])
+              .enter()
+              .append('rect')
+              .attr('x', function(d, i) { return that.lc_width * 1.02 + 10 })
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 30})
+              .attr('width', 10)
+              .attr('height', 10)
+              .text((d,i) => {if(i == 0){return '没雨'} else {return '有雨'}})
+              .style('opacity', 0)
+              .attr('class', (d,i) => {
+                return 'legend_weather' + ' legend_weather_rect' + i
               })
-            */
+              .transition()
+              .duration(300)
+              .style('opacity', 1)
+            
+            g.selectAll('.xRectLegend')
+              .data([0,1])
+              .enter()
+              .append('text')
+              .attr('x', function(d, i) { return that.lc_width * 1.02 + 40 })
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 39})
+              .text((d,i) => {if(i == 0){return '没雨'} else {return '有雨'}})
+              .style("text-anchor", "middle")
+              .attr('class', 'legend_weather_text')
+
+        
+          function rect_handleMouseOver(d, i){
+            let date = d3.select(this).attr('date'),
+              coordinates = d3.mouse(this),
+              x = coordinates[0],
+              y = coordinates[1]
+            
+            d3.select('#weatherRect').append('text').attr('id', 'recttext')
+              .attr('x', x)
+              .attr('y', y)
+              .attr('fill', 'white')
+              .text(date)
+  
+            d3.select(this).attr('class', 'weatherRect_select')
+          }
+          function rect_handleMouseOut(){
+            d3.select(this).attr('class', 'weatherRect_disselect')
+            d3.selectAll('#recttext').remove()
+            
+          }
+          
         }
+
         function getWeatherRectStatus(){}
       }
       
@@ -955,4 +1016,31 @@ text.axis-worktime {
   font-size: 12px;
 }
 
+.weatherRect_select {
+  z-index: -1;
+  stroke: yellow;
+  stroke-width: 2px;
+}
+
+.weatherRect_disselect {
+  z-index: -1;
+  stroke: none;
+  stroke-width: 0;
+}
+
+.legend_weather_rect0{
+  stroke: black;
+  fill: none;
+  stroke-width: 1px;
+}
+
+.legend_weather_rect1{
+  stroke: black;
+  stroke-width: 1px;
+}
+.legend_weather_text{
+  fill: rgb(170, 170, 170);
+  font-family: initial;
+  font-size: 12px;
+}
 </style>
