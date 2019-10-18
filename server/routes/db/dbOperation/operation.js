@@ -240,10 +240,22 @@ module.exports = {
             connection.query(`select * from poi_haikou ${req.query.sql}`, function (err, result) {
                 if (err) res.send(err);
                 //console.log(result);
+                
                 res.send(result);
                 connection.release();
             });
         });
+    },
+    weather:function(req, res, next){
+        pool.getConnection(function(err, connection) {
+            connection.query('select time,rain from tq', function(err, result){
+                result = JSON.parse(JSON.stringify(result))
+                if (err) res.send(err);
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.send(result)
+                //res.send(resData)
+            })
+        })
     }
 };
 

@@ -40,10 +40,7 @@
         lc_legend_text: undefined, // legend text
         lc_pathcount: 0, //line path count
         lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
-        his_weather_config:{
-                  checkedNames:[],
-                  status: '3'
-                }
+        last_axis_type: null
       }
     },
     components: {
@@ -258,6 +255,7 @@
       },
       draw_linechart(opt){
         let that = this
+        this.last_axis_type = opt.config.unit
         if(opt.status == 0){
           let that = this
           this.lc_FullWidth = document.getElementById('line').clientWidth,
@@ -265,29 +263,46 @@
           this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
           this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
+          let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
+          yScaleMax = Math.max.apply(null, opt.data[0].yScale),
+          xScaleMin = Math.min.apply(null, opt.data[0].xScale),
+          xScaleMax = Math.max.apply(null, opt.data[0].xScale)
           // The number of datapoints
           let n = 21;
           // 5. X scale will use the index of our data
-          this.lc_xScale = d3.scaleLinear()
+          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
+          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
+
+          this.lc_xScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([0, that.lc_width]); // output
 
           // 6. Y scale will use the randomly generate number
-          this.lc_yScale = d3.scaleLinear()
+          this.lc_yScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
+              .range([that.lc_height, 0]); // output
+          
+          this.lc_xScaleAxis = d3.scaleLinear()
+              .domain([xScaleMin, xScaleMax]) // input
+              .range([0, that.lc_width]); // output
+          
+          this.lc_yScaleAxis = d3.scaleLinear()
+              .domain([yScaleMin, yScaleMax]) // input
               .range([that.lc_height, 0]); // output
 
           // 7. d3's line generator
           this.lc_line = d3.line()
-              .x(function(d, i) { return that.lc_xScale(d.x); }) // set the x values for the line generator
-              .y(function(d) { return that.lc_yScale(d.y); }) // set the y values for the line generator
+              .x(function(d, i) { return that.lc_xScaleLine(d.x); }) // set the x values for the line generator
+              .y(function(d) { return that.lc_yScaleLine(d.y); }) // set the y values for the line generator
               .curve(d3.curveMonotoneX) // apply smoothing to the line
           
           if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
             let unit = opt.config.unit
             this.lc_line_generator[unit] = {}
-            this.lc_line_generator[unit]['xScale'] = this.lc_xScale
-            this.lc_line_generator[unit]['yScale'] = this.lc_yScale
+            this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
+            this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+            this.lc_line_generator[unit]['xScaleAxis'] = this.lc_xScaleAxis
+            this.lc_line_generator[unit]['yScaleAxis'] = this.lc_yScaleAxis
             this.lc_line_generator[unit]['generator'] = this.lc_line
           }
 
@@ -398,8 +413,8 @@
             .enter().append("circle")
             // Uses the enter().append() method
               .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-              .attr("cx", function(d, i) { return that.lc_xScale(d.x) })
-              .attr("cy", function(d, i) { return that.lc_yScale(d.y) })
+              .attr("cx", function(d, i) {return that.lc_line_generator[opt.config.unit]['xScaleLine'](d.x)})
+              .attr("cy", function(d, i) {return that.lc_line_generator[opt.config.unit]['yScaleLine'](d.y)})
               .attr("r", 2)
               .attr("linenum", i)
               .attr('unit', opt.config.unit)
@@ -438,16 +453,31 @@
               .attr("transform", "translate( 0," + +that.lc_height + ")")
               .transition()
               .duration(3000)
-              .call(d3.axisBottom(that.lc_xScale)) // Create an axis component with d3.axisBottom
+              .call(d3.axisBottom(that.lc_xScaleLine)) // Create an axis component with d3.axisBottom
 
           // 4. Call the y axis in a group tag
           this.lc_svg_g.append("g")
               .attr("class", "y axis")
               .transition()
               .duration(3000)
-              .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
+              .call(d3.axisLeft(that.lc_yScaleLine)); // Create an axis component with d3.axisLeft
 
           for(var i=0; i<opt.data.length; i++){
+            let draw_data = opt.data[i].values,
+              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
+              yScaleMax = Math.max.apply(null, opt.data[i].yScale),
+              xScaleMin = 0,
+              xScaleMax = 1
+
+            if(typeof(opt['data'][i].xScale) == 'object'){
+                let len = opt['data'][i].xScale.length
+                xScaleMin = new Date(opt['data'][i].xScale[0])
+                xScaleMax = new Date(opt['data'][i].xScale[len-1])
+              } else {
+                xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+                xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
+              }
+
             if(opt.data[i].xLabel == 'date'){
               for(let j=0; j<opt.data[i].values.length; j++){
                 opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
@@ -461,30 +491,24 @@
               let unit = opt.config.unit
               if(unit == 'Hour' || unit == 'Day'){
                 this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScale'] = this.lc_xScale
-                this.lc_line_generator[unit]['yScale'] = this.lc_yScale
+                this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
+                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
+                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
                 this.lc_line_generator[unit]['generator'] = this.lc_line
               } else if(unit == 'All'){
-                let _xscale = d3.scaleTime().range([0, that.lc_width]).domain(d3.extent(opt.data[0].values, (d) => {return d.x})),
-                  _yscale = this.lc_yScale,
-                  _lc_date_line = d3.line()
-                    .x((d, i) => {return _xscale(d.x)})
-                    .y((d) => { return _yscale(d.y)})
-                    .curve(d3.curveMonotoneX)
-
                 this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScale'] = _xscale
-                this.lc_line_generator[unit]['yScale'] = _yscale
-                this.lc_line_generator[unit]['generator'] = _lc_date_line
+                this.lc_line_generator[unit]['xScaleLine'] = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
+                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
+                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+                this.lc_line_generator[unit]['generator'] = d3.line()
+                                                              .x((d, i) => {return that.lc_line_generator[unit]['xScaleLine'](d.x)})
+                                                              .y((d) => { return that.lc_line_generator[unit]['yScaleLine'](d.y)})
+                                                              .curve(d3.curveMonotoneX)
               }
             }
             // if x is not date
-            let draw_data = opt.data[i].values,
-              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
-              yScaleMax = Math.max.apply(null, opt.data[i].yScale),
-              xScaleMin = Math.min.apply(null, opt.data[i].xScale),
-              xScaleMax = Math.max.apply(null, opt.data[i].xScale)
-
               this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
               this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
 
@@ -503,8 +527,8 @@
               .enter().append("circle")
               // Uses the enter().append() method
                 .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-                .attr("cx", function(d, i) { return that.lc_line_generator[opt.config.unit].xScale(d.x) })
-                .attr("cy", function(d, i) { return that.lc_line_generator[opt.config.unit].yScale(d.y) })
+                .attr("cx", function(d, i) { return that.lc_line_generator[opt.config.unit].xScaleLine(d.x) })
+                .attr("cy", function(d, i) { return that.lc_line_generator[opt.config.unit].yScaleLine(d.y) })
                 .attr("r", 2)
                 .attr("linenum", i)
                 .attr('unit', opt.config.unit)
@@ -573,21 +597,19 @@
 
               d3.selectAll('.y.axis').transition()
                   .duration(300).remove()
-
+              
               that.lc_svg_g.append("g")
                   .attr("class", "x axis")
                   .attr("transform", "translate( 0," + +that.lc_height + ")")
                   .transition()
                   .duration(1000)
-                  .call(d3.axisBottom(that.lc_line_generator[unit].xScale).ticks(8))
+                  .call(d3.axisBottom(that.lc_line_generator[opt.config.unit]['xScaleAxis']).ticks(4))
               
-              let _yScaleMin = Math.min.apply(null, opt['data'][i].yScale),
-                _yScaleMax = Math.max.apply(null, opt['data'][i].yScale)
               that.lc_svg_g.append("g")
                   .attr("class", "y axis")
                   .transition()
                   .duration(1000)
-                  .call(d3.axisLeft(d3.scaleLinear().domain([_yScaleMin, _yScaleMax]).range([that.lc_height, 0])))
+                  .call(d3.axisLeft(that.lc_line_generator[opt.config.unit]['yScaleAxis']))
                    // Create an axis component with d3.axisBottom
 
               d3.selectAll('.yAxisLabel').transition()
@@ -623,12 +645,12 @@
                 .attr('id', "lt_label")
                 .attr('x', () => {
                   if(typeof(d.x) == 'object'){
-                    return that.lc_line_generator[unit].xScale(d.x)
+                    return that.lc_line_generator[unit].xScaleLine(d.x)
                   } else {
-                    return that.lc_line_generator[unit].xScale(d.x) - 30
+                    return that.lc_line_generator[unit].yScaleLine(d.x) - 30
                   }
                 })
-                .attr('y', that.lc_yScale(d.y) - 15)
+                .attr('y', that.lc_yScaleLine(d.y) - 15)
                 .attr('fill', 'white')
                 .text(function() {
                     if(typeof(d) != 'object'){
@@ -779,42 +801,51 @@
         // 在线图添加提示 颜色渐变
         // 添加交互 鼠标点击矩形块时，非此矩形块内的圆变小，再点退出
         // 
-        //this.weather_change_state
-        // weather_config:{
-        //           checkedNames:[],
-        //           status: '3' // update all
-        //           // 0 天气 1 风力
-        //         },
         
         let that = this
         action_handle()
         function action_handle(){
-          let res = {
-            'status': '3',
-            'config': {
-              'add': [],
-              'remove': []
-            }
+          //仅对坐标轴为All时绘制天气Rect
+          if(that.last_axis_type == 'All'){
+            DataManager.getWeather().then((res) => {
+              addWeatherRect(res.data)
+              console.log(res)
+            }).catch(err => {
+              if(err){
+                console.log(err)
+                return;
+              }
+            })
+          } else {
+            removeWeatherRect()
           }
-          //计算增加或者删除块
-          that.weather_change_state.checkedNames.forEach((d,i) => {
-            if(that.his_weather_config.checkedNames.indexOf(that.weather_change_state.checkedNames[i]) == -1){
-              res.config.add.push(that.weather_change_state.checkedNames[i])
-            }
-          })
-
-          that.his_weather_config.checkedNames.forEach((d,i) => {
-            if(that.weather_change_state.checkedNames.indexOf(that.his_weather_config.checkedNames[i]) == -1){
-              res.config.remove.push(that.his_weather_config.checkedNames[i])
-            }
-          })
-          that.his_weather_config = JSON.parse(JSON.stringify(that.weather_change_state))
-          
-          //X坐标轴是否变化
-          
         }
         function removeWeatherRect(){}
-        function addWeatherRect(){}
+        function addWeatherRect(weather){
+          let xScale = that.lc_line_generator['All']['xScale'],
+            yScale = that.lc_line_generator['All']['yScale']
+            //width = xScale / 2
+            // height = lc_height
+            for(let i=0;i<weather.length;i++){
+              weather[i]['Time'] = new Date(weather[i].time)
+            }
+            console.log(xScale(weather[0]['Time']))
+            console.log(xScale(weather[1]['Time']))
+            
+            /*
+            //construct data
+            //draw rect
+            let g = d3.select('#line_chart_g')
+            d3.selectAll('.xRect')
+              .data()
+              .enter()
+              .append('rect')
+              .attr((d,i) => {
+                return {'x': 10, 'y': 10, 'width': 10, 'height': 10}
+                //x,y 为左上角
+              })
+            */
+        }
         function getWeatherRectStatus(){}
       }
       
@@ -838,7 +869,7 @@
     //   }
     //  heatmapChart("http://localhost:3000/test")
     //   calendar.adddata()
-    //this.init_piechart()
+    //   this.init_piechart()
       this.handle_linechart({
         'status': '0',
         'config': {

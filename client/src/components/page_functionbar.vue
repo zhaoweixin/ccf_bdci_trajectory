@@ -73,11 +73,6 @@
           <label for="weatherCheckbox1">天气</label>
           <span></span>
         </div>
-        <div class="chiller_cb">
-          <input id="weatherCheckbox2" type="checkbox" value="1" v-model="weather_config.checkedNames">
-          <label for="weatherCheckbox2">风力</label>
-          <span></span>
-        </div>
       </div>
     </div>
 
@@ -148,7 +143,7 @@
                 weather_config:{
                   checkedNames:[],
                   status: '3' // update all
-                  // 0 天气 1 风力
+                  // 0 天气
                 },
                 layer_config:{},
                 his_weather_config:{

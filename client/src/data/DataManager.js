@@ -14,6 +14,13 @@ export default class DataManager {
     static getHeatmapData(){
         return axios.get('http://127.0.0.1:3000/test')
     }
+    static getWeather(){
+        return axios.get('http://localhost:3000/weather',{
+            'header': {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+    }
     /*
     static getTestData(){
         let data = JSON.stringify({
