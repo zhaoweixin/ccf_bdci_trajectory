@@ -84,7 +84,7 @@
     <div class="bg">
       <div>
         <div class="chiller_cb">
-          <input id="btn-grid-layer" type="checkbox" value="grid_layer" v-model="map_config.checkedNames">
+          <input id="btn-grid-layer" type="checkbox" value="gird_layer" checked v-model="map_config.checkedNames">
           <label for="btn-grid-layer">地图网格图层</label>
           <span></span>
         </div>
@@ -137,7 +137,7 @@
                     status: '3' // update all
                 },
                 map_config:{
-                    checkedNames:[],
+                    checkedNames:['gird_layer'],
                     //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层 4 公交路网图层
                 },
                 weather_config:{
@@ -160,7 +160,7 @@
             map_config:{
                 handler(newValue,oldValue){
                     this.layer_config = {
-                        "grid_layer": false,
+                        "gird_layer": false,
                         'district_layer': false,
                         'heatmap_layer': false,
                         'poi_layer': false,
@@ -169,6 +169,7 @@
                     newValue.checkedNames.forEach(d=>{
                         this.layer_config[d] = !this.layer_config[d];
                     });
+                    //console.log(this.layer_config);
                     this.$store.commit('map_state', this.layer_config);
                 },
                 deep: true
@@ -187,7 +188,7 @@
                     res.config.add.push(newValue.checkedNames[i])
                   }
                 })
-                
+
                 this.his_weather_config.checkedNames.forEach((d,i) => {
                   if(newValue.checkedNames.indexOf(this.his_weather_config.checkedNames[i]) == -1){
                     res.config.remove.push(this.his_weather_config.checkedNames[i])
