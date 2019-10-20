@@ -4,8 +4,7 @@
 
 <script>
     import mapboxgl from 'mapbox-gl'
-    //import d3 from 'd3'
-    import { scaleLinear,scaleThreshold, nest, rgb, interpolate } from 'd3'
+    import * as d3 from 'd3'
     import coordtrans from 'coordtransform'
     import ngeohash from 'ngeohash'
 
@@ -33,8 +32,7 @@
         name: "AppMap",
         data() {
             return {
-                map: null,
-                data_day:null
+                map: null
             }
         },
         created() {
@@ -44,12 +42,10 @@
         mounted() {
             this.map_config();
             this.grid_draw();
-            this.od_geohash_init();
+            this.poi_geohash();
+            // this.od_geohash_init();
             this.gird_click();
-            //this.load_all_order();
-            //this.load_day_order();
-            //this.load_district()
-            //this.load_geohash();
+            //this.load_district();
         },
         methods: {
 
@@ -214,49 +210,49 @@
                         }
                     });
                 });
-                this.map.on('load', ()=>{
-                    this.map.addSource('district_polygon_source',{
-                        'type': 'geojson',
-                        'data': {
-                            "type": "FeatureCollection",
-                            "features": feature_polygons
-                        }
-                    });
+                //this.map.on('load', ()=>{
+                // this.map.addSource('district_polygon_source',{
+                //     'type': 'geojson',
+                //     'data': {
+                //         "type": "FeatureCollection",
+                //         "features": feature_polygons
+                //     }
+                // });
+                //
+                // this.map.addLayer({
+                //     'id': 'district_polygon_layer',
+                //     'type': 'fill',
+                //     'source': 'district_polygon_source',
+                //     'layout': {},
+                //     'paint': {
+                //         'fill-color': ['get','color'],
+                //         //'fill-outline-color':'#FFFFFF',
+                //         'fill-opacity': .1,
+                //     }
+                // });
 
-                    this.map.addLayer({
-                        'id': 'district_polygon_layer',
-                        'type': 'fill',
-                        'source': 'district_polygon_source',
-                        'layout': {},
-                        'paint': {
-                            'fill-color': ['get','color'],
-                            //'fill-outline-color':'#FFFFFF',
-                            'fill-opacity': .1,
-                        }
-                    });
-
-                    //district outline
-                    this.map.addSource('district_outline_source',{
-                        "type": "geojson",
-                        "data": {
-                            "type": "FeatureCollection",
-                            "features": feature_lines
-                        }
-                    });
-                    this.map.addLayer({
-                        "id": "district_outline_layer",
-                        "type": "line",
-                        "source":'district_outline_source',
-                        "layout": {
-                            "line-join": "round",
-                            "line-cap": "round"
-                        },
-                        "paint": {
-                            "line-color": ['get','color'],
-                            "line-width": 1
-                        }
-                    });
+                //district outline
+                this.map.addSource('district_outline_source',{
+                    "type": "geojson",
+                    "data": {
+                        "type": "FeatureCollection",
+                        "features": feature_lines
+                    }
                 });
+                this.map.addLayer({
+                    "id": "district_outline_layer",
+                    "type": "line",
+                    "source":'district_outline_source',
+                    "layout": {
+                        "line-join": "round",
+                        "line-cap": "round"
+                    },
+                    "paint": {
+                        "line-color": ['get','color'],
+                        "line-width": 1
+                    }
+                });
+                //});
             },
 
             /*----------------------------------------/
@@ -274,8 +270,8 @@
                     },
                 }).then((res) => {
                     //console.log(res.body);
-                    //this.poi_draw(res.body);
-                    this.poi_heatmap(res.body);
+                    this.poi_draw(res.body);
+                    //this.poi_heatmap(res.body);
                 });
             },
             poi_draw(data){
@@ -521,7 +517,8 @@
                 this.map.on('click',(e)=> {
                     let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
                     let bbox = ngeohash.decode_bbox(curr_geohash);
-                    //console.log(bbox);
+
+                    this.poi_geohash(curr_geohash);
 
                     let features_polygon = [{
                         'type': 'Feature',
@@ -543,14 +540,14 @@
                         "features": features_polygon
                     });
 
-                    this.$http.get('query',{
-                        params:{
-                            // table:"odcount where start_geo ='"+curr_geohash+"'"
-                            table: `odcount where start_geo = '${curr_geohash}'`
-                        }}).then((res) => {
-                        this.od_geohash_update(res.body);
-                        //console.log(res.body)
-                    });
+                    // this.$http.get('query',{
+                    //     params:{
+                    //         // table:"odcount where start_geo ='"+curr_geohash+"'"
+                    //         table: `odcount where start_geo = '${curr_geohash}'`
+                    //     }}).then((res) => {
+                    //     this.od_geohash_update(res.body);
+                    //     //console.log(res.body)
+                    // });
                 });
             },
             od_geohash_init(){
@@ -864,12 +861,12 @@
                     });
                     // this.map.on('mouseenter','geohash_polygon_layer',e =>{
                     //     this.map.getCanvas().style.cursor = 'pointer';
-                    //     this.map.setFilter('geohash_polygon_hover', ["!=", "geohash", e.features[0].properties.geohash]);
+                    //     this.map.setFilter('geohash_polygon_hover', ["!=", "od_geohash_day", e.features[0].properties.od_geohash_day]);
                     // });
                     //
                     // this.map.on('mouseleave','geohash_polygon_layer',() =>{
                     //     this.map.getCanvas().style.cursor = '';
-                    //     this.map.setFilter('geohash_polygon_hover', ['!=', 'geohash', '']);
+                    //     this.map.setFilter('geohash_polygon_hover', ['!=', 'od_geohash_day', '']);
                     // });
                     //
                     // this.map.on('click','geohash_polygon_layer',() =>{
@@ -877,10 +874,19 @@
                     // });
                 });
             },
-
-
+            poi_geohash(geohash){
+                this.$http.get('query',{
+                    params:{
+                        table:`poi_geohash where geo_hash = '${geohash}'`
+                    }}).then((res) => {
+                    //console.log(res.body);
+                    let data = d3.nest().key(d=>d.type).entries(res.body);
+                    //console.log(data);
+                    this.$store.commit('poi_state',{data:data})
+                });
+                },
             load_day_order(){
-                this.$http.get('dataset/geohash/2017-05-01.csv').then((res) => {
+                this.$http.get('dataset/od_geohash_day/2017-05-01.csv').then((res) => {
                     let data = nest().key(d=>d.start_geo).entries(res.body.toCSletray());
                     this.data_day = data;
                     //console.log(data);
@@ -1178,6 +1184,17 @@
                     //console.log(this.$store.state.map_state);
                     let map_state = this.$store.state.map_state;
 
+                    //地图网格
+                    //console.log(map_state.gird_layer);
+                    map_state.gird_layer? this.map.setLayoutProperty('gird_layer', 'visibility', 'visible'):
+                        this.map.setLayoutProperty('gird_layer', 'visibility', 'none');
+
+                    //POI
+                    //console.log(map_state.poi_layer);
+                    map_state.poi_layer? this.load_poi():
+                        this.map.getLayer('poi_points_layer')?
+                            this.map.removeLayer('poi_points_layer')&this.map.removeSource('poi_points_source'):null;
+
                     //公交路网
                     //console.log(map_state.buses_layer);
                     map_state.buses_layer? this.load_buses():
@@ -1185,10 +1202,11 @@
                             this.map.removeLayer('buses_routes_layer')&this.map.removeLayer('buses_stations_layer')&
                             this.map.removeSource('buses_routes_source')&this.map.removeSource('buses_stations_source'):null;
 
-                    //地图网格
-                    //console.log(map_state.gird_layer);
-                    map_state.gird_layer? this.map.setLayoutProperty('gird_layer', 'visibility', 'visible'):
-                        this.map.setLayoutProperty('gird_layer', 'visibility', 'none');
+                    //行政区划
+                    console.log(map_state.district_layer);
+                    map_state.district_layer? this.load_district():
+                        this.map.getLayer('district_outline_layer')?
+                            this.map.removeLayer('district_outline_layer')&this.map.removeSource('district_outline_source'):null;
 
                 },
                 deep:true

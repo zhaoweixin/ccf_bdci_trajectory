@@ -7,6 +7,7 @@ import Router from 'vue-router'
 import Vuex from 'vuex'
 import store from './vuex/store'
 import ViewUI from 'view-design';
+import echarts from 'echarts'
 
 // import style
 import 'view-design/dist/styles/iview.css';
@@ -22,6 +23,7 @@ import 'bootstrap/dist/js/bootstrap.min.js'
 Vue.use(Resource);
 Vue.use(Router);
 Vue.use(Vuex);
+Vue.prototype.$echarts = echarts;
 
 
 Vue.config.productionTip = false;

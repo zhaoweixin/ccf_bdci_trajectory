@@ -62,25 +62,11 @@
         <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
       </div>
     </div>
-    <div class="funcbar_warp_header">
-      <h5> WEATHER </h5>
-      <div class="line-separator-2"></div>
-    </div>
-    <div class="bg">
-      <div>
-        <div class="chiller_cb">
-          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
-          <label for="weatherCheckbox1">天气</label>
-          <span></span>
-        </div>
-      </div>
-    </div>
 
     <div class="funcbar_warp_header">
       <h5> MAP </h5>
       <div class="line-separator-2"></div>
     </div>
-
     <div class="bg">
       <div>
         <div class="chiller_cb">
@@ -88,16 +74,11 @@
           <label for="btn-grid-layer">地图网格图层</label>
           <span></span>
         </div>
-        <div class="chiller_cb">
-          <input id="btn-heatmap-layer" type="checkbox"  value="heatmap_layer" v-model="map_config.checkedNames">
-          <label for="btn-heatmap-layer">地图热力图层</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
+<!--        <div class="chiller_cb">
           <input id="btn-poi-layer" type="checkbox"  value="poi_layer" v-model="map_config.checkedNames">
           <label for="btn-poi-layer">POI&nbsp;数据图层</label>
           <span></span>
-        </div>
+        </div>-->
         <div class="chiller_cb">
           <input id="btn-buses-layer" type="checkbox"  value="buses_layer" v-model="map_config.checkedNames">
           <label for="btn-buses-layer">公交路网图层</label>
@@ -112,14 +93,25 @@
     </div>
 
     <div class="funcbar_warp_header">
-      <h5> OPERATER </h5>
+      <h5> DATE </h5>
       <div class="line-separator-2"></div>
     </div>
+    <DatePicker type="date" placeholder="Select date" style="padding: 10px; width: 150px" placement="right-end"></DatePicker>
 
+    <div class="funcbar_warp_header">
+      <h5> WEATHER </h5>
+      <div class="line-separator-2"></div>
+    </div>
     <div class="bg">
+      <div>
+        <div class="chiller_cb">
+          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
+          <label for="weatherCheckbox1">天气</label>
+          <span></span>
+        </div>
+      </div>
     </div>
 
-    <DatePicker type="date" placeholder="Select date" style="width: 150px" placement="right-end"></DatePicker>
 
   </div>
 </template>
@@ -137,18 +129,17 @@
                     status: '3' // update all
                 },
                 map_config:{
-                    checkedNames:['gird_layer'],
-                    //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层 4 公交路网图层
+                    checkedNames:['gird_layer']
                 },
                 weather_config:{
-                  checkedNames:[],
-                  status: '3' // update all
-                  // 0 天气
+                    checkedNames:[],
+                    status: '3' // update all
+                    // 0 天气
                 },
                 layer_config:{},
                 his_weather_config:{
-                  checkedNames:[],
-                  status: '3'
+                    checkedNames:[],
+                    status: '3'
                 }
             }
         },
@@ -162,7 +153,6 @@
                     this.layer_config = {
                         "gird_layer": false,
                         'district_layer': false,
-                        'heatmap_layer': false,
                         'poi_layer': false,
                         'buses_layer': false
                     };
@@ -175,31 +165,31 @@
                 deep: true
             },
             weather_config:{
-              handler(newValue, oldValue){
-                let res = {
-                  'status': '3',
-                  'config': {
-                    'add': [],
-                    'remove': []
-                  }
-                }
-                newValue.checkedNames.forEach((d,i) => {
-                  if(this.his_weather_config.checkedNames.indexOf(newValue.checkedNames[i]) == -1){
-                    res.config.add.push(newValue.checkedNames[i])
-                  }
-                })
+                handler(newValue, oldValue){
+                    let res = {
+                        'status': '3',
+                        'config': {
+                            'add': [],
+                            'remove': []
+                        }
+                    }
+                    newValue.checkedNames.forEach((d,i) => {
+                        if(this.his_weather_config.checkedNames.indexOf(newValue.checkedNames[i]) == -1){
+                            res.config.add.push(newValue.checkedNames[i])
+                        }
+                    })
 
-                this.his_weather_config.checkedNames.forEach((d,i) => {
-                  if(newValue.checkedNames.indexOf(this.his_weather_config.checkedNames[i]) == -1){
-                    res.config.remove.push(this.his_weather_config.checkedNames[i])
-                  }//旧数组中不存在该元素，需添加
-                })
-                //新数组中存在该元素，需
-                //console.log(newValue, oldValue)
-                this.his_weather_config = JSON.parse(JSON.stringify(newValue))
-                this.$store.commit('weather_change_state', newValue)
-              },
-              deep: true
+                    this.his_weather_config.checkedNames.forEach((d,i) => {
+                        if(newValue.checkedNames.indexOf(this.his_weather_config.checkedNames[i]) == -1){
+                            res.config.remove.push(this.his_weather_config.checkedNames[i])
+                        }//旧数组中不存在该元素，需添加
+                    })
+                    //新数组中存在该元素，需
+                    //console.log(newValue, oldValue)
+                    this.his_weather_config = JSON.parse(JSON.stringify(newValue))
+                    this.$store.commit('weather_change_state', newValue)
+                },
+                deep: true
             }
         },
         methods:{

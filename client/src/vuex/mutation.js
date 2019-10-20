@@ -8,7 +8,11 @@ const mutation = {
     },
     weather_change_state(state, payload){
       state.weather_change_state = JSON.parse(JSON.stringify(payload))
-      console.log(state.weather_change_state)
+      // console.log(state.weather_change_state)
+    },
+    poi_state(state,payload){
+      state.poi_state = JSON.parse(JSON.stringify(payload));
+      // console.log(state.poi_state);
     }
 };
 export default mutation;
