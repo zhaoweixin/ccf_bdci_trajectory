@@ -33,7 +33,7 @@
         data() {
             return {
                 map: null,
-                date:'2019-05-01'
+                od_date:'od_20170501'
             }
         },
         created() {
@@ -43,9 +43,9 @@
         mounted() {
             this.map_config();
             this.grid_draw();
-            // this.od_geohash_init();
-            // this.gird_click();
-            this.load_od_day();
+            this.od_geohash_init();
+            this.gird_click();
+            // this.load_od_day();
         },
         methods: {
 
@@ -544,7 +544,7 @@
                         params:{
                             // table:"odcount where start_geo ='"+curr_geohash+"'"
                             // table: `odcount where start_geo = '${curr_geohash}'`
-                            table: "`${this}` where start_geo = 'w7w3x1'"
+                            table: `${this.od_date} where start_geo = '${curr_geohash}'`
 
                         }}).then((res) => {
                       this.od_geohash_update(res.body);
@@ -589,18 +589,14 @@
             },
             od_geohash_update(data){
 
+                this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
+
+
                 let features_polygon = [];
 
-                let color_scale = ["#23D561","#9CD523","#F1E229","#FFBF3A","#FB8C00","#FF5252"];
-
-
-                let threshold=d3.scaleThreshold()
-                    .domain([.1,.2,.3,.5,.8])
-                    .range(color_scale);
-
                 let linear = d3.scaleLinear()
-                    .domain([0, 1])
-                    .range([0, 1]);
+                    .domain([0, d3.max(data,(d)=>d.count)])
+                    .range([0, .7]);
 
                 data.forEach(d =>{
 
@@ -610,7 +606,7 @@
                         'type': 'Feature',
                         "properties": {
                             'color':"#ee2d3e",
-                            'value': parseFloat(d.value) +0.1
+                            'value': linear(d.count) +0.1
                         },
                         'geometry': {
                             'type': 'Polygon',
@@ -652,7 +648,7 @@
             load_od_day(){
                 this.$http.get('query',{
                     params:{
-                        table: `'2017-05-01' where start_geo = 'w7w3x1'`
+                        table: `od_20170501 where start_geo = 'w7w3x1'`
                       }}).then((res) => {
                     console.log(res.body)
                 });
@@ -698,8 +694,10 @@
                 deep:true
             },
             '$store.state.date_state':{
-                handler(date){
-                    this.date = date;
+                handler(state){
+                    this.od_date = 'od_'+state.date.replace(/-/g,'');
+                    //console.log(state.date);
+                    this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'none');
                 },
                 deep:true
             }
