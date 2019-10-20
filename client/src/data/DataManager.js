@@ -1,27 +1,30 @@
-import axios from 'axios';
-import qs from 'qs'
+import axios from "axios";
+import qs from "qs";
 export default class DataManager {
-    static getLineChartData(data){
-        return axios.post('http://127.0.0.1:3000/basic_line',qs.stringify(data), {
-            'header': {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-    }
-    static getGeoStartData(){
-      return axios.get('http://127.0.0.1:3000/query')
-    }
-    static getHeatmapData(){
-        return axios.get('http://127.0.0.1:3000/test')
-    }
-    static getWeather(){
-        return axios.get('http://localhost:3000/weather',{
-            'header': {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-    }
-    /*
+  static getLineChartData(data) {
+    return axios.post("http://127.0.0.1:3000/basic_line", qs.stringify(data), {
+      header: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+  }
+  static getVectorData(path) {
+    return axios.get(path);
+  }
+  static getGeoStartData() {
+    return axios.get("http://127.0.0.1:3000/query");
+  }
+  static getHeatmapData() {
+    return axios.get("http://127.0.0.1:3000/test");
+  }
+  static getWeather() {
+    return axios.get("http://localhost:3000/weather", {
+      header: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+  }
+  /*
     static getTestData(){
         let data = JSON.stringify({
             'dataName': dataName,
