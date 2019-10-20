@@ -96,7 +96,14 @@
       <h5> DATE </h5>
       <div class="line-separator-2"></div>
     </div>
-    <DatePicker type="date" placeholder="Select date" style="padding: 10px; width: 150px" placement="right-end"></DatePicker>
+    <DatePicker
+      :value="start_date"
+      type="date"
+      placeholder="选择日期"
+      style="padding: 10px; width: 150px"
+      placement="right-end"
+      @on-change="date_update"
+    ></DatePicker>
 
     <div class="funcbar_warp_header">
       <h5> WEATHER </h5>
@@ -122,6 +129,7 @@
         name: 'page_funtionbar',
         data(){
             return {
+                start_date:'2017-05-01',
                 config: {
                     checkedNames:['0'],
                     //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
@@ -201,6 +209,9 @@
                 } else {
 
                 }
+            },
+            date_update(date){
+                this.$store.commit('date_state',{date:date});
             }
         },
         mounted(){

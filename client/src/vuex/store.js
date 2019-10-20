@@ -10,6 +10,8 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   // 定义状态
   state: {
+    date_state:{
+    },
     poi_state:{
     },
     operater_state:{

@@ -32,7 +32,8 @@
         name: "AppMap",
         data() {
             return {
-                map: null
+                map: null,
+                date:'2019-05-01'
             }
         },
         created() {
@@ -42,10 +43,9 @@
         mounted() {
             this.map_config();
             this.grid_draw();
-            this.poi_geohash();
             // this.od_geohash_init();
-            this.gird_click();
-            //this.load_district();
+            // this.gird_click();
+            this.load_od_day();
         },
         methods: {
 
@@ -540,14 +540,16 @@
                         "features": features_polygon
                     });
 
-                    // this.$http.get('query',{
-                    //     params:{
-                    //         // table:"odcount where start_geo ='"+curr_geohash+"'"
-                    //         table: `odcount where start_geo = '${curr_geohash}'`
-                    //     }}).then((res) => {
-                    //     this.od_geohash_update(res.body);
-                    //     //console.log(res.body)
-                    // });
+                    this.$http.get('query',{
+                        params:{
+                            // table:"odcount where start_geo ='"+curr_geohash+"'"
+                            // table: `odcount where start_geo = '${curr_geohash}'`
+                            table: "`${this}` where start_geo = 'w7w3x1'"
+
+                        }}).then((res) => {
+                      this.od_geohash_update(res.body);
+                       //console.log(res.body)
+                    });
                 });
             },
             od_geohash_init(){
@@ -591,15 +593,12 @@
 
                 let color_scale = ["#23D561","#9CD523","#F1E229","#FFBF3A","#FB8C00","#FF5252"];
 
-                let a = rgb(66,251,75);
-                let b = rgb(255,0,7);
-                let color = interpolate(a,b);
 
-                let threshold=scaleThreshold()
+                let threshold=d3.scaleThreshold()
                     .domain([.1,.2,.3,.5,.8])
                     .range(color_scale);
 
-                let linear = scaleLinear()
+                let linear = d3.scaleLinear()
                     .domain([0, 1])
                     .range([0, 1]);
 
@@ -632,248 +631,11 @@
 
             },
 
-
-            //--------------施工现场！！！！-----------------------------//
-            load_all_order() {
-                this.$http.get('query',{
-                    params:{
-                        table:'end_geohash'
-                    }}).then((res) => {
-                    this.geohash_draw(res.body);
-                    //console.log(res.body);
-                });
-            },
-            geohash_draw(data){
-
-                let self = this;
-                let feature_points = [];
-                let features_polygon = [];
-
-                let color_scale = ["#23D561","#9CD523","#F1E229","#FFBF3A","#FB8C00","#FF5252"];
-
-                let a = rgb(66,251,75);
-                let b = rgb(255,0,7);
-                let color = interpolate(a,b);
-
-                let threshold=scaleThreshold()
-                    .domain([.1,.2,.3,.5,.8])
-                    .range(color_scale);
-
-                let linear = scaleLinear()
-                    .domain([0, 1])
-                    .range([0, 1]);
-
-                //let size = 50;
-
-                console.log(color(linear(0.5)));
-
-                /*let pulsingDot = {
-                    width: size,
-                    height: size,
-                    data: new Uint8Array(size * size * 4),
-
-                    onAdd: function() {
-                        let canvas = document.createElement('canvas');
-                        canvas.width = this.width;
-                        canvas.height = this.height;
-                        this.context = canvas.getContext('2d');
-                    },
-
-                    render: function() {
-                        let duration = 1000;
-                        let t = (performance.now() % duration) / duration;
-
-                        let radius = size / 2 * 0.3;
-                        let outerRadius = size / 2 * 0.7 * t + radius;
-                        let context = this.context;
-
-                        // draw outer circle
-                        context.clearRect(0, 0, this.width, this.height);
-                        context.beginPath();
-                        context.arc(this.width / 2, this.height / 2, outerRadius, 0, Math.PI * 2);
-                        context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
-                        context.fill();
-
-                        // // draw inner circle
-                        // context.beginPath();
-                        // context.arc(this.width / 2, this.height / 2, radius, 0, Math.PI * 2);
-                        // context.fillStyle = 'rgba(255, 100, 100, 0)';
-                        // context.strokeStyle = 'white';
-                        // context.lineWidth = 0 + 4 * (1 - t);
-                        // context.fill();
-                        // context.stroke();
-
-                        // update this image's data with data from the canvas
-                        this.data = context.getImageData(0, 0, this.width, this.height).data;
-
-                        // keep the map repainting
-                        self.map.triggerRepaint();
-
-                        // return `true` to let the map know that the image was updated
-                        return true;
-                    }
-                };*/
-
-                data.forEach(d =>{
-                    let lnglat = ngeohash.decode();
-                    let bbox = ngeohash.decode_bbox(d.geohash_index);
-                    feature_points.push({
-                        "type": "Feature",
-                        "properties": {
-                            "color": color(linear(d.value)).toString(),
-                            //"opacity":0.5,
-                            "radius":5,
-                            'value':d.value
-                        },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [lnglat.longitude, lnglat.latitude]
-                        }
-                    });
-                    //grid map
-                    features_polygon.push({
-                        'type': 'Feature',
-                        "properties": {
-                            "coordinates": [lnglat.longitude, lnglat.latitude],
-                            'geohash':d.geohash_index,
-                            'color':"#ee2d3e",
-                            'value': parseFloat(d.value) + 0.1
-                        },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [bbox[1],bbox[0]],
-                                [bbox[3],bbox[0]],
-                                [bbox[3],bbox[2]],
-                                [bbox[1],bbox[2]]
-                            ]]
-                        }
-                    });
-                });
-                this.map.on('load',  () =>{
-                    //rotateCamera(0);
-                    //this.map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 2 });
-                    //heatemap
-                    /*this.map.addSource('heatmap_source', {
-                        "type": "geojson",
-                        "data": {
-                            "type": "FeatureCollection",
-                            "features": feature_points
-                        }
-                    });
-                    this.map.addLayer({
-                        "id": "heatmap_layer",
-                        "type": "heatmap",
-                        "layout":{
-                        },
-                        "source": "heatmap_source",
-                        "maxzoom": 14,
-                        "paint": {
-                            "heatmap-weight": [
-                                "interpolate",
-                                ["linear"],
-                                ["get", "value"],
-                                0, 0,
-                                1, 1
-                            ],
-                            "heatmap-intensity": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                8, 0,
-                                14, 1
-                            ],
-                            "heatmap-color": [
-                                "interpolate",
-                                ["linear"],
-                                ["heatmap-density"],
-                                0, "rgb(33,102,172)",
-                                0.2, "rgb(65,105,255)",
-                                0.4, "rgb(75,250,154)",
-                                0.6, "rgb(0,255,43)",
-                                0.8, "rgb(205,205,10)",
-                                1, "rgb(150,10,10)"
-                            ],
-                            "heatmap-radius": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                8, 80,
-                                14, 140
-                            ],
-                            "heatmap-opacity": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                8, 0,
-                                14, 1
-                            ]
-                        }
-                    }, 'waterway-label');*/
-                    this.map.addSource('geohash_polygon_source',{
-                        'type': 'geojson',
-                        'data': {
-                            "type": "FeatureCollection",
-                            "features": features_polygon
-                        }
-                    });
-
-                    this.map.addLayer({
-                        'id': 'geohash_polygon_layer',
-                        'type': 'fill',
-                        'source': 'geohash_polygon_source',
-                        "minzoom":8,
-                        "maxzoom":14,
-                        'layout': {},
-                        'paint': {
-                            'fill-color': ['get','color'],
-                            //'fill-outline-color':'#FFFFFF',
-                            'fill-opacity': ['get','value'],
-                        }
-                    });
-                    // this.map.addSource("geohash_points_source", {
-                    //     "type": "geojson",
-                    //     'data':  {
-                    //         "type": "FeatureCollection",
-                    //         "features": feature_points
-                    //     }
-                    // });
-                    // this.map.addLayer({
-                    //     'id':'geohash_points_layer',
-                    //     'source': 'geohash_points_source',
-                    //     "type": "circle",
-                    //     'layout': {},
-                    //     'paint': {
-                    //         'circle-color': ['get','color'],
-                    //         'circle-opacity': ['get','opacity'],
-                    //         'circle-radius':['get','radius']
-                    //     }
-                    // });
-
-                    this.map.on('mouseenter','geohash_points_layer',()=>{
-                        this.map.getCanvas().style.cursor = 'pointer';
-                    });
-                    this.map.on('mouseleave','geohash_points_layer',()=>{
-                        this.map.getCanvas().style.cursor = '';
-                    });
-                    this.map.on('click','geohash_points_layer',(e)=>{
-                        alert(e.features[0].geometry.coordinates)
-                    });
-                    // this.map.on('mouseenter','geohash_polygon_layer',e =>{
-                    //     this.map.getCanvas().style.cursor = 'pointer';
-                    //     this.map.setFilter('geohash_polygon_hover', ["!=", "od_geohash_day", e.features[0].properties.od_geohash_day]);
-                    // });
-                    //
-                    // this.map.on('mouseleave','geohash_polygon_layer',() =>{
-                    //     this.map.getCanvas().style.cursor = '';
-                    //     this.map.setFilter('geohash_polygon_hover', ['!=', 'od_geohash_day', '']);
-                    // });
-                    //
-                    // this.map.on('click','geohash_polygon_layer',() =>{
-                    //     //alert(e.features[0].properties.value);
-                    // });
-                });
-            },
+            /*----------------------------------------/
+             * Fun - 获取格子geohash POI
+             * @poi_geohash()
+             * @param:geohash
+            /-----------------------------------------*/
             poi_geohash(geohash){
                 this.$http.get('query',{
                     params:{
@@ -884,294 +646,18 @@
                     //console.log(data);
                     this.$store.commit('poi_state',{data:data})
                 });
-                },
-            load_day_order(){
-                this.$http.get('dataset/od_geohash_day/2017-05-01.csv').then((res) => {
-                    let data = nest().key(d=>d.start_geo).entries(res.body.toCSletray());
-                    this.data_day = data;
-                    //console.log(data);
-                    //this.geo_day_draw(data);
-                    //this.geo_day_heatmap(data);
-                    this.order_lines(data);
+            },
+
+            //--------------施工现场！！！！-----------------------------//
+            load_od_day(){
+                this.$http.get('query',{
+                    params:{
+                        table: `'2017-05-01' where start_geo = 'w7w3x1'`
+                      }}).then((res) => {
+                    console.log(res.body)
                 });
             },
-            geo_day_draw(data) {
-                //console.log(data[0]);
-                let test_data = data[0];
-                //let origin_lnglat = ngeohash.decode(data[0].key);
 
-                let feature_points = [];
-
-                // feature_points.push({
-                //     "type": "Feature",
-                //     "properties": {
-                //         // "color": threshold(d.value),
-                //         "color": "#1bff14",
-                //         "opacity": 0.5,
-                //         "radius": 10
-                //     },
-                //     "geometry": {
-                //         "type": "Point",
-                //         "coordinates": [origin_lnglat.longitude, origin_lnglat.latitude]
-                //     }
-                // });
-
-                let color_scale = ["#23D561","#9CD523","#F1E229","#FFBF3A","#FB8C00","#FF5252"];
-
-                let threshold=scaleThreshold()
-                    .domain([10,50,200,1000,10000])
-                    .range(color_scale);
-
-                test_data.values.forEach(d=>{
-
-                    let lnglat = ngeohash.decode(d.start_geo);
-
-                    feature_points.push({
-                        "type": "Feature",
-                        "properties": {
-                            "color": threshold(parseInt(d.count_start_geo)),
-                            "geohash":d.start_geo,
-                            //: "#3f61ff",
-                            "opacity": 0.5,
-                            "radius": 5
-                        },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [lnglat.longitude, lnglat.latitude]
-                        }
-                    });
-                });
-
-                this.map.on('load',()=>{
-
-                    this.map.addSource("geohash_day_source", {
-                        "type": "geojson",
-                        'data': {
-                            "type": "FeatureCollection",
-                            "features": feature_points
-                        }
-                    });
-
-                    this.map.addLayer({
-                        'id': 'geohash_day_layer',
-                        'source': 'geohash_day_source',
-                        "type": "circle",
-                        'layout': {},
-                        'paint': {
-                            'circle-color': ['get', 'color'],
-                            'circle-opacity': ['get', 'opacity'],
-                            'circle-radius': ['get', 'radius']
-                        }
-                    });
-                });
-
-                this.map.on('mouseenter', 'geohash_day_layer', () => {
-                    this.map.getCanvas().style.cursor = 'pointer';
-                });
-
-                this.map.on('mouseleave', 'geohash_day_layer', () => {
-                    this.map.getCanvas().style.cursor = '';
-                });
-
-                this.map.on('click', 'geohash_day_layer', (e) => {
-                    console.log(e.features[0].properties)
-                });
-            },
-            geo_day_heatmap(data){
-
-                let test_data = data[0];
-                let poi_points = [];
-                test_data.values.forEach(d=>{
-
-                    let lnglat = ngeohash.decode(d.start_geo);
-
-                    poi_points.push({
-                        "type": "Feature",
-                        "properties": {
-                            "color": '#4cff3d',
-                            "opacity":0.1,
-                            "radius":2,
-                            "mag":d.count_start_geo
-                        },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [lnglat.longitude, lnglat.latitude]
-                        }
-                    });
-                });
-
-                this.map.on('load',()=>{
-                    //heatemap
-                    this.map.addSource('poi_heatmap_source', {
-                        "type": "geojson",
-                        "data": {
-                            "type": "FeatureCollection",
-                            "features": poi_points
-                        }
-                    });
-                    this.map.addLayer({
-                        "id": "poi_heatmap_layer",
-                        "type": "heatmap",
-                        "layout":{
-                        },
-                        "source": "poi_heatmap_source",
-                        "maxzoom": 12,
-                        "paint": {
-                            // Increase the heatmap weight based on frequency and property magnitude
-                            "heatmap-weight": [
-                                "interpolate",
-                                ["linear"],
-                                ["get", "mag"],
-                                0, 0,
-                                500, 1
-                            ],
-                            // Increase the heatmap color weight weight by zoom level
-                            // heatmap-intensity is a multiplier on top of heatmap-weight
-                            "heatmap-intensity": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                9, 3,
-                                12, 4
-                            ],
-                            // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
-                            // Begin color ramp at 0-stop with a 0-transparancy color
-                            // to create a blur-like effect.
-                            "heatmap-color": [
-                                "interpolate",
-                                ["linear"],
-                                ["heatmap-density"],
-                                0, "rgba(33,102,172,0)",
-                                0.2, "rgb(103,169,207)",
-                                0.4, "rgb(209,229,240)",
-                                0.6, "rgb(253,219,199)",
-                                0.8, "rgb(239,138,98)",
-                                1, "rgb(178,24,43)"
-                            ],
-                            // Adjust the heatmap radius by zoom level
-                            "heatmap-radius": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                9, 10,
-                                12, 50
-                            ],
-                            // Transition from heatmap to circle layer by zoom level
-                            "heatmap-opacity": [
-                                "interpolate",
-                                ["linear"],
-                                ["zoom"],
-                                9, 1,
-                                14, 0
-                            ],
-                        }
-                    });
-                });
-
-            },
-            order_lines(data){
-
-                let data_test = data[200];
-
-                let features_test = [];
-                let features_nodes = [];
-
-                let center = ngeohash.decode(data_test.key);
-                //console.log(center);
-
-                features_nodes.push({
-                    "type": "Feature",
-                    "properties": {
-                        'color': 'rgb(181,74,51)',
-                        "opacity":.8,
-                        "radius":10
-                    },
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [center.longitude, center.latitude]
-                    }
-                });
-
-                data_test.values.forEach(d=>{
-
-                    //console.log(d[Object.keys(d)[5]]);
-
-                    let lngLat = ngeohash.decode(d.dest_geo);
-
-                    features_test.push({
-                        'type': 'Feature',
-                        'properties': {
-                            'color': 'rgb(181,74,51)',
-                            'value':Math.sqrt(d[Object.keys(d)[5]]) * 0.1,
-                        },
-                        'geometry': {
-                            'type': 'LineString',
-                            'coordinates': [
-                                [center.longitude,center.latitude],
-                                [lngLat.longitude,lngLat.latitude]
-                            ]
-                        }
-                    });
-
-                    features_nodes.push({
-                        "type": "Feature",
-                        "properties": {
-                            "color": '#ffeb3d',
-                            "opacity":0.2,
-                            "radius":1,
-                        },
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [lngLat.longitude, lngLat.latitude]
-                        }
-                    });
-                });
-
-                this.map.on('load',  () =>{
-
-
-                    this.map.addSource('lines_source',{
-                        'type': 'geojson',
-                        'data':{
-                            'type': 'FeatureCollection',
-                            features:features_test
-                        }
-                    });
-
-                    this.map.addLayer({
-                        'id': 'lines_layer',
-                        'type': 'line',
-                        'source': 'lines_source',
-                        'paint': {
-                            'line-width': ['get','value'],
-                            'line-color': ['get', 'color']
-                        }
-                    });
-
-                    this.map.addSource("nodes_source", {
-                        "type": "geojson",
-                        'data': {
-                            "type": "FeatureCollection",
-                            "features": features_nodes
-                        }
-                    });
-
-                    this.map.addLayer({
-                        'id': 'nodes_layer',
-                        'source': 'nodes_source',
-                        "type": "circle",
-                        'layout': {},
-                        'paint': {
-                            'circle-color': ['get', 'color'],
-                            'circle-opacity': ['get', 'opacity'],
-                            'circle-radius': ['get', 'radius']
-                        }
-                    });
-
-                });
-
-
-            },
             coordtrans_bdtowgs84(lnglat){
                 let bd09togcj02 = coordtrans.bd09togcj02(lnglat[0], lnglat[1]);
                 return coordtrans.gcj02towgs84(bd09togcj02[0], bd09togcj02[1])
@@ -1208,6 +694,12 @@
                         this.map.getLayer('district_outline_layer')?
                             this.map.removeLayer('district_outline_layer')&this.map.removeSource('district_outline_source'):null;
 
+                },
+                deep:true
+            },
+            '$store.state.date_state':{
+                handler(date){
+                    this.date = date;
                 },
                 deep:true
             }
