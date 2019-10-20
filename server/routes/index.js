@@ -36,13 +36,17 @@ router.get("/poi_data", function(req, res, next) {
 
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  fs.readFile(
-    path.join(__dirname, `../public/dataset/POI/POI.json`),
-    (err, data) => {
-      data = data.toString();
-      res.json(data);
+  var file = path.join(__dirname, "../public/dataset/POI/POI.json"); //文件路径，__dirname为当前运行js文件的目录
+  //var file = 'f:\\nodejs\\data\\test.json'; //也可以用这种方式指定路径
+
+  //读取json文件
+  fs.readFile(file, "utf-8", function(err, data) {
+    if (err) {
+      res.send("文件读取失败");
+    } else {
+      res.send(data);
     }
-  );
+  });
 });
 router.get("/add", function(req, res, next) {
   sql_operation.add(req, res, next);

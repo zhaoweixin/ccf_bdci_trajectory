@@ -1,12 +1,14 @@
 import * as d3 from "d3";
 import DataManager from "../data/DataManager";
-var POIdata = null;
+var poidata = null;
 const POIData = {
   initdata() {
     var POI = function(tsvFile) {
       (async function() {
         const response = await DataManager.getPoiData();
-        console.log(response.data);
+
+        poidata = response.data[0];
+        console.log(poidata);
         // calendardata = data;
         // console.log(calendardata);
       })();
