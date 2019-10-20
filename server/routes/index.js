@@ -62,7 +62,7 @@ router.post('/basic_line', function(req, res, next){
   sql_operation.basic_line(req, res, next)
 });
 
-router.get('/weather', function(req, res, next){
-  sql_operation.weather(req, res, next)
+router.post('/feature_line', function(req, res, next){
+  sql_operation.feature_line(req, res, next)
 })
 module.exports = router;

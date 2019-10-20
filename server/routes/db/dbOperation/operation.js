@@ -135,7 +135,7 @@ module.exports = {
                 }
 
                 if(req.body.config.unit == 'Day' || req.body.config.unit == 'Hour'){
-    
+                    console.log(dataType)
                     dataType.forEach((d,i) => {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
@@ -246,9 +246,19 @@ module.exports = {
             });
         });
     },
-    weather:function(req, res, next){
+    feature_line:function(req, res, next){
+        console.log('select time, * from feature_line')
         pool.getConnection(function(err, connection) {
-            connection.query('select time,rain from tq', function(err, result){
+            /*
+                req.body = {val: '1'}
+            */
+            let sql_dict = {
+                '0': 'rain',
+                '1': 'holiday'
+            }
+            let sql_key = sql_dict[req.body.val]
+            
+            connection.query(`select time,${sql_key} from feature_line`, function(err, result){
                 result = JSON.parse(JSON.stringify(result))
                 if (err) res.send(err);
                 res.setHeader("Access-Control-Allow-Origin", "*");

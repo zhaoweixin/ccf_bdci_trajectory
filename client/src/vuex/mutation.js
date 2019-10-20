@@ -6,9 +6,13 @@ const mutation = {
     map_state(state,payload){
       state.map_state = JSON.parse(JSON.stringify(payload))
     },
-    weather_change_state(state, payload){
-      state.weather_change_state = JSON.parse(JSON.stringify(payload))
-      console.log(state.weather_change_state)
+    feature_change_state(state, payload){
+      state.feature_change_state = JSON.parse(JSON.stringify(payload))
+    },
+    UPDATE_DATA_STORE(state, payload){
+      let name = payload.name,
+        data = payload.data
+      state.DATA_STORE[name] = JSON.parse(JSON.stringify(data))
     }
 };
 export default mutation;

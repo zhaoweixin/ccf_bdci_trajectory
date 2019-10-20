@@ -59,20 +59,19 @@
           </div>
         </div>
 
-        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
-      </div>
-    </div>
-    <div class="funcbar_warp_header">
-      <h5> WEATHER </h5>
-      <div class="line-separator-2"></div>
-    </div>
-    <div class="bg">
-      <div>
         <div class="chiller_cb">
-          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
+          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="feature_config.checkedNames">
           <label for="weatherCheckbox1">天气</label>
           <span></span>
         </div>
+
+        <div class="chiller_cb">
+          <input id="weatherCheckbox2" type="checkbox" value="1" v-model="feature_config.checkedNames">
+          <label for="weatherCheckbox2">节假日</label>
+          <span></span>
+        </div>
+
+        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
       </div>
     </div>
 
@@ -140,13 +139,13 @@
                     checkedNames:['gird_layer'],
                     //0 地图网格图层  1 地图热力图层 3 POI数据图层 3 行政区划图层 4 公交路网图层
                 },
-                weather_config:{
+                feature_config:{
                   checkedNames:[],
                   status: '3' // update all
                   // 0 天气
                 },
                 layer_config:{},
-                his_weather_config:{
+                his_feature_config:{
                   checkedNames:[],
                   status: '3'
                 }
@@ -174,7 +173,7 @@
                 },
                 deep: true
             },
-            weather_config:{
+            feature_config:{
               handler(newValue, oldValue){
                 let res = {
                   'status': '3',
@@ -184,20 +183,20 @@
                   }
                 }
                 newValue.checkedNames.forEach((d,i) => {
-                  if(this.his_weather_config.checkedNames.indexOf(newValue.checkedNames[i]) == -1){
+                  if(this.his_feature_config.checkedNames.indexOf(newValue.checkedNames[i]) == -1){
                     res.config.add.push(newValue.checkedNames[i])
                   }
                 })
 
-                this.his_weather_config.checkedNames.forEach((d,i) => {
-                  if(newValue.checkedNames.indexOf(this.his_weather_config.checkedNames[i]) == -1){
-                    res.config.remove.push(this.his_weather_config.checkedNames[i])
+                this.his_feature_config.checkedNames.forEach((d,i) => {
+                  if(newValue.checkedNames.indexOf(this.his_feature_config.checkedNames[i]) == -1){
+                    res.config.remove.push(this.his_feature_config.checkedNames[i])
                   }//旧数组中不存在该元素，需添加
                 })
                 //新数组中存在该元素，需
                 //console.log(newValue, oldValue)
-                this.his_weather_config = JSON.parse(JSON.stringify(newValue))
-                this.$store.commit('weather_change_state', newValue)
+                this.his_feature_config = JSON.parse(JSON.stringify(newValue))
+                this.$store.commit('feature_change_state', newValue)
               },
               deep: true
             }
@@ -209,7 +208,7 @@
                 if(JSON.stringify(this.$store.state.operater_state) !== JSON.stringify(this.config)){
                     this.$store.commit('operater_state', this.config)
                 } else {
-
+                  
                 }
             }
         },
