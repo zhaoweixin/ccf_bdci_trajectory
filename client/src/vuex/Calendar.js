@@ -22,6 +22,16 @@ var svg = null;
 var formatPercent = d3.format(".1%"); //定义一个百分数格式函数，规定百分数精确度小数点后1位
 var rect = null;
 var events = null;
+var colorScale = d3
+  .scaleQuantile()
+  .domain([
+    0,
+    8,
+    d3.max(d3.range(0, 8), function(d) {
+      return d;
+    })
+  ])
+  .range(colors);
 const calendar = {
   init_heatmap() {
     var FullWidth = document.getElementById("heatmap").clientWidth;
@@ -58,7 +68,7 @@ const calendar = {
     svg
       .append("text")
       //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
-      .attr("transform", "translate(-5," + cellSize + ")rotate(-90)")
+      .attr("transform", "translate(5," + cellSize + ")rotate(-90)")
       .style("font-family", "sans-serif")
       .style("font-size", 12)
       .style("text-anchor", "middle")
@@ -175,18 +185,33 @@ const calendar = {
       .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
       .attr("d", pathMonth);
     initdata();
+    //添加图例
+    var legend = svg
+      .append("g")
+      .attr("fill", "none")
+      .attr("stroke", "#000");
+    var legendrects = legend
+      .selectAll("rect")
+      .data(d3.range(0, 8))
+      .enter()
+      .append("rect")
+      .attr("width", cellSize / 1.2)
+      .attr("height", cellSize / 5)
+      .attr("x", function(d) {
+        return (
+          d3.timeWeek.count(d3.timeYear(nowday[now - 1]), nowday[now - 1]) *
+          cellSize *
+          0.58
+        );
+      })
+      .attr("y", function(d) {
+        return ((d - 1) * cellSize) / 5;
+      })
+      .attr("fill", function(d) {
+        return colorScale(d);
+      });
   },
   adddata(data) {
-    var colorScale = d3
-      .scaleQuantile()
-      .domain([
-        0,
-        8,
-        d3.max(data, function(d) {
-          return d.value;
-        })
-      ])
-      .range(colors);
     var index = 0;
     //test data
     var testcolor = new Array();
@@ -204,11 +229,6 @@ const calendar = {
         if (index < data.length) return data[index++]["date"] + ":" + (d - 1);
         return d;
       });
-
-    // rect.selectAll("rect").attr("fill", function(d) {
-    //   console.log(d);
-    //   return colorScale(index++);
-    // });
     var indexs = 0;
     rect.selectAll("rect").attr("fill", function(d) {
       if (indexs < data.length) return colorScale(data[indexs++].value);
@@ -222,10 +242,7 @@ const calendar = {
         .select("title")
         .text();
       newValue = newValue.split(":");
-      console.log(store);
       store.commit("Calendar_change_state", newValue);
-      // console.log(x.split(":"));
-      // alert("s");
     });
   }
 };
