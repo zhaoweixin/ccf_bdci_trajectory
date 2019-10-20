@@ -135,7 +135,6 @@ module.exports = {
                 }
 
                 if(req.body.config.unit == 'Day' || req.body.config.unit == 'Hour'){
-                    console.log(dataType)
                     dataType.forEach((d,i) => {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
