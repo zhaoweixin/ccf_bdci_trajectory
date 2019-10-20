@@ -16,6 +16,7 @@
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import calendar from "@/vuex/Calendar.js"
+  import POIbar from "@/vuex/POIbar.js"
   import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
@@ -40,7 +41,11 @@
         lc_legend_text: undefined, // legend text
         lc_pathcount: 0, //line path count
         lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
-        last_axis_type: null
+        last_axis_type: null,
+        his_feature_config:{
+          checkedNames: [],
+          status: '3'
+        }
       }
     },
     components: {
@@ -49,16 +54,16 @@
       operater_state () {
         return this.$store.state.operater_state
       },
-      weather_change_state () {
-        return this.$store.state.weather_change_state
+      feature_change_state () {
+        return this.$store.state.feature_change_state
       }
     },
     watch:{
       operater_state: function(val, oldVal){
         this.handle_operater_state()
       },
-      weather_change_state (val, oldVal) {
-        this.handle_weather_change_state()
+      feature_change_state (val, oldVal) {
+        this.handle_feature_change_state()
       }
     },
     methods:{
@@ -205,19 +210,56 @@
       },
       handle_linechart(opt){
         let that = this
+
         if(opt.status == '0'){
           //init
           let req = {
             'legend': opt.config.legend,
             'unit': opt.config.unit
-          }
-          DataManager.getLineChartData(opt).then((res) => {
-            let info = {
+          },
+          info = {
               'status': 0,
-              'data': res.data,
-              'config': opt.config
+              'data': [],
+              'config': {
+                'legend': [],
+                'legend_val': [],
+                'unit': opt.config.unit
+              }
+          },//draw
+          requestInfo = {
+            'config': {
+              'legend': [],
+              'legend_val':[],
+              'unit': opt.config.unit
+            },
+            'status': opt.status
+          }//request
+
+          opt.config.legend_val.forEach((d,i) => {
+            let dataName = opt.config.unit + d
+            if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+              info.data.push(that.$store.state.DATA_STORE[dataName])
+              info.config.legend.push(opt.config.legend[i])
+              info.config.legend_val.push(d)
+            } else {
+              requestInfo.config.legend.push(opt.config.legend[i])
+              requestInfo.config.legend_val.push(d)
             }
-            
+          })
+
+          DataManager.getLineChartData(requestInfo).then((res) => {
+            requestInfo.config.legend_val.forEach((d,i) => {
+              let dataName = requestInfo.config.unit + d
+              if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
+              }
+            })
+            requestInfo.config.legend_val.forEach((v,j) => {
+              info.config.legend.push(requestInfo.config.legend[j])
+              info.config.legend_val.push(v)
+              info.data.push(res.data[j])
+            })
+
             that.draw_linechart(info)
           }).catch(err => {
             if(err){
@@ -225,6 +267,9 @@
               return;
             }
           })
+
+
+
         } else if(opt.status == '1'){
           //add
         } else if(opt.status == '2'){
@@ -234,27 +279,68 @@
           let req = {
             'legend': opt.config.legend_val,
             'unit': opt.config.unit
-          }
-          DataManager.getLineChartData(opt).then((res) => {
-            //console.log(res.data)
-            let info = {
+          },
+          info = {
               'status': opt.status,
-              'data': res.data,
-              'config': opt.config
-            }
-            that.draw_linechart(info)
-          }).catch(err => {
-            if(err){
-              console.log(err)
-              return;
+              'data': [],
+              'config': {
+                'legend': [],
+                'legend_val': [],
+                'unit': opt.config.unit
+              }
+          },//draw
+          requestInfo = {
+            'config': {
+              'legend': [],
+              'legend_val':[],
+              'unit': opt.config.unit
+            },
+            'status': opt.status
+          }//request
+
+          opt.config.legend_val.forEach((d,i) => {
+            let dataName = opt.config.unit + d
+            if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+              info.data.push(that.$store.state.DATA_STORE[dataName])
+              info.config.legend.push(opt.config.legend[i])
+              info.config.legend_val.push(d)
+            } else {
+              requestInfo.config.legend.push(opt.config.legend[i])
+              requestInfo.config.legend_val.push(d)
             }
           })
 
+          if(requestInfo.config.legend.length != 0){
+            DataManager.getLineChartData(requestInfo).then((res) => {
+            
+              requestInfo.config.legend_val.forEach((d,i) => {
+                let dataName = requestInfo.config.unit + d
+                if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                  that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
+                }
+              })
+
+              requestInfo.config.legend_val.forEach((v,j) => {
+                info.config.legend.push(requestInfo.config.legend[j])
+                info.config.legend_val.push(v)
+                info.data.push(res.data[j])
+              })
+              that.draw_linechart(info)
+            }).catch(err => {
+              if(err){
+                console.log(err)
+                return;
+              }
+            })
+          }else if(requestInfo.config.legend.length == 0){
+            that.draw_linechart(info)
+          }
         }
       },
       draw_linechart(opt){
         let that = this
         this.last_axis_type = opt.config.unit
+
         if(opt.status == 0){
           let that = this
           this.lc_FullWidth = document.getElementById('line').clientWidth,
@@ -468,23 +554,23 @@
               xScaleMin = 0,
               xScaleMax = 1
 
-            if(typeof(opt['data'][i].xScale) == 'object'){
-                let len = opt['data'][i].xScale.length
-                xScaleMin = new Date(opt['data'][i].xScale[0])
-                xScaleMax = new Date(opt['data'][i].xScale[len-1])
-              } else {
-                xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
-                xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
-              }
-
             if(opt.data[i].xLabel == 'date'){
+              let len = opt['data'][i].xScale.length
+              xScaleMin = new Date(opt['data'][i].xScale[0])
+              xScaleMax = new Date(opt['data'][i].xScale[len-1])
+
               for(let j=0; j<opt.data[i].values.length; j++){
                 opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
               }
               for(let j=0; j<opt.data[i].xScale.length; j++){
                 opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
               }
+
+            } else {
+              xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+              xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
             }
+
             //calculate line generator
             if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
               let unit = opt.config.unit
@@ -643,13 +729,16 @@
               d3.select('#line_chart_g').append("text")
                 .attr('id', "lt_label")
                 .attr('x', () => {
+                  return +that.lc_line_generator[unit].xScaleLine(d.x) - 10
                   if(typeof(d.x) == 'object'){
                     return that.lc_line_generator[unit].xScaleLine(d.x)
                   } else {
-                    return that.lc_line_generator[unit].yScaleLine(d.x) - 30
+                    
                   }
                 })
-                .attr('y', that.lc_yScaleLine(d.y) - 15)
+                .attr('y', () => {
+                  return +that.lc_line_generator[unit].yScaleLine(d.y) - 10
+                })
                 .attr('fill', 'white')
                 .text(function() {
                     if(typeof(d) != 'object'){
@@ -664,7 +753,6 @@
                       return tex;
                     }
                   });
-
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
@@ -792,7 +880,7 @@
                 return color(linear(dataset[i]));
             })
       },
-      handle_weather_change_state(){
+      handle_feature_change_state(){
         // 前提：在有线图All的基础上进行添加色块
         // 收集基本信息 存储参数的变量
         // 获取已经绘制线图的类型 
@@ -805,54 +893,122 @@
         action_handle()
         function action_handle(){
           //仅对坐标轴为All时绘制天气Rect
-          if(that.last_axis_type == 'All' && that.weather_change_state.checkedNames.length !=0){
-            DataManager.getWeather().then((res) => {
-              addWeatherRect(res.data)
-            }).catch(err => {
-              if(err){
-                console.log(err)
-                return;
-              }
-            })
-          } else {
-            removeWeatherRect()
+          //计算增加或者删除块
+          let obj = {
+            'status':3,
+            'config': {
+              'add': [],
+              'remove': []
+            }
           }
+
+          that.feature_change_state.checkedNames.forEach((d,i) => {
+            if(that.his_feature_config.checkedNames.indexOf(d) == -1){
+              obj.config.add.push(d)
+            }
+          })
+
+          that.his_feature_config.checkedNames.forEach((d,i) => {
+            if(that.feature_change_state.checkedNames.indexOf(d) == -1){
+              obj.config.remove.push(d)
+            }
+          })
+
+          that.his_feature_config = JSON.parse(JSON.stringify(that.feature_change_state))
+
+          if(that.last_axis_type == 'All'){
+            if(obj.config.add.length != 0){
+              // request data
+              // draw data
+              let dataName = 'getFeature' + obj.config.add[0]
+              if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                addFeatureRect(JSON.parse(JSON.stringify(that.$store.state.DATA_STORE[dataName])))
+              } else {
+                  DataManager.getFeature({'val': obj.config.add[0]}).then((res) => {
+                    let _data = {
+                      'type': obj.config.add[0],
+                      'data': res.data
+                    }
+                    that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': _data})
+                    addFeatureRect(_data)
+                  }).catch(err => {
+                    if(err){
+                      console.log(err)
+                      return ;
+                    }
+                  })
+              }
+            } else if(obj.config.remove.length != 0){
+              removeFeatureRect({'type': obj.config.remove[0]})
+              //removeFeatureRect()
+            }
+          }
+
         }
-        function removeWeatherRect(){
-          d3.selectAll('.weatherRect_disselect').data([]).exit().transition().duration(300).remove()
-          d3.selectAll('.legend_weather_text').remove()
+        function removeFeatureRect(config){
+          let _rectclass = '.rect-' + config.type
+          if(config.type == 0){
+            d3.selectAll('.weatherRect_disselect').data([]).exit().transition().duration(300).remove()
+            d3.selectAll('.legendtext0').remove()
+            d3.selectAll('.legendrect0').remove()
+          } else {
+            d3.selectAll('.legendtext1').remove()
+            d3.selectAll('.legendrect1').remove()
+          }
+          d3.selectAll(_rectclass).remove()
         }
-        function addWeatherRect(weather){
+        function addFeatureRect(config){
+          
           let xScaleAxis = that.lc_line_generator['All']['xScaleAxis'],
-            yScaleAxis = that.lc_line_generator['All']['yScaleAxis']
-            //width = xScale / 2
+            yScaleAxis = that.lc_line_generator['All']['yScaleAxis'],
+            feature = config.data
+            // width = xScale / 2
             // height = lc_height
-            let half_rect_interval = (xScaleAxis(new Date(weather[1].time)) - xScaleAxis(new Date(weather[0].time))) / 2,
+            let half_rect_interval = (xScaleAxis(new Date(feature[1].time)) - xScaleAxis(new Date(feature[0].time))) / 2,
               g = that.lc_svg.append('g')
                   .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")")
-                  .attr('id', 'weatherRect')
+                  .attr('id', 'featureRect')
             
-            for(let i=0;i<weather.length;i++){
-              weather[i]['Time'] = new Date(weather[i].time)
-              weather[i]['x'] = xScaleAxis(weather[i]['Time']) - half_rect_interval
-              weather[i]['y'] = 0
-              weather[i]['width'] = half_rect_interval * 2
-              weather[i]['height'] = that.lc_height
+            for(let i=0;i<feature.length;i++){
+              feature[i]['Time'] = new Date(feature[i].time)
+              feature[i]['x'] = xScaleAxis(feature[i]['Time']) - half_rect_interval
+              feature[i]['y'] = 0
+              feature[i]['width'] = half_rect_interval * 2
+              feature[i]['height'] = that.lc_height
             }
             
             //construct data
             //draw bar
             g.selectAll('.xRect')
-              .data(weather)
+              .data(feature)
               .enter()
               .append('rect')
               .attr('x', (d,i) => {return d.x})
               .attr('y', (d,i) => {return d.y})
               .attr('width', (d,i) => {return d.width})
-              .attr('height', (d,i) => {return d.height})
+              .attr('height', (d,i) => {
+                if(config.type == 0){
+                  //weather
+                  return d.height
+                } else {
+                  return d.width
+                }
+                })
               .attr('date', (d,i) => {return d.time})
-              .attr('class', 'weatherRect_disselect')
-              .style('opacity', (d,i) => {if(d.rain == 1){return 0.4} else return 0})
+              .attr('class', (d,i) => {
+                return config.type == 0 ? 'weatherRect_disselect' + ' rect-' + config.type :  ' rect-' + config.type
+                })
+              .style('opacity', (d,i) => {
+                if(config.type == 0){
+                  return d.rain == 1 ? 0.4 : 0
+                } else {
+                  if(d.holiday == '0'){
+                    return 0
+                  } else {
+                    return 1
+                  }
+                }
+                })
               .on('mouseover', rect_handleMouseOver)
               .on('mouseout', rect_handleMouseOut)
             
@@ -861,14 +1017,24 @@
               .data([0,1])
               .enter()
               .append('rect')
-              .attr('x', function(d, i) { return that.lc_width * 1.02 + 10 })
+              .attr('x', function(d, i) { 
+                if(config.type == 0){
+                  //weather
+                  return that.lc_width * 1.02 + 10 
+                } else {
+                  return that.lc_width * 1.10 + 10 
+                }
+                })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 30})
               .attr('width', 10)
               .attr('height', 10)
-              .text((d,i) => {if(i == 0){return '没雨'} else {return '有雨'}})
               .style('opacity', 0)
               .attr('class', (d,i) => {
-                return 'legend_weather' + ' legend_weather_rect' + i
+                if(config.type == 0){
+                  return 'legend_feature_weather_rect' + i + ' legendrect0'
+                } else {
+                  return 'legend_feature_holi_rect' + i + ' legendrect1'
+                }
               })
               .transition()
               .duration(300)
@@ -878,11 +1044,31 @@
               .data([0,1])
               .enter()
               .append('text')
-              .attr('x', function(d, i) { return that.lc_width * 1.02 + 40 })
+              .attr('x', function(d, i) { 
+                if(config.type == 0){
+                  //weather
+                  return that.lc_width * 1.02 + 40 
+                } else {
+                  return that.lc_width * 1.10 + 40
+                }
+                })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 39})
-              .text((d,i) => {if(i == 0){return '没雨'} else {return '有雨'}})
+              .text((d,i) => {
+                if(config.type == 0){
+                  //weather
+                  return i == 0 ? '无雨' : '有雨'
+                } else {
+                  return i == 0 ? '工作' : '周末'
+                }
+                })
               .style("text-anchor", "middle")
-              .attr('class', 'legend_weather_text')
+              .attr('class', (d,i) => {
+                if(config.type == 0){
+                  return 'legend_feature_text_' + i + ' legendtext0'
+                } else {
+                  return 'legend_feature_text_' + i + ' legendtext1'
+                }
+              })
 
         
           function rect_handleMouseOver(d, i){
@@ -891,7 +1077,7 @@
               x = coordinates[0],
               y = coordinates[1]
             
-            d3.select('#weatherRect').append('text').attr('id', 'recttext')
+            d3.select('#featureRect').append('text').attr('id', 'recttext')
               .attr('x', x)
               .attr('y', y)
               .attr('fill', 'white')
@@ -907,28 +1093,30 @@
           
         }
 
-        function getWeatherRectStatus(){}
+        function getFeatureRectStatus(){}
       }
       
     },
     mounted(){
+
+      POIbar.initdata();
       // this.init_heatmap() //previous
-    //    calendar.init_heatmap()
-    //    var heatmapChart = function(tsvFile) {
-    //   (async function() {
-    //     const response = await DataManager.getHeatmapData();
-    //     let data = [];
-    //     response.data.forEach((d, i) => {
-    //       data.push({
-    //         day: +d.day,
-    //         hour: +d.hour,
-    //         value: +d.value
-    //       })
-    //     })
-    //     calendar.adddata(data);
-    //   })()
-    //   }
-    //  heatmapChart("http://localhost:3000/test")
+       calendar.init_heatmap()
+       var heatmapChart = function(tsvFile) {
+      (async function() {
+        const response = await DataManager.getHeatmapData();
+        let data = [];
+        response.data.forEach((d, i) => {
+          data.push({
+            day: +d.day,
+            hour: +d.hour,
+            value: +d.value
+          })
+        })
+        calendar.adddata(data);
+      })()
+      }
+     heatmapChart("http://localhost:3000/test")
     //   calendar.adddata()
     //   this.init_piechart()
       this.handle_linechart({
@@ -1025,22 +1213,54 @@ text.axis-worktime {
 .weatherRect_disselect {
   z-index: -1;
   stroke: none;
+  fill: grey;
   stroke-width: 0;
 }
 
-.legend_weather_rect0{
-  stroke: black;
+.holiRect{
+  z-index: -1;
+  stroke: none;
+  fill: yellow;
+  stroke-width: 0;
+}
+
+.legend_feature_weather_rect0{
+  stroke: grey;
   fill: none;
   stroke-width: 1px;
 }
 
-.legend_weather_rect1{
-  stroke: black;
+.legend_feature_weather_rect1{
+  stroke: grey;
+  fill: grey;
   stroke-width: 1px;
 }
-.legend_weather_text{
+
+.legend_feature_holi_rect0{
+  stroke: yellow;
+  fill: none;
+  stroke-width: 1px;
+}
+
+.legend_feature_holi_rect1{
+  stroke: yellow;
+  fill: yellow;
+  stroke-width: 1px;
+}
+
+.legend_feature_text_0{
   fill: rgb(170, 170, 170);
   font-family: initial;
   font-size: 12px;
+}
+
+.legend_feature_text_1{
+  fill: rgb(170, 170, 170);
+  font-family: initial;
+  font-size: 12px;
+}
+
+.rect-1{
+  fill: yellow;
 }
 </style>
