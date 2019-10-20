@@ -16,6 +16,7 @@
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import calendar from "@/vuex/Calendar.js"
+  import POIbar from "@/vuex/POIbar.js"
   import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
@@ -912,6 +913,8 @@
       
     },
     mounted(){
+
+      POIbar.initdata();
       // this.init_heatmap() //previous
        calendar.init_heatmap()
       

@@ -8,36 +8,36 @@
 </template>
 
 <script>
-  import AppMap from './components/AppMap'
-  import page_header from './components/page_header'
-  import page_functionbar from './components/page_functionbar'
-  import page_functionbar2 from './components/page_functionbar2'
-  export default {
-    name: 'app',
-    components: {
-      AppMap,
-      page_header,
-      page_functionbar,
-      page_functionbar2
-    }
+import AppMap from "./components/AppMap";
+import page_header from "./components/page_header";
+import page_functionbar from "./components/page_functionbar";
+import page_functionbar2 from "./components/page_functionbar2";
+export default {
+  name: "app",
+  components: {
+    AppMap,
+    page_header,
+    page_functionbar,
+    page_functionbar2
   }
+};
 </script>
 
 <style>
+html,
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
 
-  html,body{
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-  }
-
-  #app {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-align: center;
-    background-color: #191a1a;
-  }
+#app {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  background-color: #191a1a;
+}
 </style>
