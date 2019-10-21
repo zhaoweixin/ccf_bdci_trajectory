@@ -24,11 +24,7 @@ const store = new Vuex.Store({
     },
     map_state: {},
     calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
-<<<<<<< HEAD
     DATA_STORE: {}
-=======
-    DATA_STORE:{}
->>>>>>> 3cc515cd50c7a4d9674bf86fe70f7d5fc493cc4e
   },
   mutations: mutation,
   actions: action,
