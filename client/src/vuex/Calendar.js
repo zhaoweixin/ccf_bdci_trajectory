@@ -5,32 +5,22 @@ var calendardata = null;
 var nowday = new Array(); //存储日历图日期数据
 var cellSize = null,
   colors = [
-    "#a50026",
-    "#d73027",
-    "#f46d43",
-    "#fdae61",
-    "#fee08b",
-    "#ffffbf",
-    "#d9ef8b",
-    "#a6d96a",
-    "#66bd63",
-    "#1a9850",
-    "#006837"
+    "#efac0e",
+    "#efe102",
+    "#cff9bb",
+    "#c2ef39",
+    "#02f48b",
+    "#0aeafa",
+    "#348def",
+    "#6067ea"
   ];
-// colors = ["#99C779", "#90BA72", "#86AD6A", "#688752", "#37472C", "#2D3B24"];
 var svg = null;
 var formatPercent = d3.format(".1%"); //定义一个百分数格式函数，规定百分数精确度小数点后1位
 var rect = null;
 var events = null;
 var colorScale = d3
   .scaleQuantile()
-  .domain([
-    0,
-    8,
-    d3.max(d3.range(0, 8), function(d) {
-      return d;
-    })
-  ])
+  .domain(d3.range(0, 8))
   .range(colors);
 const calendar = {
   init_heatmap() {
@@ -46,11 +36,9 @@ const calendar = {
       height = FullHeight - margin.top - margin.bottom;
     cellSize = Math.floor(height / 6) - 2;
     // console.log(cellSize);
-    var legendElementWidth = cellSize,
-      buckets = 9,
-      // alternatively colorbrewer.YlGnBu[9]
-      days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-      datasets = ["http://localhost:3000/test", "http://localhost:3000/test"];
+
+    // alternatively colorbrewer.YlGnBu[9]
+    var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     svg = d3
       .select("#heatmap_chart")
       .selectAll("svg")
@@ -112,65 +100,7 @@ const calendar = {
       .text(function(d) {
         return d;
       });
-    // 定义每个年份中代表天的小方格
-    rect = svg
-      .append("g")
-      .attr("fill", "none")
-      .attr("stroke", "#ccc")
-      .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
-      .selectAll("rect")
-      //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
-      .data(function(d) {
-        return d3.timeDays(new Date(d, 4, 1), new Date(d, 9, 1));
-      })
-      .enter()
-      .append("g")
-      .attr("width", cellSize / 1.2)
-      .attr("height", cellSize)
-      // 返回一年有多少个周，确定一组小方格的横向位置
-      .attr("x", function(d) {
-        return (d3.timeWeek.count(d3.timeYear(d), d) * cellSize) / 1.2;
-      })
-      // 返回天，确定一组小方格的纵向位置
-      .attr("y", function(d) {
-        return d.getDay() * cellSize;
-      });
-    // 定义当前小方格上对应的日期的格式
 
-    var index = 0;
-    var i = -1;
-    var now = -1;
-    var j = -1;
-    var now2 = -1;
-    events = rect
-      .selectAll("rect")
-      .data(function(d) {
-        nowday[index++] = d;
-        return d3.range(1, 6);
-      })
-      .enter()
-      .append("rect")
-      .attr("width", cellSize / 1.2)
-      .attr("height", cellSize / 6)
-      .attr("x", function(d) {
-        ++i;
-        if (i % 5 == 0) {
-          now++;
-        }
-        return (
-          (d3.timeWeek.count(d3.timeYear(nowday[now]), nowday[now]) *
-            cellSize) /
-          1.2
-        );
-      })
-      .attr("y", function(d) {
-        j += 1;
-        if (j % 5 == 0) {
-          now2++;
-        }
-        return nowday[now2].getDay() * cellSize + ((d - 1) * cellSize) / 6;
-      });
-    rect.datum(d3.timeFormat("%Y-%m-%d"));
     // 勾勒月份的分割线
     svg
       .append("g")
@@ -184,39 +114,14 @@ const calendar = {
       .append("path")
       .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
       .attr("d", pathMonth);
-    initdata();
-    //添加图例
-    var legend = svg
-      .append("g")
-      .attr("fill", "none")
-      .attr("stroke", "#000");
-    var legendrects = legend
-      .selectAll("rect")
-      .data(d3.range(0, 8))
-      .enter()
-      .append("rect")
-      .attr("width", cellSize / 1.2)
-      .attr("height", cellSize / 6)
-      .attr("x", function(d) {
-        return (
-          d3.timeWeek.count(d3.timeYear(nowday[now - 1]), nowday[now - 1]) *
-          cellSize *
-          0.58
-        );
-      })
-      .attr("y", function(d) {
-        return ((d - 1) * cellSize) / 6;
-      })
-      .attr("fill", function(d) {
-        return colorScale(d);
-      });
+    drawday();
+    // drawhour();
   },
-  adddata(data) {
+  houradddata(data) {
     var index = 0;
     //test data
     var testcolor = new Array();
     var testi = 0;
-
     var s = rect
       .selectAll("rect")
       // 定义小方格的填充色，通过每个小方格中的values值来映射颜色函数
@@ -224,6 +129,7 @@ const calendar = {
       //					return color(data[d]);
       //				})
       .append("title", function(d) {})
+
       // 定义小方格的title属性文本为 日期后面加小方格value对应的的百分比格式
       .text(function(d) {
         if (index < data.length) return data[index++]["date"] + ":" + (d - 1);
@@ -233,9 +139,18 @@ const calendar = {
     rect.selectAll("rect").attr("fill", function(d) {
       if (indexs < data.length) return colorScale(data[indexs++].value);
     });
-    this.setrectClick();
+    this.hoursetrectClick();
   },
-  setrectClick() {
+  dayadddata(data) {
+    var indexs = 0;
+    svg
+      .select(".rects")
+      .selectAll("rect")
+      .attr("fill", function(d) {
+        if (indexs < data.length) return colorScale(data[indexs++].value);
+      });
+  },
+  hoursetrectClick() {
     events.on("click", function(d) {
       var newValue = d3
         .select(this)
@@ -275,12 +190,12 @@ function pathMonth(t0) {
     "Z"
   );
 }
-function initdata() {
+function inithourdata() {
   var heatmapChart = function(path) {
     (async function() {
       const response = await DataManager.getVectorData(path);
       let data = [];
-      console.log(response)
+
       response.data.forEach((d, i) => {
         data.push({
           date: d.date,
@@ -290,9 +205,191 @@ function initdata() {
       });
       calendardata = data;
       // console.log(calendardata);
-      calendar.adddata(data);
+      calendar.houradddata(data);
     })();
   };
   heatmapChart("http://localhost:3000/query?table=vector");
+}
+
+function initdaydata() {
+  var heatmapChart = function(path) {
+    (async function() {
+      const response = await DataManager.getVectorData(path);
+      let data = [];
+
+      response.data.forEach((d, i) => {
+        data.push({
+          date: d.date,
+          value: d.cluster
+        });
+      });
+      calendardata = data;
+      // console.log(calendardata);
+      calendar.dayadddata(data);
+    })();
+  };
+  heatmapChart("http://localhost:3000/query?table=vector_day");
+}
+
+function drawhour() {
+  // 定义每个年份中代表天的小方格
+  rect = svg
+    .append("g")
+    .attr("class", "rects")
+    .attr("fill", "none")
+    .attr("stroke", "#ccc")
+    .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
+    .selectAll("rect")
+    //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
+    .data(function(d) {
+      return d3.timeDays(new Date(d, 4, 1), new Date(d, 9, 1));
+    })
+    .enter()
+    .append("g")
+    .attr("width", cellSize / 1.2)
+    .attr("height", cellSize)
+    // 返回一年有多少个周，确定一组小方格的横向位置
+    .attr("x", function(d) {
+      return (d3.timeWeek.count(d3.timeYear(d), d) * cellSize) / 1.2;
+    })
+    // 返回天，确定一组小方格的纵向位置
+    .attr("y", function(d) {
+      return d.getDay() * cellSize;
+    });
+  // 定义当前小方格上对应的日期的格式
+
+  var index = 0;
+  var i = -1;
+  var now = -1;
+  var j = -1;
+  var now2 = -1;
+  events = rect
+    .selectAll("rect")
+    .data(function(d) {
+      nowday[index++] = d;
+      return d3.range(1, 6);
+    })
+    .enter()
+    .append("rect")
+    .attr("width", cellSize / 1.2)
+    .attr("height", cellSize / 6)
+    .attr("x", function(d) {
+      ++i;
+      if (i % 5 == 0) {
+        now++;
+      }
+      return (
+        (d3.timeWeek.count(d3.timeYear(nowday[now]), nowday[now]) * cellSize) /
+        1.2
+      );
+    })
+    .attr("y", function(d) {
+      j += 1;
+      if (j % 5 == 0) {
+        now2++;
+      }
+      return nowday[now2].getDay() * cellSize + ((d - 1) * cellSize) / 6;
+    });
+  rect.datum(d3.timeFormat("%Y-%m-%d"));
+  addLegend(8);
+
+  inithourdata();
+}
+
+function drawday() {
+  // 定义每个年份中代表天的小方格
+  rect = svg
+    .append("g")
+    .attr("class", "rects")
+    .attr("fill", "none")
+    .attr("stroke", "#ccc")
+    .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
+    .selectAll("rect")
+    //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
+    .data(function(d) {
+      return d3.timeDays(new Date(d, 4, 1), new Date(d, 9, 1));
+    })
+    .enter()
+    .append("rect")
+    .attr("width", cellSize / 1.2)
+    .attr("height", cellSize)
+    // 返回一年有多少个周，确定一组小方格的横向位置
+    .attr("x", function(d) {
+      return (d3.timeWeek.count(d3.timeYear(d), d) * cellSize) / 1.2;
+    })
+    // 返回天，确定一组小方格的纵向位置
+    .attr("y", function(d) {
+      return d.getDay() * cellSize;
+    })
+    .on("click", function(d) {
+      var newValue = d3
+        .select(this)
+        .select("title")
+        .text();
+      store.commit("Calendar_change_state", [newValue]);
+    })
+    .datum(d3.timeFormat("%Y-%m-%d"))
+    .append("title")
+    // 定义小方格的title属性文本为 日期后面加小方格value对应的的百分比格式
+    .text(function(d) {
+      return d;
+    });
+
+  // 定义当前小方格上对应的日期的格式
+  initdaydata();
+  addLegend(6);
+}
+function addLegend(num) {
+  var Dates = new Date(2017, 8, 29);
+  var legend = svg
+    .append("g")
+    .attr("class", "legend")
+    .attr("fill", "none")
+    .attr("stroke", "#000");
+  var legendrects = legend
+    .selectAll("rect")
+    .data(d3.range(0, num))
+    .enter()
+    .append("rect")
+    .attr("width", cellSize / 1.2)
+    .attr("height", cellSize / 4)
+    .attr("x", function(d) {
+      return d3.timeWeek.count(d3.timeYear(Dates), Dates) * cellSize * 0.58;
+    })
+    .attr("y", function(d) {
+      return ((d - 1) * cellSize) / 4;
+    })
+    .attr("fill", function(d) {
+      return colorScale(d);
+    })
+    .on("mouseover", function(d) {
+      var tcolor = d3.select(this).attr("fill");
+      var ca = d3
+        .select(".rects")
+        .selectAll("rect")
+        .attr("opacity", function(d) {
+          if (d3.select(this).attr("fill") != null) {
+            if (d3.select(this).attr("fill") != tcolor) {
+              return 0.3;
+            }
+          }
+        });
+    })
+    .on("mouseout", function(d) {
+      var tcolor = d3.select(this).attr("fill");
+      var ca = d3
+        .select(".rects")
+        .selectAll("rect")
+        .attr("opacity", function(d) {
+          if (d3.select(this).attr("fill") != null) {
+            return 1;
+          }
+        });
+    })
+    .append("title")
+    .text(function(d) {
+      console.log(d);
+      return "第" + (d + 1) + "类";
+    });
 }
 export default calendar;
