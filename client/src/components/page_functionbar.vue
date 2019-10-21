@@ -227,7 +227,9 @@
     z-index: 1;
     width:12.5%;
     max-height: 90%;
-    transform: translate(20px, 60px);
+    /*transform: translate(20px, 60px);*/
+    left:1%;
+    top:6%;
     height:70%;
     /*overflow:hidden;*/
     border-radius:.3em;

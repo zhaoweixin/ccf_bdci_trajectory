@@ -33,7 +33,8 @@
         data() {
             return {
                 map: null,
-                od_date:'od_20170501'
+                od_date:'od_20170501',
+                geo_routes:{}
             }
         },
         created() {
@@ -44,8 +45,7 @@
             this.map_config();
             this.grid_draw();
             this.od_geohash_init();
-            this.gird_click();
-            // this.load_od_day();
+            this.load_geo_routes();
         },
         methods: {
 
@@ -58,11 +58,13 @@
                 this.map = new mapboxgl.Map({
                     container: this.$refs.basicMapbox,
                     style: 'mapbox://styles/mapbox/dark-v9',
-                    center: [110.302071,19.9], // 设置地图中心
+                    center: [110.32953682031234,19.973591989780688], // 设置地图中心
                     zoom: 11  // 设置地图比例
                     //pitch:50
                 });
-
+                // this.map.on('click',(e)=>{
+                //     console.log(e.lngLat);
+                // })
             },
 
             /*----------------------------------------/
@@ -486,19 +488,32 @@
 
             /*----------------------------------------/
              * Fun - 点击网格事件
-             * @gird_click()   绘制当前点击geohash
              * @od_geohash_init() 初始化OD格子Source&&Layer
              * @od_geohash_update()  更新OD网格
              * ////起点热点区域 | 终点热点区域////
             /-----------------------------------------*/
-            gird_click(){
+            od_geohash_init(){
 
-                this.map.on('load',()=>{
+                let default_bbox = ngeohash.decode_bbox('w7w3y9');
+                this.map.on('load',  () =>{
+
                     this.map.addSource('click_polygon_source',{
                         'type': 'geojson',
                         'data': {
                             "type": "FeatureCollection",
-                            "features": []
+                            "features": [{
+                                'type': 'Feature',
+                                "properties": {},
+                                'geometry': {
+                                    'type': 'Polygon',
+                                    'coordinates': [[
+                                        [default_bbox[1], default_bbox[0]],
+                                        [default_bbox[3], default_bbox[0]],
+                                        [default_bbox[3], default_bbox[2]],
+                                        [default_bbox[1], default_bbox[2]]
+                                    ]]
+                                }
+                            }]
                         }
                     });
 
@@ -512,48 +527,7 @@
                             'fill-outline-color':'#57ff22'
                         }
                     });
-                });
 
-                this.map.on('click',(e)=> {
-                    let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
-                    let bbox = ngeohash.decode_bbox(curr_geohash);
-
-                    this.$store.commit('geohash_state',{geohash:curr_geohash});
-
-                    let features_polygon = [{
-                        'type': 'Feature',
-                        "properties": {
-                        },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [bbox[1], bbox[0]],
-                                [bbox[3], bbox[0]],
-                                [bbox[3], bbox[2]],
-                                [bbox[1], bbox[2]]
-                            ]]
-                        }
-                    }];
-
-                    this.map.getSource('click_polygon_source').setData({
-                        "type": "FeatureCollection",
-                        "features": features_polygon
-                    });
-
-                    this.$http.get('query',{
-                        params:{
-                            // table:"odcount where start_geo ='"+curr_geohash+"'"
-                            // table: `odcount where start_geo = '${curr_geohash}'`
-                            table: `${this.od_date} where start_geo = '${curr_geohash}'`
-
-                        }}).then((res) => {
-                      this.od_geohash_update(res.body);
-                       //console.log(res.body)
-                    });
-                });
-            },
-            od_geohash_init(){
-                this.map.on('load',  () =>{
                     this.map.addSource('od_polygon_source',{
                         'type': 'geojson',
                         'data': {
@@ -585,49 +559,109 @@
                     this.map.on('click','od_polygon_layer',() =>{
                         //alert(e.features[0].properties.value);
                     });
+
+                    //初始化OD
+                    this.od_geohash_update();
                 });
-            },
-            od_geohash_update(data){
 
-                this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
-
-
-                let features_polygon = [];
-
-                let linear = d3.scaleLinear()
-                    .domain([0, d3.max(data,(d)=>d.count)])
-                    .range([0, .5]);
-
-                data.forEach(d =>{
-
-                    let bbox = ngeohash.decode_bbox(d.dest_geo);
-
-                    features_polygon.push({
+                this.map.on('click',(e)=> {
+                    let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
+                    let bbox = ngeohash.decode_bbox(curr_geohash);
+                    let features_polygon = [{
                         'type': 'Feature',
                         "properties": {
-                            'color':"#ee2d3e",
-                            'value': linear(d.count) +0.1
                         },
                         'geometry': {
                             'type': 'Polygon',
                             'coordinates': [[
-                                [bbox[1],bbox[0]],
-                                [bbox[3],bbox[0]],
-                                [bbox[3],bbox[2]],
-                                [bbox[1],bbox[2]]
+                                [bbox[1], bbox[0]],
+                                [bbox[3], bbox[0]],
+                                [bbox[3], bbox[2]],
+                                [bbox[1], bbox[2]]
                             ]]
                         }
+                    }];
+
+                    this.map.getSource('click_polygon_source').setData({
+                        "type": "FeatureCollection",
+                        "features": features_polygon
                     });
+
+                    //更新OD格子
+                    this.od_geohash_update(curr_geohash);
+
+                    //更新geohash_state
+                    this.$store.commit('geohash_state',{geohash:curr_geohash});
+                });
+            },
+            od_geohash_update(curr_geohash='w7w3y9'){
+
+                this.$http.get('query',{
+                    params:{
+                        // table:"odcount where start_geo ='"+curr_geohash+"'"
+                        // table: `odcount where start_geo = '${curr_geohash}'`
+                        table: `${this.od_date} where start_geo = '${curr_geohash}'`
+
+                    }}).then((res) => {
+                    update(res.body);
+                    //console.log(res.body)
                 });
 
-                this.map.getSource('od_polygon_source').setData({
-                    "type": "FeatureCollection",
-                    "features": features_polygon
-                });
+                let update = (data)=> {
+                    this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
+
+                    let features_polygon = [];
+
+                    let linear = d3.scaleLinear()
+                        .domain([0, d3.max(data,(d)=>d.count)])
+                        .range([0, .5]);
+
+                    data.forEach(d =>{
+
+                        let bbox = ngeohash.decode_bbox(d.dest_geo);
+
+                        features_polygon.push({
+                            'type': 'Feature',
+                            "properties": {
+                                'color':"#ee2d3e",
+                                'value': linear(d.count) +0.1
+                            },
+                            'geometry': {
+                                'type': 'Polygon',
+                                'coordinates': [[
+                                    [bbox[1],bbox[0]],
+                                    [bbox[3],bbox[0]],
+                                    [bbox[3],bbox[2]],
+                                    [bbox[1],bbox[2]]
+                                ]]
+                            }
+                        });
+                    });
+
+                    this.map.getSource('od_polygon_source').setData({
+                        "type": "FeatureCollection",
+                        "features": features_polygon
+                    });
+                }
 
             },
 
+            /*----------------------------------------/
+             * Fun - 加载公交路线geohash数据
+             * @load_geo_routes()
+            /-----------------------------------------*/
+            load_geo_routes(){
+                this.$http.get('dataset/buses_data/geo_routes.json').then(res=>{
+                    this.geo_routes = res.body;
+                    //console.log(res.body['w7w1rz'][0]);
+                });
+            },
+
             //--------------施工现场！！！！-----------------------------//
+            map_refresh(){
+
+            },
+
             load_od_day(){
                 this.$http.get('query',{
                     params:{

@@ -10,7 +10,10 @@ const store = new Vuex.Store({
   // 定义状态
   state: {
     date_state: {},//当前日期
-    geohash_state:{},//当前geohash
+    geohash_state:{
+      'geohash':'w7w3y9'
+    },//当前geohash
+    map_state: {}, //地图图层操作
 
     operater_state: {
       checkedNames: [],
@@ -23,7 +26,7 @@ const store = new Vuex.Store({
         remove: []
       }
     },
-    map_state: {}, //地图图层操作
+
     calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
     DATA_STORE: {}
   },
