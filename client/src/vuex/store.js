@@ -26,7 +26,8 @@ const store = new Vuex.Store({
       }
     },
     map_state:{
-    }
+    },
+    DATA_STORE:{}
   },
   mutations:mutation,
   actions:action,

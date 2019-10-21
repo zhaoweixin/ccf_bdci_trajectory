@@ -25,9 +25,14 @@ module.exports = {
     },
     query: function (req, res, next) {
         pool.getConnection(function(err, connection) {
+            console.log('111')
             console.log(req.query);
-            connection.query($sql.queryAll+req.query.table, function(err, result) {
-                if(err) res.send(err);
+            let sql = $sql.queryAll+req.query.table
+            connection.query(sql, function(err, result) {
+                if(err){
+                    console.log(err);
+                    res.send(err)
+                };
                 //console.log(result);
                 res.send(result);
                 connection.release();

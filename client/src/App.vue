@@ -4,6 +4,7 @@
     <page_functionbar></page_functionbar>
     <AppMap></AppMap>
     <page_functionbar2></page_functionbar2>
+    <page_functionbar3></page_functionbar3>
 <!--    <AppPie_POI></AppPie_POI>-->
   </div>
 </template>
@@ -13,14 +14,16 @@
     import page_header from './components/page_header'
     import page_functionbar from './components/page_functionbar'
     import page_functionbar2 from './components/page_functionbar2'
+    import page_functionbar3 from './components/page_functionbar3'
     // import AppPie_POI from './components/AppPie_POI'
     export default {
         name: 'app',
         components: {
             AppMap,
             page_header,
-            page_functionbar,
-            page_functionbar2,
+            page_functionbar,  // 下端
+            page_functionbar2, // 左侧
+            page_functionbar3  // 右侧
             // AppPie_POI
         }
     }

@@ -10,6 +10,11 @@ const mutation = {
     state.weather_change_state = JSON.parse(JSON.stringify(payload))
     // console.log(state.weather_change_state)
   },
+  UPDATE_DATA_STORE(state, payload){
+    let name = payload.name,
+      data = payload.data
+      state.DATA_STORE[name] = JSON.parse(JSON.stringify(data))
+  },
   poi_state(state,payload){
     state.poi_state = JSON.parse(JSON.stringify(payload));
     // console.log(state.poi_state);
