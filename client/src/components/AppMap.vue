@@ -518,7 +518,7 @@
                     let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
                     let bbox = ngeohash.decode_bbox(curr_geohash);
 
-                    this.poi_geohash(curr_geohash);
+                    this.$store.commit('geohash_state',{geohash:curr_geohash});
 
                     let features_polygon = [{
                         'type': 'Feature',
@@ -596,7 +596,7 @@
 
                 let linear = d3.scaleLinear()
                     .domain([0, d3.max(data,(d)=>d.count)])
-                    .range([0, .7]);
+                    .range([0, .5]);
 
                 data.forEach(d =>{
 
@@ -625,23 +625,6 @@
                     "features": features_polygon
                 });
 
-            },
-
-            /*----------------------------------------/
-             * Fun - 获取格子geohash POI
-             * @poi_geohash()
-             * @param:geohash
-            /-----------------------------------------*/
-            poi_geohash(geohash){
-                this.$http.get('query',{
-                    params:{
-                        table:`poi_geohash where geo_hash = '${geohash}'`
-                    }}).then((res) => {
-                    //console.log(res.body);
-                    let data = d3.nest().key(d=>d.type).entries(res.body);
-                    //console.log(data);
-                    this.$store.commit('poi_state',{data:data})
-                });
             },
 
             //--------------施工现场！！！！-----------------------------//
@@ -685,7 +668,7 @@
                             this.map.removeSource('buses_routes_source')&this.map.removeSource('buses_stations_source'):null;
 
                     //行政区划
-                    console.log(map_state.district_layer);
+                    //console.log(map_state.district_layer);
                     map_state.district_layer? this.load_district():
                         this.map.getLayer('district_outline_layer')?
                             this.map.removeLayer('district_outline_layer')&this.map.removeSource('district_outline_source'):null;
