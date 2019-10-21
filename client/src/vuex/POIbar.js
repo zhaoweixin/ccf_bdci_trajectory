@@ -1,13 +1,14 @@
 import * as d3 from "d3";
 import DataManager from "../data/DataManager";
 var poidata = null;
+var svg = null;
 const POIData = {
   initdata() {
     var POI = function(tsvFile) {
       (async function() {
         const response = await DataManager.getPoiData();
         poidata = response.data[0];
-        console.log(poidata);
+        // console.log(poidata);
         // calendardata = data;
         // console.log(calendardata);
       })();
@@ -30,7 +31,44 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
+    svg = d3
+      .select("body")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  },
+  /*
+=================
+data格式:data={name:xxx,OrderType:xxx}
+name为所点击方块的geohash值,OrderType为订单类型数据
+=================
+*/
+  addData(data) {
+    if (data == null) {
+      data = {
+        name: "w7w3wx",
+        trafficdata: [
+          { nmae: "A", value: -3 },
+          { nmae: "B", value: -10 },
+          { nmae: "C", value: -3 },
+          { nmae: "D", value: -3 },
+          { nmae: "E", value: -3 }
+        ]
+      };
+    }
+    pois = poidata[data.name];
   }
 };
-
+//排序函数,从大到小排列
+function dsort(a, b) {
+  return a.value < b.value
+    ? 1
+    : a.value > b.value
+    ? -1
+    : a.value >= b.value
+    ? 0
+    : NaN;
+}
 export default POIData;

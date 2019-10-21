@@ -21,7 +21,7 @@ const store = new Vuex.Store({
       }
     },
     map_state: {},
-    calendar_state: {}
+    calendar_state: {} //日历图点击时间段，数据格式[日期,第几个时间段]
   },
   mutations: mutation,
   actions: action,
