@@ -8,7 +8,6 @@ const POIData = {
       (async function() {
         const response = await DataManager.getPoiData();
         poidata = response.data[0];
-        // console.log(poidata);
         // calendardata = data;
         // console.log(calendardata);
       })();

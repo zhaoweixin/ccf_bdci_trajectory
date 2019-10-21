@@ -26,11 +26,11 @@ export default class DataManager {
       }
     );
   }
-  static getPoiData() {
-    return axios.get("http://127.0.0.1:3000/poi_data");
-  }
   static getVectorData(path) {
     return axios.get(path);
+  }
+  static getPoiData() {
+    return axios.get("http://127.0.0.1:3000/poi_data");
   }
   /*
 import axios from "axios";
@@ -43,9 +43,7 @@ export default class DataManager {
       }
     });
   }
-  static getPoiData() {
-    return axios.get("http://127.0.0.1:3000/poi_data");
-  }
+  
   static getVectorData(path) {
     return axios.get(path);
   }

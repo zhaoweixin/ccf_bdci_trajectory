@@ -1,5 +1,5 @@
 <template>
-  <div class="funcbar_warp">
+  <div class="funcbar_warp_bar1">
     <div class="funcbar_warp_header">
       <h4> PANEL </h4>
       <div class="line-separator-1"></div>
@@ -221,7 +221,7 @@
 </script>
 <style>
 
-  .funcbar_warp{
+  .funcbar_warp_bar1{
     position: absolute;
     z-index: 1;
     width:12.5%;

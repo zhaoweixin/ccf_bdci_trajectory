@@ -276,11 +276,11 @@ function pathMonth(t0) {
   );
 }
 function initdata() {
-  var heatmapChart = function(tsvFile) {
+  var heatmapChart = function(path) {
     (async function() {
-      const response = await DataManager.getVectorData(tsvFile);
+      const response = await DataManager.getVectorData(path);
       let data = [];
-
+      console.log(response)
       response.data.forEach((d, i) => {
         data.push({
           date: d.date,
@@ -293,7 +293,6 @@ function initdata() {
       calendar.adddata(data);
     })();
   };
-
   heatmapChart("http://localhost:3000/query?table=vector");
 }
 export default calendar;

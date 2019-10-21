@@ -1102,7 +1102,6 @@
       POIbar.initdata();
       // this.init_heatmap() //previous
        calendar.init_heatmap()
-    
     //   calendar.adddata()
     //   this.init_piechart()
       this.handle_linechart({
