@@ -1102,21 +1102,7 @@
       POIbar.initdata();
       // this.init_heatmap() //previous
        calendar.init_heatmap()
-       var heatmapChart = function(tsvFile) {
-      (async function() {
-        const response = await DataManager.getHeatmapData();
-        let data = [];
-        response.data.forEach((d, i) => {
-          data.push({
-            day: +d.day,
-            hour: +d.hour,
-            value: +d.value
-          })
-        })
-        calendar.adddata(data);
-      })()
-      }
-     heatmapChart("http://localhost:3000/test")
+    
     //   calendar.adddata()
     //   this.init_piechart()
       this.handle_linechart({
