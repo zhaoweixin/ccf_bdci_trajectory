@@ -246,8 +246,11 @@
               requestInfo.config.legend_val.push(d)
             }
           })
-
-          DataManager.getLineChartData(requestInfo).then((res) => {
+          
+          //forbidden reload error
+          console.log(requestInfo.config.legend_val)
+          if(requestInfo.config.legend_val.length != 0){
+            DataManager.getLineChartData(requestInfo).then((res) => {
             requestInfo.config.legend_val.forEach((d,i) => {
               let dataName = requestInfo.config.unit + d
               if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
@@ -259,14 +262,15 @@
               info.config.legend_val.push(v)
               info.data.push(res.data[j])
             })
-
             that.draw_linechart(info)
-          }).catch(err => {
-            if(err){
-              console.log(err)
-              return;
-            }
-          })
+            }).catch(err => {
+              if(err){
+                console.log(err)
+                return;
+              }
+            })
+          }
+          
 
 
 
@@ -309,7 +313,10 @@
               requestInfo.config.legend_val.push(d)
             }
           })
-
+          
+           
+          //forbidden reload error
+          console.log(requestInfo.config.legend_val)
           if(requestInfo.config.legend.length != 0){
             DataManager.getLineChartData(requestInfo).then((res) => {
             

@@ -26,6 +26,6 @@ const mutation = {
   date_state(state, payload) {
     state.date_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.date_state);
-  }
+  } 
 };
 export default mutation;
