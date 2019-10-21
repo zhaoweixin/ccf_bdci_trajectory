@@ -44,7 +44,7 @@ const calendar = {
       },
       width = FullWidth - margin.left - margin.right,
       height = FullHeight - margin.top - margin.bottom;
-    cellSize = Math.floor(height / 6);
+    cellSize = Math.floor(height / 6) - 2;
     // console.log(cellSize);
     var legendElementWidth = cellSize,
       buckets = 9,
@@ -62,7 +62,7 @@ const calendar = {
       .append("g")
       .attr(
         "transform",
-        "translate(" + margin.left / 0.8 + "," + margin.top + ")"
+        "translate(" + margin.left / 0.8 + "," + margin.top / 2 + ")"
       );
     // 定义每个年份对应的group旁边的标签
     svg
@@ -146,15 +146,15 @@ const calendar = {
       .selectAll("rect")
       .data(function(d) {
         nowday[index++] = d;
-        return d3.range(1, 5);
+        return d3.range(1, 6);
       })
       .enter()
       .append("rect")
       .attr("width", cellSize / 1.2)
-      .attr("height", cellSize / 5)
+      .attr("height", cellSize / 6)
       .attr("x", function(d) {
         ++i;
-        if (i % 4 == 0) {
+        if (i % 5 == 0) {
           now++;
         }
         return (
@@ -165,17 +165,17 @@ const calendar = {
       })
       .attr("y", function(d) {
         j += 1;
-        if (j % 4 == 0) {
+        if (j % 5 == 0) {
           now2++;
         }
-        return nowday[now2].getDay() * cellSize + ((d - 1) * cellSize) / 5;
+        return nowday[now2].getDay() * cellSize + ((d - 1) * cellSize) / 6;
       });
     rect.datum(d3.timeFormat("%Y-%m-%d"));
     // 勾勒月份的分割线
     svg
       .append("g")
       .attr("fill", "none")
-      .attr("stroke", "#000")
+      .attr("stroke", "white")
       .selectAll("path")
       .data(function(d) {
         return d3.timeMonths(new Date(d, 4, 1), new Date(d, 9, 1));
@@ -196,7 +196,7 @@ const calendar = {
       .enter()
       .append("rect")
       .attr("width", cellSize / 1.2)
-      .attr("height", cellSize / 5)
+      .attr("height", cellSize / 6)
       .attr("x", function(d) {
         return (
           d3.timeWeek.count(d3.timeYear(nowday[now - 1]), nowday[now - 1]) *
@@ -205,7 +205,7 @@ const calendar = {
         );
       })
       .attr("y", function(d) {
-        return ((d - 1) * cellSize) / 5;
+        return ((d - 1) * cellSize) / 6;
       })
       .attr("fill", function(d) {
         return colorScale(d);
