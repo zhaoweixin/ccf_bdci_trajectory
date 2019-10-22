@@ -115,7 +115,7 @@
                     .attr('y',(d)=>d.col*gird_size)
                     .attr('width',gird_size)
                     .attr('height',gird_size)
-                    .attr('fill',"#cc6335")
+                    .attr('fill',"#3C9466")
                     .style('opacity',0)
                     .transition()
                     .duration(300)

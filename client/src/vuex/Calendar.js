@@ -5,6 +5,18 @@ var calendardata = null;
 var nowday = new Array(); //存储日历图日期数据
 var cellSize = null,
   colors = [
+    '#3E5948',
+'#66425A',
+'#495270',
+'#706C49',
+'#664C42',
+'#57534A',
+'#63A67C',
+'#74A686'
+    
+  ]
+/*
+  colors = [
     "#efac0e",
     "#efe102",
     "#cff9bb",
@@ -14,6 +26,7 @@ var cellSize = null,
     "#348def",
     "#6067ea"
   ];
+  */
 var svg = null;
 var formatPercent = d3.format(".1%"); //定义一个百分数格式函数，规定百分数精确度小数点后1位
 var rect = null;
@@ -138,7 +151,8 @@ const calendar = {
     var indexs = 0;
     rect.selectAll("rect").attr("fill", function(d) {
       if (indexs < data.length) return colorScale(data[indexs++].value);
-    });
+    })
+    ;
     this.hoursetrectClick();
   },
   dayadddata(data) {

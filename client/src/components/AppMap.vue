@@ -676,7 +676,7 @@
                         features_polygon.push({
                             'type': 'Feature',
                             "properties": {
-                                'color':"#ee2d3e",
+                                'color': '#04759D',//"#16B2D8",//"#ee2d3e",
                                 'value': linear(d.count) +0.1
                             },
                             'geometry': {
