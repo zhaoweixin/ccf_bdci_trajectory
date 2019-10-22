@@ -12,15 +12,15 @@
     <div id="od_matrix"></div>
     <div id="barchart"></div>
     <div id="location_info">
-      <Tabs size="small">
-        <TabPane label="公交信息">
-          <div id="buses_info"></div>
-        </TabPane>
+      <Tabs size="small"  @on-click="tabs_func">
         <TabPane label="区域方向">
           <div id="angle_ring"></div>
         </TabPane>
         <TabPane label="区域POI">
           <div id="poi_ring"></div>
+        </TabPane>
+        <TabPane label="公交信息">
+          <div id="buses_info"></div>
         </TabPane>
       </Tabs>
     </div>
@@ -34,13 +34,12 @@
         name: "page_functionbar3",
         data() {
             return {
-                geohash: "w7w3y9"
+                geohash: "w7w3y9",
+                buses_data:[]
             };
         },
         mounted() {
             this.draw_od_matrix(this.geohash);
-            this.draw_poi_ring(this.geohash);
-            this.draw_location_ring(this.geohash);
             //console.log(POIbar);
             //POIbar.initchart();
             //POIbar.initdata();
@@ -48,6 +47,16 @@
         updated(){
         },
         methods: {
+            tabs_func(name){
+              console.log(name);
+              if(name === 0)
+                  this.draw_location_ring(this.geohash);
+              else if(name === 1)
+                  this.draw_poi_ring(this.geohash);
+              else
+                  this.draw_buses_info(this.buses_data);
+
+            },
             draw_od_matrix(curr_geohash) {
                 this.$http.get('query',{
                     params:{
@@ -483,6 +492,23 @@
                 let option = null;
 
                 option = {
+                    title:{
+                        show:false,
+                        text:'公交路线数: '+data.length,
+                        //x: "", //水平安放位置，默认为'left'，可选为：'center' | 'left' | 'right' | {number}（x坐标，单位px）
+                        y: "0", //垂直安放位置，默认为top，可选为：'top' | 'bottom' | 'center' | {number}（y坐标，单位px）
+                        textStyle: {
+                            //文字颜色
+                            color: "#57ff22",
+                            fontStyle: "normal",
+                            //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                            fontWeight: "lighter",
+                            //字体系列
+                            fontFamily: "sans-serif",
+                            //字体大小
+                            fontSize: 14
+                        }
+                    },
                     series: {
                         type: 'graph',
                         layout: 'force',
@@ -529,9 +555,9 @@
                 handler(state) {
                     console.log(state.geohash);
                     this.geohash = state.geohash;
-                    this.draw_od_matrix(state.geohash);
-                    this.draw_poi_ring(state.geohash);
                     this.draw_location_ring(state.geohash);
+                    //this.draw_od_matrix(state.geohash);
+                    //this.draw_poi_ring(state.geohash);
                 },
                 deep: true
             },
@@ -543,14 +569,15 @@
                 deep: true
             },
             "$store.state.calendar_state": function(newdata, olddata) {
-                console.log(newdata);
+                //console.log(newdata);
                 POIbar.addData();
                 // 需要执行的代码
             },
             "$store.state.buses_routes_state":{
                 handler(data){
                     //console.log(data.routes)
-                    this.draw_buses_info(data.routes);
+                    this.buses_data = data.routes;
+                    //this.draw_buses_info(data.routes);
                 }
             }
         }
