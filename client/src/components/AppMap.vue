@@ -33,7 +33,9 @@
         data() {
             return {
                 map: null,
-                od_date:'od_20170501'
+                od_date:'od_20170501',
+                geo_routes:{},
+                buses_data:[]
             }
         },
         created() {
@@ -41,11 +43,15 @@
         beforeMount(){
         },
         mounted() {
+            //数据加载
+            this.load_buses_data();
+            this.load_geo_routes();
+
+            //地图处理
             this.map_config();
             this.grid_draw();
-            this.od_geohash_init();
-            this.gird_click();
-            // this.load_od_day();
+            this.geohash_init();
+
         },
         methods: {
 
@@ -58,11 +64,13 @@
                 this.map = new mapboxgl.Map({
                     container: this.$refs.basicMapbox,
                     style: 'mapbox://styles/mapbox/dark-v9',
-                    center: [110.302071,19.9], // 设置地图中心
+                    center: [110.32953682031234,19.973591989780688], // 设置地图中心
                     zoom: 11  // 设置地图比例
                     //pitch:50
                 });
-
+                // this.map.on('click',(e)=>{
+                //     console.log(e.lngLat);
+                // })
             },
 
             /*----------------------------------------/
@@ -107,7 +115,8 @@
                     feature_buslines.push({
                         "type": "Feature",
                         "properties": {
-                            color:'#ffeb3d'
+                            color:'#ffeb3d',
+                            name:parseInt(d.name)+'路'
                         },
                         "geometry": {
                             "type": "LineString",
@@ -120,6 +129,7 @@
                 });
                 //this.map.on('load',  ()=>{
 
+                //console.log(feature_buslines);
                 this.map.addSource("buses_stations_source", {
                     "type": "geojson",
                     'data':  {
@@ -184,7 +194,7 @@
             district_draw(data){
                 //console.log(data);
                 let feature_lines = [];
-                let feature_polygons = [];
+                //let feature_polygons = [];
                 let district_color = ['#ff722c','#ff4f6a','#48b6ff','#3dffaf'];
 
                 data.forEach((d,i)=>{
@@ -454,6 +464,7 @@
                 //     //     .setHTML(e.lngLat)
                 //     //     .addTo(this.map);
                 // });
+
                 this.map.on('load',  () =>{
 
                     this.map.addSource('gird_source',{
@@ -486,22 +497,34 @@
 
             /*----------------------------------------/
              * Fun - 点击网格事件
-             * @gird_click()   绘制当前点击geohash
-             * @od_geohash_init() 初始化OD格子Source&&Layer
-             * @od_geohash_update()  更新OD网格
+             * @geohash_init() 初始化OD格子Source&&Layer
+             * @geohash_update()  更新OD网格
              * ////起点热点区域 | 终点热点区域////
             /-----------------------------------------*/
-            gird_click(){
+            geohash_init(){
 
-                this.map.on('load',()=>{
+                let default_bbox = ngeohash.decode_bbox('w7w3y9');
+                this.map.on('load',  () =>{
+
                     this.map.addSource('click_polygon_source',{
                         'type': 'geojson',
                         'data': {
                             "type": "FeatureCollection",
-                            "features": []
+                            "features": [{
+                                'type': 'Feature',
+                                "properties": {},
+                                'geometry': {
+                                    'type': 'Polygon',
+                                    'coordinates': [[
+                                        [default_bbox[1], default_bbox[0]],
+                                        [default_bbox[3], default_bbox[0]],
+                                        [default_bbox[3], default_bbox[2]],
+                                        [default_bbox[1], default_bbox[2]]
+                                    ]]
+                                }
+                            }]
                         }
                     });
-
                     this.map.addLayer({
                         'id': 'click_polygon_layer',
                         'type': 'fill',
@@ -512,14 +535,85 @@
                             'fill-outline-color':'#57ff22'
                         }
                     });
+
+                    this.map.addSource('od_polygon_source',{
+                        'type': 'geojson',
+                        'data': {
+                            "type": "FeatureCollection",
+                            "features": []
+                        }
+                    });
+                    this.map.addLayer({
+                        'id': 'od_polygon_layer',
+                        'type': 'fill',
+                        'source': 'od_polygon_source',
+                        'layout': {},
+                        'paint': {
+                            'fill-color': ['get','color'],
+                            // 'fill-outline-color':'#FFFFFF',
+                            'fill-opacity': ['get','value'],
+                        }
+                    });
+
+                    this.map.addSource("geo_stations_source", {
+                        "type": "geojson",
+                        'data':  {
+                            "type": "FeatureCollection",
+                            "features": []
+                        }
+                    });
+                    this.map.addLayer({
+                        'id':'geo_stations_layer',
+                        'source': 'geo_stations_source',
+                        "type": "circle",
+                        'layout': {},
+                        'paint': {
+                            'circle-color': ['get','color'],
+                            'circle-opacity': ['get','opacity'],
+                            'circle-radius':['get','radius']
+                        }
+                    });
+                    this.map.addSource('geo_routes_source',{
+                        "type": "geojson",
+                        "data": {
+                            "type": "FeatureCollection",
+                            "features": []
+                        }
+                    });
+                    this.map.addLayer({
+                        "id": "geo_routes_layer",
+                        "type": "line",
+                        "source":'geo_routes_source',
+                        "layout": {
+                            "line-join": "round",
+                            "line-cap": "round"
+                        },
+                        "paint": {
+                            "line-color": ['get','color'],
+                            "line-width": 0.3,
+                            "line-opacity": 0.4
+                        }
+                    });
+
+                    this.map.on('mouseenter','od_polygon_layer',e =>{
+                        this.map.getCanvas().style.cursor = 'pointer';
+                    });
+
+                    this.map.on('mouseleave','od_polygon_layer',() =>{
+                        this.map.getCanvas().style.cursor = '';
+                    });
+
+                    this.map.on('click','od_polygon_layer',() =>{
+                        //alert(e.features[0].properties.value);
+                    });
+
+                    //初始化OD
+                    this.geohash_update();
                 });
 
                 this.map.on('click',(e)=> {
                     let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
                     let bbox = ngeohash.decode_bbox(curr_geohash);
-
-                    this.poi_geohash(curr_geohash);
-
                     let features_polygon = [{
                         'type': 'Feature',
                         "properties": {
@@ -540,116 +634,162 @@
                         "features": features_polygon
                     });
 
-                    this.$http.get('query',{
-                        params:{
-                            // table:"odcount where start_geo ='"+curr_geohash+"'"
-                            // table: `odcount where start_geo = '${curr_geohash}'`
-                            table: `${this.od_date} where start_geo = '${curr_geohash}'`
-
-                        }}).then((res) => {
-                      this.od_geohash_update(res.body);
-                       //console.log(res.body)
-                    });
+                    //更新格子
+                    this.geohash_update(curr_geohash);
                 });
             },
-            od_geohash_init(){
-                this.map.on('load',  () =>{
-                    this.map.addSource('od_polygon_source',{
-                        'type': 'geojson',
-                        'data': {
-                            "type": "FeatureCollection",
-                            "features": []
-                        }
-                    });
+            geohash_update(curr_geohash='w7w3y9'){
 
-                    this.map.addLayer({
-                        'id': 'od_polygon_layer',
-                        'type': 'fill',
-                        'source': 'od_polygon_source',
-                        'layout': {},
-                        'paint': {
-                            'fill-color': ['get','color'],
-                            // 'fill-outline-color':'#FFFFFF',
-                            'fill-opacity': ['get','value'],
-                        }
-                    });
+                //更新geohash_state
+                this.$store.commit('geohash_state',{geohash:curr_geohash});
 
-                    this.map.on('mouseenter','od_polygon_layer',e =>{
-                        this.map.getCanvas().style.cursor = 'pointer';
-                    });
+                //当前geohash公交路线
+                //console.log(this.geo_routes[curr_geohash]);
+                this.draw_geo_buses(curr_geohash);
 
-                    this.map.on('mouseleave','od_polygon_layer',() =>{
-                        this.map.getCanvas().style.cursor = '';
-                    });
+                this.$http.get('query',{
+                    params:{
+                        // table:"odcount where start_geo ='"+curr_geohash+"'"
+                        // table: `odcount where start_geo = '${curr_geohash}'`
+                        table: `${this.od_date} where start_geo = '${curr_geohash}'`
 
-                    this.map.on('click','od_polygon_layer',() =>{
-                        //alert(e.features[0].properties.value);
-                    });
-                });
-            },
-            od_geohash_update(data){
-
-                this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
-
-
-                let features_polygon = [];
-
-                let linear = d3.scaleLinear()
-                    .domain([0, d3.max(data,(d)=>d.count)])
-                    .range([0, .7]);
-
-                data.forEach(d =>{
-
-                    let bbox = ngeohash.decode_bbox(d.dest_geo);
-
-                    features_polygon.push({
-                        'type': 'Feature',
-                        "properties": {
-                            'color':"#ee2d3e",
-                            'value': linear(d.count) +0.1
-                        },
-                        'geometry': {
-                            'type': 'Polygon',
-                            'coordinates': [[
-                                [bbox[1],bbox[0]],
-                                [bbox[3],bbox[0]],
-                                [bbox[3],bbox[2]],
-                                [bbox[1],bbox[2]]
-                            ]]
-                        }
-                    });
+                    }}).then((res) => {
+                    update(res.body);
+                    //console.log(res.body)
                 });
 
-                this.map.getSource('od_polygon_source').setData({
-                    "type": "FeatureCollection",
-                    "features": features_polygon
-                });
+                //更新OD
+                let update = (data)=> {
+
+                    this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
+
+                    let features_polygon = [];
+
+                    let linear = d3.scaleLinear()
+                        .domain([0, d3.max(data,(d)=>d.count)])
+                        .range([0, .5]);
+
+                    data.forEach(d =>{
+
+                        let bbox = ngeohash.decode_bbox(d.dest_geo);
+
+                        features_polygon.push({
+                            'type': 'Feature',
+                            "properties": {
+                                'color':"#ee2d3e",
+                                'value': linear(d.count) +0.1
+                            },
+                            'geometry': {
+                                'type': 'Polygon',
+                                'coordinates': [[
+                                    [bbox[1],bbox[0]],
+                                    [bbox[3],bbox[0]],
+                                    [bbox[3],bbox[2]],
+                                    [bbox[1],bbox[2]]
+                                ]]
+                            }
+                        });
+                    });
+
+                    this.map.getSource('od_polygon_source').setData({
+                        "type": "FeatureCollection",
+                        "features": features_polygon
+                    });
+                }
 
             },
 
             /*----------------------------------------/
-             * Fun - 获取格子geohash POI
-             * @poi_geohash()
-             * @param:geohash
+             * Fun - 加载公交路线geohash数据
+             * @load_geo_routes()
             /-----------------------------------------*/
-            poi_geohash(geohash){
-                this.$http.get('query',{
-                    params:{
-                        table:`poi_geohash where geo_hash = '${geohash}'`
-                    }}).then((res) => {
-                    //console.log(res.body);
-                    let data = d3.nest().key(d=>d.type).entries(res.body);
-                    //console.log(data);
-                    this.$store.commit('poi_state',{data:data})
+            load_geo_routes(){
+                this.$http.get('dataset/buses_data/geo_routes.json').then(res=>{
+                    this.geo_routes = res.body;
+                    //console.log(this.geo_routes);
                 });
             },
 
             //--------------施工现场！！！！-----------------------------//
+
+            load_buses_data(){
+                this.$http.get('dataset/buses_data/buses_data.json').then(res=>{
+                    this.buses_data = res.body;
+                });
+            },
+            draw_geo_buses(curr_geohash='w7w3y9'){
+                let routes = this.geo_routes[curr_geohash];
+                //console.log(routes);
+
+                let data = this.buses_data.filter(d=>{
+                    return routes.includes(d.name);
+                });
+
+                //console.log(data);
+                let feature_buslines = [];
+                let feature_buspoints = [];
+                let stations = [];
+
+                data.forEach(d=>{
+                    //station geo data
+                    d.stations.forEach(s=>{
+                        if(stations.indexOf(s.name) === -1){
+                            stations.push(s.name);
+                            feature_buspoints.push({
+                                "type": "Feature",
+                                "properties": {
+                                    "color": '#ff4f6a',
+                                    "opacity":0.5,
+                                    "radius":2
+                                },
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": this.coordtrans_bdtowgs84(s.position)
+                                }
+                            });
+                        }
+                        else {
+                        }
+                    });
+                    //buses line data
+                    feature_buslines.push({
+                        "type": "Feature",
+                        "properties": {
+                            color:'#ffeb3d',
+                            name:parseInt(d.name)+'路'
+                        },
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": d.path.map(s =>{
+                                let bd09togcj02=coordtrans.bd09togcj02(s[0],s[1]);
+                                return coordtrans.gcj02towgs84(bd09togcj02[0],bd09togcj02[1])
+                            })
+                        }
+                    });
+                });
+
+                //this.map.on('load',  ()=>{
+                this.map.getSource('geo_stations_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buspoints
+                });
+
+                this.map.getSource('geo_routes_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buslines
+                });
+                //});
+
+            },
+
+            map_refresh(){
+            },
+
             load_od_day(){
                 this.$http.get('query',{
                     params:{
                         table: `od_20170501 where start_geo = 'w7w3x1'`
-                      }}).then((res) => {
+                    }}).then((res) => {
                     console.log(res.body)
                 });
             },
@@ -685,7 +825,7 @@
                             this.map.removeSource('buses_routes_source')&this.map.removeSource('buses_stations_source'):null;
 
                     //行政区划
-                    console.log(map_state.district_layer);
+                    //console.log(map_state.district_layer);
                     map_state.district_layer? this.load_district():
                         this.map.getLayer('district_outline_layer')?
                             this.map.removeLayer('district_outline_layer')&this.map.removeSource('district_outline_source'):null;

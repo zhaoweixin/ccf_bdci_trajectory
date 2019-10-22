@@ -19,13 +19,13 @@ const mutation = {
 
     state.DATA_STORE[name] = JSON.parse(JSON.stringify(data));
   },
-  poi_state(state, payload) {
-    state.poi_state = JSON.parse(JSON.stringify(payload));
-    // console.log(state.poi_state);
-  },
   date_state(state, payload) {
     state.date_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.date_state);
-  } 
+  },
+  geohash_state(state, payload) {
+    state.geohash_state = JSON.parse(JSON.stringify(payload));
+    //console.log(state.geohash_state);
+  }
 };
 export default mutation;

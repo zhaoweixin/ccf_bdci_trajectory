@@ -64,7 +64,7 @@
     </div>
 
     <div class="funcbar_warp_header">
-      <h5> MAP </h5>
+      <h5> MAP LAYER </h5>
       <div class="line-separator-2"></div>
     </div>
     <div class="bg">
@@ -74,11 +74,11 @@
           <label for="btn-grid-layer">地图网格图层</label>
           <span></span>
         </div>
-<!--        <div class="chiller_cb">
-          <input id="btn-poi-layer" type="checkbox"  value="poi_layer" v-model="map_config.checkedNames">
-          <label for="btn-poi-layer">POI&nbsp;数据图层</label>
-          <span></span>
-        </div>-->
+        <!--        <div class="chiller_cb">
+                  <input id="btn-poi-layer" type="checkbox"  value="poi_layer" v-model="map_config.checkedNames">
+                  <label for="btn-poi-layer">POI&nbsp;数据图层</label>
+                  <span></span>
+                </div>-->
         <div class="chiller_cb">
           <input id="btn-buses-layer" type="checkbox"  value="buses_layer" v-model="map_config.checkedNames">
           <label for="btn-buses-layer">公交路网图层</label>
@@ -96,11 +96,12 @@
       <h5> DATE </h5>
       <div class="line-separator-2"></div>
     </div>
+
     <DatePicker
       :value="start_date"
       type="date"
       placeholder="选择日期"
-      style="padding: 10px; width: 150px"
+      style="padding: 10px; width: 135px"
       placement="right-end"
       @on-change="date_update"
     ></DatePicker>
@@ -226,14 +227,16 @@
     z-index: 1;
     width:12.5%;
     max-height: 90%;
-    transform: translate(20px, 60px);
+    /*transform: translate(20px, 60px);*/
+    left:1%;
+    top:6%;
     height:70%;
     /*overflow:hidden;*/
     border-radius:.3em;
     box-shadow:0 0 0 1px hsla(0,0%,100%,.3) inset,0 .5em 1em rgba(0,0,0,0.6);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    font-size: 14px;
+    font-size: 13px;
   }
   .funcbar_warp_header {
     padding-top: 10px;
@@ -256,7 +259,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    padding-top: 10px;
+    padding-top: 1px;
   }
 
   .span_pseudo, .chiller_cb span:before, .chiller_cb span:after {
@@ -271,7 +274,7 @@
 
   .chiller_cb {
     position: relative;
-    height: 2rem;
+    height: 1.6rem;
     display: flex;
     align-items: center;
   }
@@ -315,8 +318,8 @@
   }
   .chiller_cb span {
     display: inline-block;
-    width: 0.8rem;
-    height: 0.8rem;
+    width: 0.6rem;
+    height: 0.6rem;
     border: 1px solid #ccc;
     position: absolute;
     left: 0;
@@ -349,7 +352,7 @@
   .custom-control-label {
     padding-left: 10px !important;
     padding-top: 2px !important;
-    display: relative !important;
+    display: relative!important;
     color: white !important;
     font-family: initial !important;
   }
@@ -358,9 +361,14 @@
     padding-left: 1.4rem !important;
     min-height: 32px !important;
   }
+
   .custom-control-label::before{
     background-color: rgba(0,0,0,0) !important;
     border: white solid 1px !important;
+    width: .8rem;
+    height: .8rem;
+    top:.32rem;
+    left:-1.4rem;
   }
 
   .custom-control-input:checked~.custom-control-label::before{

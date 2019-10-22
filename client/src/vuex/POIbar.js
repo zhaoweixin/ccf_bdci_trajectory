@@ -31,7 +31,7 @@ const POIData = {
         document.getElementById("barchart").clientHeight -
         margin.top -
         margin.bottom);
-
+    console.log(width);
     x = d3.scaleLinear().range([0, width]);
 
     y = d3.scaleBand().rangeRound([0, height], 0.1);
@@ -47,6 +47,7 @@ const POIData = {
       .append("svg")
       .attr("width", width + margin.left)
       .attr("height", height + margin.top);
+    console.log(d3.select("#barchart").select("svg"));
   },
   /*
 =================
@@ -80,29 +81,50 @@ name为所点击方块的geohash值,OrderType为订单类型数据
     var fnames = ["A", "B", "C", "D", "E", "F"];
     var result = new Array();
     var pois = poidata[data.name];
+    var poisums = sum(pois);
+    var trafficnum = sum(data.trafficdata);
     pois = pois.sort(dsort);
     data.trafficdata = data.trafficdata.sort(dsort);
+    var otherpercentage = 0;
+    if (pois.length > 6) {
+      for (var i = 6; i < pois.length; i++) {
+        otherpercentage += pois[i].value;
+      }
+    }
     var index = 0;
     for (var i = 0; i < pois.length; i++) {
       if (i >= 6) {
         break;
       }
+      if (i == 5 && pois.length > 6) {
+        result[index++] = {
+          name: fnames[i],
+          value: otherpercentage / poisums,
+          text: "其他",
+          percentage: Number((otherpercentage / poisums) * 100).toFixed(2) + "%"
+        };
+        break;
+      }
       result[index++] = {
         name: fnames[i],
-        value: pois[i].value,
-        text: pois[i].name
+        value: pois[i].value / poisums,
+        text: pois[i].name,
+        percentage: Number((pois[i].value / poisums) * 100).toFixed(2) + "%"
       };
     }
     for (var i = 0; i < data.trafficdata.length; i++) {
       result[index++] = {
         name: fnames[i],
-        value: -data.trafficdata[i].value,
-        text: traffictypes[data.trafficdata[i].name]
+        value: -(data.trafficdata[i].value / trafficnum),
+        text: traffictypes[data.trafficdata[i].name],
+        percentage:
+          Number((data.trafficdata[i].value / trafficnum) * 100).toFixed(2) +
+          "%"
       };
     }
     x.domain(
-      d3.extent(result, function(d) {
-        return parseInt(d.value);
+      d3.extent([-1, 1], function(d) {
+        return parseInt(d);
       })
     ).nice();
     y.domain(
@@ -147,13 +169,13 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .enter()
       .append("text")
       .text(function(d) {
-        return d.text;
+        return d.percentage + " " + d.text;
       })
       .attr("transform", function(d) {
         "translate(" + x(d.value) + "," + 0 + ")";
       })
       .attr("x", function(d) {
-        if (d.value < 0) return x(d.value - d.text.length * 4);
+        if (d.value < 0) return x(-0.9);
         else {
           return x(d.value);
         }
@@ -179,5 +201,13 @@ function dsort(a, b) {
     : a.value >= b.value
     ? 0
     : NaN;
+}
+function sum(arr) {
+  var s = 0;
+  arr.forEach(function(d, idx, arr) {
+    s += d.value;
+  }, 0);
+
+  return s;
 }
 export default POIData;

@@ -246,7 +246,7 @@
               requestInfo.config.legend_val.push(d)
             }
           })
-          
+
           //forbidden reload error
           console.log(requestInfo.config.legend_val)
           if(requestInfo.config.legend_val.length != 0){
@@ -270,7 +270,7 @@
               }
             })
           }
-          
+
 
 
 
@@ -313,13 +313,13 @@
               requestInfo.config.legend_val.push(d)
             }
           })
-          
-           
+
+
           //forbidden reload error
           console.log(requestInfo.config.legend_val)
           if(requestInfo.config.legend.length != 0){
             DataManager.getLineChartData(requestInfo).then((res) => {
-            
+
               requestInfo.config.legend_val.forEach((d,i) => {
                 let dataName = requestInfo.config.unit + d
                 if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
@@ -373,11 +373,11 @@
           this.lc_yScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([that.lc_height, 0]); // output
-          
+
           this.lc_xScaleAxis = d3.scaleLinear()
               .domain([xScaleMin, xScaleMax]) // input
               .range([0, that.lc_width]); // output
-          
+
           this.lc_yScaleAxis = d3.scaleLinear()
               .domain([yScaleMin, yScaleMax]) // input
               .range([that.lc_height, 0]); // output
@@ -387,7 +387,7 @@
               .x(function(d, i) { return that.lc_xScaleLine(d.x); }) // set the x values for the line generator
               .y(function(d) { return that.lc_yScaleLine(d.y); }) // set the y values for the line generator
               .curve(d3.curveMonotoneX) // apply smoothing to the line
-          
+
           if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
             let unit = opt.config.unit
             this.lc_line_generator[unit] = {}
@@ -613,7 +613,7 @@
                 .style('fill', 'none')
                 .style('stroke', that.lc_linecolor[i])
                 .style("stroke-width", '1px')
-              
+
               this.lc_svg_g.selectAll(".ddot")
                 .data(draw_data)
               .enter().append("circle")
@@ -683,20 +683,20 @@
               d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
               //select scale
               // 3. Call the x axis in a group tag
-              
+
               d3.selectAll('.x.axis').transition()
                   .duration(300).remove()
 
               d3.selectAll('.y.axis').transition()
                   .duration(300).remove()
-              
+
               that.lc_svg_g.append("g")
                   .attr("class", "x axis")
                   .attr("transform", "translate( 0," + +that.lc_height + ")")
                   .transition()
                   .duration(1000)
                   .call(d3.axisBottom(that.lc_line_generator[opt.config.unit]['xScaleAxis']).ticks(4))
-              
+
               that.lc_svg_g.append("g")
                   .attr("class", "y axis")
                   .transition()
@@ -740,7 +740,7 @@
                   if(typeof(d.x) == 'object'){
                     return that.lc_line_generator[unit].xScaleLine(d.x)
                   } else {
-                    
+
                   }
                 })
                 .attr('y', () => {
@@ -793,109 +793,15 @@
         }
         //end of function draw_linechart
       },
-      init_piechart() {
-          let pie_width = document.getElementById('pie').clientWidth;
-          let pie_height = document.getElementById('pie').clientHeight;
-          let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
-          let rdata = [1,1,1,1,1,1,1,1,1,1,1,1]
-          let max_index = 0, min_index = 0;
-          for (let index = 0; index < dataset.length; index++) {
-            if(dataset[index] == d3.max(dataset)){
-              max_index = index
-              break
-            }
-          }
-          for (let index = 0; index < dataset.length; index++) {
-            if(dataset[index] == d3.min(dataset)){
-              min_index = index
-              break
-            }
-          }
-
-          let pie_svg = d3.select("#pie_chart")
-            .append("svg")
-            .attr("width", pie_width)
-            .attr("height", pie_width);
-          let pie = d3.pie();
-          let piedata = pie(rdata);
-          let outerRadius = pie_width/3; //外半径
-          let innerRadius = outerRadius/1.7; //内半径
-          let markerSize = innerRadius;//三角标记大小
-          
-          let KOUSHAOLV = d3.rgb(93, 190, 138)
-          let HEYELV = d3.rgb(26, 104, 64)
-          let color = d3.interpolate(KOUSHAOLV, HEYELV);
-          let linear = d3.scaleLinear()
-            .domain([0, 1200])
-            .range([0, 1])
-          let arc = d3.arc() //弧生成器
-            .innerRadius(innerRadius) //设置内半径
-            .outerRadius(outerRadius); //设置外半径
-          let arcs = pie_svg.selectAll("g")
-            .attr("class","chart")
-            .data(piedata)
-            .enter()
-            .append("g")
-            .attr("transform", "translate(" + (pie_width / 2) + "," + (pie_width / 2) + ")");
-          arcs.append("path")
-            .attr("fill", function (d,i) {
-              return color(linear(dataset[i]));
-            })
-            .attr("d", function (d) {
-              return arc(d);
-            });
-          let marker = d3.symbol()
-            .size(markerSize)
-            .type(d3.symbolTriangle)
-          pie_svg.append("g")
-            .attr("transform", function () {
-                let widthT = Math.sin((piedata[max_index].startAngle + piedata[max_index].endAngle)/2) * (innerRadius-10)
-                let heightT = Math.cos((piedata[max_index].startAngle + piedata[max_index].endAngle)/2) * (innerRadius-10)
-                return "translate(" + (pie_width / 2 + widthT)+ "," + (pie_width / 2 - heightT) + ")"
-            })
-            .append("path")
-            .attr("d",marker)
-            .attr("fill",color(linear(dataset[max_index])))
-            .attr("transform", function () {
-                let ang = (max_index - 0.5)*(2 * Math.PI) /12
-                return "rotate(" + (ang - Math.PI / 2) / Math.PI * 180 + ")";
-            })
-          pie_svg.append("g")
-            .attr("transform", function () {
-                let widthT = Math.sin((piedata[min_index].startAngle + piedata[min_index].endAngle)/2) * (innerRadius-10)
-                let heightT = Math.cos((piedata[min_index].startAngle + piedata[min_index].endAngle)/2) * (innerRadius-10)
-                return "translate(" + (pie_width / 2 + widthT)+ "," + (pie_width / 2 - heightT) + ")"
-            })
-            .append("path")
-            .attr("d",marker)
-            .attr("fill",color(linear(dataset[min_index])))
-            .attr("transform", function () {
-                let ang = (min_index - 0.5)*(2 * Math.PI) /12
-                return "rotate(" + (ang - Math.PI / 2) / Math.PI * 180 + ")";
-            })
-          let updataMark = pie_svg.selectAll("g")
-            .attr("class","chart")
-            .data(piedata)
-            .enter()
-            .append("g")
-            .attr("transform", "translate(" + (pie_width / 2) + "," + (pie_width / 2) + ")")
-          updataMark.append("path")
-            .attr("d", function (d) {
-                return marker(d);
-            })
-            .attr("fill", function (d,i) {
-                return color(linear(dataset[i]));
-            })
-      },
       handle_feature_change_state(){
         // 前提：在有线图All的基础上进行添加色块
         // 收集基本信息 存储参数的变量
-        // 获取已经绘制线图的类型 
-        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形 
+        // 获取已经绘制线图的类型
+        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形
         // 在线图添加提示
         // 添加交互 鼠标mouseover矩形块时，矩形块边框高亮
-        // 
-        
+        //
+
         let that = this
         action_handle()
         function action_handle(){
@@ -965,7 +871,7 @@
           d3.selectAll(_rectclass).remove()
         }
         function addFeatureRect(config){
-          
+
           let xScaleAxis = that.lc_line_generator['All']['xScaleAxis'],
             yScaleAxis = that.lc_line_generator['All']['yScaleAxis'],
             feature = config.data
@@ -975,7 +881,7 @@
               g = that.lc_svg.append('g')
                   .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")")
                   .attr('id', 'featureRect')
-            
+
             for(let i=0;i<feature.length;i++){
               feature[i]['Time'] = new Date(feature[i].time)
               feature[i]['x'] = xScaleAxis(feature[i]['Time']) - half_rect_interval
@@ -983,7 +889,7 @@
               feature[i]['width'] = half_rect_interval * 2
               feature[i]['height'] = that.lc_height
             }
-            
+
             //construct data
             //draw bar
             g.selectAll('.xRect')
@@ -1018,18 +924,18 @@
                 })
               .on('mouseover', rect_handleMouseOver)
               .on('mouseout', rect_handleMouseOut)
-            
+
             //legend
             g.selectAll('.xRectLegend')
               .data([0,1])
               .enter()
               .append('rect')
-              .attr('x', function(d, i) { 
+              .attr('x', function(d, i) {
                 if(config.type == 0){
                   //weather
-                  return that.lc_width * 1.02 + 10 
+                  return that.lc_width * 1.02 + 10
                 } else {
-                  return that.lc_width * 1.10 + 10 
+                  return that.lc_width * 1.10 + 10
                 }
                 })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 30})
@@ -1046,15 +952,15 @@
               .transition()
               .duration(300)
               .style('opacity', 1)
-            
+
             g.selectAll('.xRectLegend')
               .data([0,1])
               .enter()
               .append('text')
-              .attr('x', function(d, i) { 
+              .attr('x', function(d, i) {
                 if(config.type == 0){
                   //weather
-                  return that.lc_width * 1.02 + 40 
+                  return that.lc_width * 1.02 + 40
                 } else {
                   return that.lc_width * 1.10 + 40
                 }
@@ -1077,32 +983,32 @@
                 }
               })
 
-        
+
           function rect_handleMouseOver(d, i){
             let date = d3.select(this).attr('date'),
               coordinates = d3.mouse(this),
               x = coordinates[0],
               y = coordinates[1]
-            
+
             d3.select('#featureRect').append('text').attr('id', 'recttext')
               .attr('x', x)
               .attr('y', y)
               .attr('fill', 'white')
               .text(date)
-  
+
             d3.select(this).attr('class', 'weatherRect_select')
           }
           function rect_handleMouseOut(){
             d3.select(this).attr('class', 'weatherRect_disselect')
             d3.selectAll('#recttext').remove()
-            
+
           }
-          
+
         }
 
         function getFeatureRectStatus(){}
       }
-      
+
     },
     mounted(){
 
