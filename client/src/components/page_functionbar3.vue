@@ -35,7 +35,9 @@
         data() {
             return {
                 geohash: "w7w3y9",
-                buses_data:[]
+                buses_data:[],
+                matrix_type:'od_all',
+                location_type:'angle_all_list'
             };
         },
         mounted() {
@@ -48,7 +50,7 @@
         },
         methods: {
             tabs_func(name){
-              console.log(name);
+              //console.log(name);
               if(name === 0)
                   this.draw_location_ring(this.geohash);
               else if(name === 1)
@@ -60,7 +62,7 @@
             draw_od_matrix(curr_geohash) {
                 this.$http.get('query',{
                     params:{
-                        table: `od_all where start_geo = '${curr_geohash}'`
+                        table: `${this.matrix_type} where start_geo = '${curr_geohash}'`
                     }
                 }).then(res=>{
                     //console.log(res.body[0]);
@@ -182,7 +184,7 @@
                     .get("query", {
                         params: {
                             // table: `angle_all_list where start_geo = '${curr_geohash}'`// all
-                            table: `angle_all_list where start_geo = '${curr_geohash}'` // day
+                            table: `${this.location_type} where start_geo = '${curr_geohash}'` // day
                         }
                     })
                     .then(res => {
@@ -355,7 +357,7 @@
 
                     let inner_color = d3.scaleOrdinal(color_category);
 
-                    let inner_dataset = [30, 10, 43, 55, 13];
+                    let inner_dataset = [0,0,0,0,0].map(d=>Math.random()*50);
 
                     let inner_piedata = pie(inner_dataset);
                     //
@@ -561,13 +563,6 @@
                 },
                 deep: true
             },
-            "$store.state.date_state": {
-                handler(state) {
-                    this.date = state.date;
-                    console.log(state.date);
-                },
-                deep: true
-            },
             "$store.state.calendar_state": function(newdata, olddata) {
                 //console.log(newdata);
                 POIbar.addData();
@@ -580,6 +575,7 @@
                     //this.draw_buses_info(data.routes);
                 }
             }
+            ////////////监听类型的改变///////////
         }
     };
 </script>
