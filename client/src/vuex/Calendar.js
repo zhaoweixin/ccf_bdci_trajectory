@@ -73,7 +73,7 @@ const calendar = {
       .style("font-family", "sans-serif")
       .style("font-size", 12)
       .style("text-anchor", "middle")
-      .style("fill", "white")
+      .style('fill', 'rgb(170,170,170)')
       .text(function(d) {
         return d;
       });
@@ -84,6 +84,7 @@ const calendar = {
       .data(days)
       .enter()
       .append("text")
+      .style('fill', 'rgb(170,170,170)')
       .attr("transform", function(d, i) {
         if (i <= 6) {
           return "translate(25," + cellSize * 3.5 + ")";
@@ -127,8 +128,8 @@ const calendar = {
       .append("path")
       .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
       .attr("d", pathMonth);
-    drawday();
-    // drawhour();
+    // drawday();
+    drawhour();
   },
   houradddata(data) {
     var index = 0;
@@ -402,7 +403,6 @@ function addLegend(num) {
     })
     .append("title")
     .text(function(d) {
-      console.log(d);
       return "第" + (d + 1) + "类";
     });
 }

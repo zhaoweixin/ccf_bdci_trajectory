@@ -24,11 +24,6 @@
           <span></span>
         </div>
         <div class="chiller_cb">
-          <input id="myCheckbox3" type="checkbox"  value="2" v-model="config.checkedNames">
-          <label for="myCheckbox3">运行流向</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
           <input id="myCheckbox4" type="checkbox"  value="3" v-model="config.checkedNames">
           <label for="myCheckbox4">运行时间</label>
           <span></span>
@@ -59,7 +54,23 @@
           </div>
         </div>
 
-        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, 5px); font-size: 12px" @click="handle_clickbutton()">Apply</button>
+
+        <button class='btn btn-primary shadow-none bg-secondary' style="transform: translate(0, -5px); font-size: 12px; width:100px" @click="handle_clickbutton()">Apply</button>
+        
+        <div class="line-separator-2"></div>
+
+        <div class="chiller_cb">
+          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
+          <label for="weatherCheckbox1">天气</label>
+          <span></span>
+        </div>
+
+        <div class="chiller_cb">
+          <input id="weatherCheckbox2" type="checkbox" value="1" v-model="weather_config.checkedNames">
+          <label for="weatherCheckbox2">节假日</label>
+          <span></span>
+        </div>
+
       </div>
     </div>
 
@@ -92,34 +103,6 @@
       </div>
     </div>
 
-    <div class="funcbar_warp_header">
-      <h5> DATE </h5>
-      <div class="line-separator-2"></div>
-    </div>
-
-    <DatePicker
-      :value="start_date"
-      type="date"
-      placeholder="选择日期"
-      style="padding: 10px; width: 135px"
-      placement="right-end"
-      @on-change="date_update"
-    ></DatePicker>
-
-    <div class="funcbar_warp_header">
-      <h5> WEATHER </h5>
-      <div class="line-separator-2"></div>
-    </div>
-    <div class="bg">
-      <div>
-        <div class="chiller_cb">
-          <input id="weatherCheckbox1" type="checkbox" value="0" v-model="weather_config.checkedNames">
-          <label for="weatherCheckbox1">天气</label>
-          <span></span>
-        </div>
-      </div>
-    </div>
-
 
   </div>
 </template>
@@ -130,7 +113,6 @@
         name: 'page_funtionbar',
         data(){
             return {
-                start_date:'2017-05-01',
                 config: {
                     checkedNames:['0'],
                     //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
@@ -196,7 +178,7 @@
                     //新数组中存在该元素，需
                     //console.log(newValue, oldValue)
                     this.his_weather_config = JSON.parse(JSON.stringify(newValue))
-                    this.$store.commit('weather_change_state', newValue)
+                    this.$store.commit('feature_change_state', newValue)
                 },
                 deep: true
             }
@@ -210,9 +192,6 @@
                 } else {
 
                 }
-            },
-            date_update(date){
-                this.$store.commit('date_state',{date:date});
             }
         },
         mounted(){
@@ -274,7 +253,7 @@
 
   .chiller_cb {
     position: relative;
-    height: 1.6rem;
+    height: 2rem;
     display: flex;
     align-items: center;
   }
@@ -315,6 +294,9 @@
     margin-bottom:0;
     color: white;
     font-family: initial;
+    font-size: 15px;
+    color: rgb(170,170,170);
+    font-weight:bold;
   }
   .chiller_cb span {
     display: inline-block;
@@ -353,7 +335,7 @@
     padding-left: 10px !important;
     padding-top: 2px !important;
     display: relative!important;
-    color: white !important;
+    color: rgb(170,170,170) !important;
     font-family: initial !important;
   }
   .custom-control {
@@ -378,5 +360,13 @@
   .chiller_cb input:checked ~ span{
     background: #99C779 !important;
     border-color: #99C779 !important;
+  }
+
+  .custom-control-label::after{
+    top: .24rem !important;
+    left: -1.505rem !important;
+  }
+  .custom-radio .custom-control-input:checked~.custom-control-label::after{
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2399C779'/%3e%3c/svg%3e") !important;
   }
 </style>

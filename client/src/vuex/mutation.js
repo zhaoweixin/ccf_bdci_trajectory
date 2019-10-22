@@ -6,8 +6,8 @@ const mutation = {
   map_state(state, payload) {
     state.map_state = JSON.parse(JSON.stringify(payload));
   },
-  weather_change_state(state, payload) {
-    state.weather_change_state = JSON.parse(JSON.stringify(payload));
+  feature_change_state(state, payload) {
+    state.feature_change_state = JSON.parse(JSON.stringify(payload));
     // console.log(state.weather_change_state)
   },
   Calendar_change_state(state, payload) {
@@ -19,10 +19,10 @@ const mutation = {
 
     state.DATA_STORE[name] = JSON.parse(JSON.stringify(data));
   },
-  date_state(state, payload) {
-    state.date_state = JSON.parse(JSON.stringify(payload));
-    //console.log(state.date_state);
-  },
+  // date_state(state, payload) {
+  //   state.date_state = JSON.parse(JSON.stringify(payload));
+  //   //console.log(state.date_state);
+  // },
   geohash_state(state, payload) {
     state.geohash_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.geohash_state);
