@@ -15,6 +15,8 @@ const store = new Vuex.Store({
     },//当前geohash
     map_state: {}, //地图图层操作
 
+    buses_routes_state:{},//公交路线
+
     operater_state: {
       checkedNames: [],
       picked: ""

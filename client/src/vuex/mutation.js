@@ -26,6 +26,10 @@ const mutation = {
   geohash_state(state, payload) {
     state.geohash_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.geohash_state);
+  },
+  buses_routes_state(state, payload) {
+    state.buses_routes_state = JSON.parse(JSON.stringify(payload));
+    //console.log(state.buses_routes_state);
   }
 };
 export default mutation;

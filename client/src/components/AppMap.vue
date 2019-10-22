@@ -616,10 +616,10 @@
                 this.map.on('click',(e)=> {
                     let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
 
-                    new mapboxgl.Popup()
-                        .setLngLat([e.lngLat.lng, e.lngLat.lat])
-                        .setHTML('<APP_POI></APP_POI>')
-                        .addTo(this.map);
+                    // new mapboxgl.Popup()
+                    //     .setLngLat([e.lngLat.lng, e.lngLat.lat])
+                    //     .setHTML('<APP_POI></APP_POI>')
+                    //     .addTo(this.map);
 
                     let bbox = ngeohash.decode_bbox(curr_geohash);
                     let features_polygon = [{
@@ -739,7 +739,11 @@
                 });
             },
             draw_geo_buses(curr_geohash='w7w3y9'){
-                let routes = this.geo_routes[curr_geohash]?this.geo_routes[curr_geohash]:[];
+                let routes = this.geo_routes[curr_geohash]?this.geo_routes[curr_geohash]:[]
+
+                //公交路线
+                this.$store.commit('buses_routes_state',{routes:routes.map(d=>parseInt(d)+'路')});
+
                 //console.log(routes);
                 let data = this.buses_data.filter(d=>{
                     return routes.includes(d.name);

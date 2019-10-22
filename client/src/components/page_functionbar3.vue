@@ -11,13 +11,16 @@
 
     <div id="od_matrix"></div>
     <div id="barchart"></div>
-    <div id="location_ring">
+    <div id="location_info">
       <Tabs size="small">
-        <TabPane label="区域POI">
-          <div id="poi_ring"></div>
+        <TabPane label="公交信息">
+          <div id="buses_info"></div>
         </TabPane>
         <TabPane label="区域方向">
           <div id="angle_ring"></div>
+        </TabPane>
+        <TabPane label="区域POI">
+          <div id="poi_ring"></div>
         </TabPane>
       </Tabs>
     </div>
@@ -38,9 +41,11 @@
             this.draw_od_matrix(this.geohash);
             this.draw_poi_ring(this.geohash);
             this.draw_location_ring(this.geohash);
-            console.log(POIbar);
-            POIbar.initchart();
-            POIbar.initdata();
+            //console.log(POIbar);
+            //POIbar.initchart();
+            //POIbar.initdata();
+        },
+        updated(){
         },
         methods: {
             draw_od_matrix(curr_geohash) {
@@ -178,8 +183,8 @@
 
                 let draw = dataset => {
                     //console.log(dataset);
-                    let pie_width = document.getElementById("location_ring").clientWidth;
-                    let pie_height = document.getElementById("location_ring").clientHeight - 40;
+                    let pie_width = document.getElementById("location_info").clientWidth;
+                    let pie_height = document.getElementById("location_info").clientHeight - 40;
                     //pie_width = pie_height < pie_width ? pie_height : pie_width;
                     //let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
                     let rdata = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -470,6 +475,51 @@
                         ]
                     });
                 }
+            },
+            draw_buses_info(data){
+
+                let myChart = this.$echarts.init(document.getElementById("buses_info"));
+
+                let option = null;
+
+                option = {
+                    series: {
+                        type: 'graph',
+                        layout: 'force',
+                        animation: false,
+                        roam: true,
+                        label: {
+                            normal: {
+                                show:true,
+                                color:'#FFF',
+                                position: 'right'
+                            }
+                        },
+                        symbolSize:20,
+                        itemStyle: {
+                            normal: {
+                                color: "#c96b2b",
+                            }
+                        },
+                        data: data.map((d,i)=>{
+                            return {id:i,name:d,category:i}
+                        }),
+                        categories:data.map((d,i)=>{
+                            return {name:i}
+                        }),
+                        force: {
+                            initLayout: 'gird',
+                            // gravity: 0
+                            layoutAnimation:true,
+                            repulsion: 40,
+                        }
+                    }
+                };
+
+                if (option && typeof option === "object") {
+                    myChart.setOption(option, true);
+                }
+
             }
         },
         components: {},
@@ -496,6 +546,12 @@
                 console.log(newdata);
                 POIbar.addData();
                 // 需要执行的代码
+            },
+            "$store.state.buses_routes_state":{
+                handler(data){
+                    //console.log(data.routes)
+                    this.draw_buses_info(data.routes);
+                }
             }
         }
     };
@@ -540,11 +596,11 @@
   #barchart {
     height: 30%;
   }
-  #location_ring {
+  #location_info {
     height: 28%;
     z-index: 1;
   }
-  #poi_ring,#angle_ring{
+  #poi_ring,#angle_ring,#buses_info{
     width:100%;
     height: 100%;
   }
