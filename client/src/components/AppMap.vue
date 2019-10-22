@@ -681,7 +681,7 @@
 
                     let linear = d3.scaleLinear()
                         .domain([0, d3.max(data,(d)=>d.count)])
-                        .range([0, .5]);
+                        .range([0.1, .5]);
 
                     data.forEach(d =>{
 
@@ -691,7 +691,7 @@
                             'type': 'Feature',
                             "properties": {
                                 'color': '#04759D',//"#16B2D8",//"#ee2d3e",
-                                'value': linear(d.count) +0.1
+                                'value': linear(d.count)
                             },
                             'geometry': {
                                 'type': 'Polygon',

@@ -9,18 +9,10 @@
       <div class="line-separator-2"></div>
     </div>
 
-    <!--    <Menu theme="dark" :open-names="['1']" accordion>-->
-    <!--      <Submenu name="1">-->
-    <!--        <template slot="title">-->
-    <!--          <Icon type="ios-paper" />-->
-    <!--          内容管理-->
-    <!--        </template>-->
-    <!-- -->
-    <!--      </Submenu>-->
-    <!--    </Menu>-->
     <div id="od_matrix"></div>
     <div id="barchart"></div>
     <div id="location_ring"></div>
+
   </div>
 </template>
 <script>
@@ -43,99 +35,124 @@ export default {
   },
   methods: {
     draw_od_matrix(curr_geohash) {
-      // this.$http.get('query',{
-      //     params:{
-      //         table: `geo_odtop5 where dest_geo = '${curr_geohash}'`
-      //     }
-      // }).then(res=>{
-      //     console.log(res.body);
-      // });
+      this.$http.get('query',{
+          params:{
+              table: `od_all where start_geo = '${curr_geohash}'`
+          }
+      }).then(res=>{
+          //console.log(res.body[0]);
+          draw(res.body[0]);
+      });
 
-      let width = document.getElementById("od_matrix").clientWidth;
-      let height = document.getElementById("od_matrix").clientHeight;
+      let draw = (geo_data)=>{
 
-      let gird_size = 30;
+          //重绘
+          d3.select("#od_matrix").html("");
 
-      d3.select("#od_matrix").html("");
+          let width = document.getElementById("od_matrix").clientWidth;
+          let height = document.getElementById("od_matrix").clientHeight;
 
-      //console.log(width,height);
-      let svg = d3
-        .select("#od_matrix")
-        .append("svg")
-        .attr("width", width)
-        .attr("height", height);
+          let gird_size = 30;
 
-      let data = [];
+          geo_data.dest_geo = eval(geo_data.dest_geo);
+          geo_data.matrix = eval(geo_data.matrix);
 
-      for (let i = 0; i < 5; i++) {
-        for (let j = 0; j < 5; j++) {
-          data.push({ row: i, col: j });
-        }
+          //console.log(width,height);
+          let svg = d3
+              .select("#od_matrix")
+              .append("svg")
+              .attr("width", width)
+              .attr("height", height);
+
+          let data = [];
+          let geohash_label = geo_data.dest_geo;
+          let matrix_len = geo_data.dest_geo.length;
+
+          for (let i = 0; i < matrix_len; i++) {
+              for (let j = 0; j < matrix_len; j++) {
+                  data.push({ row: i, col: j,value:geo_data.matrix[i][j] });
+              }
+          }
+
+          let a = d3.rgb(0,0,0,0);	//无色
+          let b = d3.rgb(0,185,0);	//绿色
+
+          let compute = d3.interpolate(a,b);
+
+          let linear = d3.scaleLinear()
+              .domain([0,d3.max(geo_data.matrix,(d)=>{
+                  return d3.max(d,s=>s);
+              })])
+              .range([0,1]);
+
+          let label_row_g = svg
+              .append("g")
+              .attr("transform", "translate(" + 20 + ",0)");
+
+          let label_row = label_row_g
+              .selectAll(".label_row")
+              .data(geohash_label)
+              .enter()
+              .append("text")
+              .attr("class", "label_row")
+              .attr("x", 8)
+              .attr("y", (d, i) => i * gird_size + 45)
+              .text(d => d)
+              .style("text-anchor", "start")
+              .style("opacity", 0)
+              .transition()
+              .duration(300)
+              .style("opacity", 1);
+
+          let label_col_g = svg
+              .append("g")
+              .attr("transform", "translate(" + 0 + ",0)");
+          let label_col = label_row_g
+              .selectAll(".label_col")
+              .data(geohash_label)
+              .enter()
+              .append("text")
+              .attr("class", "label_col")
+              .attr("x", (d, i) => i * gird_size + 40)
+              .attr("y", height)
+              .text(d => d)
+              .attr("transform", (d, i) => {
+                  return "rotate(-20, " + i * gird_size + " " + height + ")";
+              })
+              .style("text-anchor", "start")
+              .style("opacity", 0)
+              .transition()
+              .duration(300)
+              .style("opacity", 1);
+
+          let cards_g = svg
+              .append("g")
+              .attr(
+                  "transform",
+                  "translate(" + ((width - 150) / 2 + 20) + "," + 20 + ")"
+              );
+
+          let cards = cards_g.selectAll(".od_card")
+              .data(data)
+              .enter()
+              .append("rect")
+              .attr("class", "od_card")
+              .attr("x", d => d.row * gird_size)
+              .attr("y", d => d.col * gird_size)
+              .attr("width", gird_size)
+              .attr("height", gird_size)
+              .attr("fill", (d)=>compute(linear(d.value)))
+              .on('mouseover',function () {
+              })
+              .on('mouseout',function () {
+              })
+              .style("opacity", 0)
+              .transition()
+              .duration(300)
+              .style("opacity", .8);
+
+          cards_g.selectAll('rect').append('title').text(d=>d.value)
       }
-
-      let geohash_label = ["geo_01", "geo_02", "geo_03", "geo_04", "geo_05"];
-
-      let label_row_g = svg
-        .append("g")
-        .attr("transform", "translate(" + 20 + ",0)");
-      let label_row = label_row_g
-        .selectAll(".label_row")
-        .data(geohash_label)
-        .enter()
-        .append("text")
-        .attr("class", "label_row")
-        .attr("x", 8)
-        .attr("y", (d, i) => i * gird_size + 45)
-        .text(d => d)
-        .style("text-anchor", "start")
-        .style("opacity", 0)
-        .transition()
-        .duration(300)
-        .style("opacity", 1);
-
-      let label_col_g = svg
-        .append("g")
-        .attr("transform", "translate(" + 0 + ",0)");
-      let label_col = label_row_g
-        .selectAll(".label_col")
-        .data(geohash_label)
-        .enter()
-        .append("text")
-        .attr("class", "label_col")
-        .attr("x", (d, i) => i * gird_size + 45)
-        .attr("y", height)
-        .text(d => d)
-        .attr("transform", (d, i) => {
-          return "rotate(-20, " + i * gird_size + " " + height + ")";
-        })
-        .style("text-anchor", "start")
-        .style("opacity", 0)
-        .transition()
-        .duration(300)
-        .style("opacity", 1);
-
-      let cards_g = svg
-        .append("g")
-        .attr(
-          "transform",
-          "translate(" + ((width - 150) / 2 + 20) + "," + 20 + ")"
-        );
-
-      cards_g
-        .selectAll(".od_card")
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("class", "od_card")
-        .attr("x", d => d.row * gird_size)
-        .attr("y", d => d.col * gird_size)
-        .attr("width", gird_size)
-        .attr("height", gird_size)
-        .attr("fill", "#3C9466")
-        .style("opacity", 0)
-        .transition()
-        .duration(300)
-        .style("opacity", d => Math.random());
     },
     draw_location_ring(curr_geohash) {
       this.$http
@@ -449,8 +466,8 @@ export default {
     "$store.state.geohash_state": {
       handler(state) {
         console.log(state.geohash);
-        //this.geohash = state.geohash;
-        //this.draw_od_matrix(state.geohash);
+        this.geohash = state.geohash;
+        this.draw_od_matrix(state.geohash);
         // this.draw_poi_ring(state.geohash);
         this.draw_location_ring(state.geohash);
       },
