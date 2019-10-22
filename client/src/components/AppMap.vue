@@ -640,6 +640,22 @@
             },
             geohash_update(curr_geohash='w7w3y9'){
 
+                //初始化
+                this.map.getSource('od_polygon_source').setData({
+                    "type": "FeatureCollection",
+                    "features": []
+                });
+
+                this.map.getSource('geo_stations_source').setData({
+                    "type": "FeatureCollection",
+                    "features": []
+                });
+
+                this.map.getSource('geo_routes_source').setData({
+                    "type": "FeatureCollection",
+                    "features": []
+                });
+
                 //更新geohash_state
                 this.$store.commit('geohash_state',{geohash:curr_geohash});
 
@@ -660,8 +676,6 @@
 
                 //更新OD
                 let update = (data)=> {
-
-                    this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'visible');
 
                     let features_polygon = [];
 
@@ -700,8 +714,10 @@
             },
 
             /*----------------------------------------/
-             * Fun - 加载公交路线geohash数据
+             * Fun - 加载公交路线
              * @load_geo_routes()
+             * @load_buses_data()
+             * @draw_geo_buses()
             /-----------------------------------------*/
             load_geo_routes(){
                 this.$http.get('dataset/buses_data/geo_routes.json').then(res=>{
@@ -709,23 +725,20 @@
                     //console.log(this.geo_routes);
                 });
             },
-
-            //--------------施工现场！！！！-----------------------------//
-
             load_buses_data(){
                 this.$http.get('dataset/buses_data/buses_data.json').then(res=>{
                     this.buses_data = res.body;
                 });
             },
             draw_geo_buses(curr_geohash='w7w3y9'){
-                let routes = this.geo_routes[curr_geohash];
+                let routes = this.geo_routes[curr_geohash]?this.geo_routes[curr_geohash]:[];
                 //console.log(routes);
-
                 let data = this.buses_data.filter(d=>{
                     return routes.includes(d.name);
                 });
 
                 //console.log(data);
+
                 let feature_buslines = [];
                 let feature_buspoints = [];
                 let stations = [];
@@ -769,18 +782,21 @@
                 });
 
                 //this.map.on('load',  ()=>{
-                this.map.getSource('geo_stations_source').setData({
-                    "type": "FeatureCollection",
-                    "features": feature_buspoints
-                });
+                    this.map.getSource('geo_stations_source').setData({
+                        "type": "FeatureCollection",
+                        "features": feature_buspoints
+                    });
 
-                this.map.getSource('geo_routes_source').setData({
-                    "type": "FeatureCollection",
-                    "features": feature_buslines
-                });
+                    this.map.getSource('geo_routes_source').setData({
+                        "type": "FeatureCollection",
+                        "features": feature_buslines
+                    });
                 //});
 
             },
+
+
+            //--------------施工现场！！！！-----------------------------//
 
             map_refresh(){
             },
@@ -837,7 +853,7 @@
                 handler(state){
                     this.od_date = 'od_'+state.date.replace(/-/g,'');
                     //console.log(state.date);
-                    this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'none');
+                    //this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'none');
                 },
                 deep:true
             }
