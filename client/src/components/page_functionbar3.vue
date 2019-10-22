@@ -168,7 +168,7 @@ export default {
         });
 
       let draw = dataset => {
-        console.log(dataset);
+        //console.log(dataset);
         let pie_width = document.getElementById("location_ring").clientWidth;
         let pie_height = document.getElementById("location_ring").clientHeight;
         pie_width = pie_height < pie_width ? pie_height : pie_width;
@@ -202,6 +202,7 @@ export default {
         let pie = d3.pie();
 
         let piedata = pie(rdata);
+
         let outerRadius = pie_width / 2.5; //外半径
         let innerRadius = outerRadius / 1.6; //内半径
         let markerSize = innerRadius; //三角标记大小
@@ -211,7 +212,7 @@ export default {
         let color = d3.interpolate(KOUSHAOLV, HEYELV);
         let linear = d3
           .scaleLinear()
-          .domain([0, 1200])
+          .domain([0, d3.max(dataset,d=>d)])
           .range([0, 1]);
         let arc = d3
           .arc() //弧生成器
