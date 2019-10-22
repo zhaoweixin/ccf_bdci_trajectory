@@ -37,7 +37,6 @@ export default {
     this.draw_od_matrix(this.geohash);
     // this.draw_poi_ring(this.geohash);
     this.draw_location_ring(this.geohash);
-    console.log(POIbar);
     POIbar.initchart();
     POIbar.initdata();
   },
@@ -151,7 +150,6 @@ export default {
         });
 
       let draw = dataset => {
-        console.log(dataset);
         let pie_width = document.getElementById("location_ring").clientWidth;
         let pie_height = document.getElementById("location_ring").clientHeight;
         pie_width = pie_height < pie_width ? pie_height : pie_width;
@@ -213,7 +211,6 @@ export default {
         arcs
           .append("path")
           .attr("fill", function(d, i) {
-            console.log(color(linear(dataset[i])));
             return color(linear(dataset[i]));
           })
           .attr("d", function(d) {
@@ -448,7 +445,6 @@ export default {
   watch: {
     "$store.state.geohash_state": {
       handler(state) {
-        console.log(state.geohash);
         //this.geohash = state.geohash;
         //this.draw_od_matrix(state.geohash);
         // this.draw_poi_ring(state.geohash);
@@ -459,12 +455,10 @@ export default {
     "$store.state.date_state": {
       handler(state) {
         this.date = state.date;
-        console.log(state.date);
       },
       deep: true
     },
     "$store.state.calendar_state": function(newdata, olddata) {
-      console.log(newdata);
       POIbar.addData();
       // 需要执行的代码
     }
@@ -539,7 +533,7 @@ export default {
   shape-rendering: crispEdges;
 }
 #barchart .bars text {
-  font: 7px sans-serif;
+  font: 10px sans-serif;
   fill: aliceblue;
 }
 </style>>

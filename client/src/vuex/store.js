@@ -9,7 +9,7 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   // 定义状态
   state: {
-    date_state: {},//当前日期
+    // date_state: {},//当前日期
     geohash_state:{
       'geohash':'w7w3y9'
     },//当前geohash
@@ -19,7 +19,7 @@ const store = new Vuex.Store({
       checkedNames: [],
       picked: ""
     },
-    weather_change_state: {
+    feature_change_state: {
       status: "3",
       config: {
         add: [],
