@@ -33,10 +33,15 @@
         name: "AppMap",
         data() {
             return {
-                map: null,
-                od_date:'od_20170501',
+                //data
                 geo_routes:{},
-                buses_data:[]
+                buses_data:[],
+
+                //init config
+                map: null,
+                date:'2017-05-01',
+                sql_table:'od_all_count',
+                od_type:'od'
             }
         },
         created() {
@@ -673,9 +678,7 @@
 
                 this.$http.get('query',{
                     params:{
-                        // table:"odcount where start_geo ='"+curr_geohash+"'"
-                        // table: `odcount where start_geo = '${curr_geohash}'`
-                        table: `${this.od_date} where start_geo = '${curr_geohash}'`
+                        table: `${this.sql_table} where start_geo = '${curr_geohash}'`
 
                     }}).then((res) => {
                     update(res.body);
@@ -688,17 +691,28 @@
                     let features_polygon = [];
 
                     let linear = d3.scaleLinear()
-                        .domain([0, d3.max(data,(d)=>d.count)])
-                        .range([0.1, .5]);
+                        .domain([0, d3.max(data,(d)=>d.count)+5])
+                        .range([0.1, .8]);
+
+                    //console.log(d3.max(data,(d)=>d.count));
 
                     data.forEach(d =>{
 
                         let bbox = ngeohash.decode_bbox(d.dest_geo);
 
+                        let color = '';
+
+                        if(this.od_type === 'od')
+                            color = '#04759D';
+                        else
+                            color = '#d8363a';
+
+                        //console.log(linear(d.count));
+
                         features_polygon.push({
                             'type': 'Feature',
                             "properties": {
-                                'color': '#04759D',//"#16B2D8",//"#ee2d3e",
+                                'color': color,
                                 'value': linear(d.count)
                             },
                             'geometry': {
@@ -807,21 +821,6 @@
 
             },
 
-
-            //--------------施工现场！！！！-----------------------------//
-
-            map_refresh(){
-            },
-
-            load_od_day(){
-                this.$http.get('query',{
-                    params:{
-                        table: `od_20170501 where start_geo = 'w7w3x1'`
-                    }}).then((res) => {
-                    console.log(res.body)
-                });
-            },
-
             coordtrans_bdtowgs84(lnglat){
                 let bd09togcj02 = coordtrans.bd09togcj02(lnglat[0], lnglat[1]);
                 return coordtrans.gcj02towgs84(bd09togcj02[0], bd09togcj02[1])
@@ -861,14 +860,51 @@
                 },
                 deep:true
             },
-            '$store.state.date_state':{
-                handler(state){
-                    this.od_date = 'od_'+state.date.replace(/-/g,'');
-                    //console.log(state.date);
-                    //this.map.setLayoutProperty('od_polygon_layer', 'visibility', 'none');
-                },
-                deep:true
-            }
+            "$store.state.AllDayHour_state":{
+                handler(type){
+
+                    //All
+                    if(type === 0){
+                        //OD
+                        if(this.od_type === 'od'){
+                            this.sql_table = 'od_all_count'
+                        }
+                        //DO
+                        else{
+                            this.sql_table = 'do_all_count'
+                        }
+                        this.geohash_update();
+                    }
+                    else if(type === 1){
+                        //OD
+                        if(this.od_type === 'od'){
+                            this.sql_table = 'od_'+this.date.replace(/-/g,'');
+                        }
+                        //DO
+                        else{
+                            this.sql_table = 'do_'+this.date.replace(/-/g,'');
+                        }
+                        this.geohash_update();
+                    }
+                }
+            },
+            "$store.state.calendar_state": function(date) {
+                this.date = date[0];
+                //OD
+                if(this.od_type === 'od'){
+                    this.sql_table = 'od_'+this.date.replace(/-/g,'');
+                }
+                //DO
+                else{
+                    this.sql_table = 'do_'+this.date.replace(/-/g,'');
+                }
+                this.geohash_update();
+            },
+            //"$store.state.od_type":{
+            // handler(type){
+            //  this.od_type = type;
+            // }
+            // }
         }
     }
 </script>

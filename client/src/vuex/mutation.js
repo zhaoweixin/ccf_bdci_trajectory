@@ -16,7 +16,6 @@ const mutation = {
   UPDATE_DATA_STORE(state, payload) {
     let name = payload.name,
       data = payload.data;
-
     state.DATA_STORE[name] = JSON.parse(JSON.stringify(data));
   },
   // date_state(state, payload) {
@@ -28,12 +27,11 @@ const mutation = {
     //console.log(state.geohash_state);
   },
   AllDayHour_state(state, payload) {
-    console.log(payload);
+    //console.log(payload);
     state.AllDayHour_state = JSON.parse(JSON.stringify(payload));
   },
   buses_routes_state(state, payload) {
     state.buses_routes_state = JSON.parse(JSON.stringify(payload));
-
     //console.log(state.buses_routes_state);
   }
 };

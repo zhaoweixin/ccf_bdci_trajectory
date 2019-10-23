@@ -35,16 +35,14 @@
         data() {
             return {
                 geohash: "w7w3y9",
+                date:'2017-05-01',
                 buses_data:[],
-                matrix_type:'od_all',
-                location_type:'angle_all_list'
+                sql_od_matrix:"od_all where start_geo = 'w7w3y9'",
+                sql_location:"angle_all_list where start_geo = 'w7w3y9'",
+                view_type:0
             };
         },
         mounted() {
-            this.draw_od_matrix(this.geohash);
-            //console.log(POIbar);
-            //POIbar.initchart();
-            //POIbar.initdata();
             POIbar.initchart();
             POIbar.initdata();
         },
@@ -52,19 +50,20 @@
         },
         methods: {
             tabs_func(name){
-              //console.log(name);
-              if(name === 0)
-                  this.draw_location_ring(this.geohash);
-              else if(name === 1)
-                  this.draw_poi_ring(this.geohash);
-              else
-                  this.draw_buses_info(this.buses_data);
+                //console.log(name);
+                if(name === 0)
+                    this.draw_location_ring(this.geohash);
+                else if(name === 1)
+                    this.draw_poi_ring(this.geohash);
+                else
+                    this.draw_buses_info(this.buses_data);
 
             },
-            draw_od_matrix(curr_geohash) {
+            draw_od_matrix() {
+                console.log(1);
                 this.$http.get('query',{
                     params:{
-                        table: `${this.matrix_type} where start_geo = '${curr_geohash}'`
+                        table: this.sql_od_matrix
                     }
                 }).then(res=>{
                     //console.log(res.body[0]);
@@ -185,8 +184,7 @@
                 this.$http
                     .get("query", {
                         params: {
-                            // table: `angle_all_list where start_geo = '${curr_geohash}'`// all
-                            table: `${this.location_type} where start_geo = '${curr_geohash}'` // day
+                            table: this.sql_location
                         }
                     })
                     .then(res => {
@@ -551,157 +549,190 @@
                 }
 
             },
-    changehead() {
-      let that=this;
-     
-        var selectrange = that.$store.state.AllDayHour_state;
-        var date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
-        var witchhour = that.$store.state.calendar_state[1];
-        var text = null;
-        switch (selectrange) {
-          case 0:
-            text = "选择区域所有数据";
-            break;
-          case 1:
-            if (date == null) {
-              text = "选择区域2017-05-01数据";
-            }
-            else{
-              text="选择区域"+date+"数据";
-            }
-            break;
-          case 2:
-            if(date==null)
-            {
-              text="选择区域2017-05-01 0时-6时数据";
-            }
-            else{
-              if(witchhour==null){
-                text="选择区域"+date+" 0时-6时数据";
-              }
-              else{
-                console.log(witchhour)
-                switch (parseInt(witchhour)) {
-                  case 0:
-                    text="选择区域"+date+" 0时-6时数据";
-                    break;
-                  case 1:
-                    text="选择区域"+date+" 6时-10时数据";
-                    break;
-                  case 2:
-                    text="选择区域"+date+" 10时-16时数据";
-                    break;
-                  case 3:
-                    text="选择区域"+date+" 16时-20时数据";
-                    break;
-                  case 4:
-                    text="选择区域"+date+" 20时-14时数据";
-                    break;
-                  default:
-                    break;
+
+            changehead() {
+                let that=this;
+
+                var selectrange = that.$store.state.AllDayHour_state;
+                var date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
+                var witchhour = that.$store.state.calendar_state[1];
+                var text = null;
+                switch (selectrange) {
+                    case 0:
+                        text = "选择区域所有数据";
+                        break;
+                    case 1:
+                        if (date == null) {
+                            text = "选择区域2017-05-01数据";
+                        }
+                        else{
+                            text="选择区域"+date+"数据";
+                        }
+                        break;
+                    case 2:
+                        if(date==null)
+                        {
+                            text="选择区域2017-05-01 0时-6时数据";
+                        }
+                        else{
+                            if(witchhour==null){
+                                text="选择区域"+date+" 0时-6时数据";
+                            }
+                            else{
+                                console.log(witchhour)
+                                switch (parseInt(witchhour)) {
+                                    case 0:
+                                        text="选择区域"+date+" 0时-6时数据";
+                                        break;
+                                    case 1:
+                                        text="选择区域"+date+" 6时-10时数据";
+                                        break;
+                                    case 2:
+                                        text="选择区域"+date+" 10时-16时数据";
+                                        break;
+                                    case 3:
+                                        text="选择区域"+date+" 16时-20时数据";
+                                        break;
+                                    case 4:
+                                        text="选择区域"+date+" 20时-14时数据";
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
-              }
+                document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
+
+            },
+            drawbarchart() {
+                var geoh = this.$store.state.geohash_state.geohash;
+                if (geoh == null) return;
+                var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+                var witchhour = this.$store.state.calendar_state[1];
+                console.log(date);
+                var selectrange = this.$store.state.AllDayHour_state;
+                switch (selectrange) {
+                    case 0:
+                        POIbar.getdata(
+                            "table=traffictype_all where start_geo='" + geoh + "'",
+                            geoh
+                        );
+                        break;
+                    case 1:
+                        if (date == null) {
+                            POIbar.getdata(
+                                "table=traffictype_day where start_geo='" +
+                                geoh +
+                                "' and date='2017-05-01'",
+                                geoh
+                            );
+                        } else {
+                            POIbar.getdata(
+                                "table=traffictype_day where start_geo='" +
+                                geoh +
+                                "' and date='" +
+                                date +
+                                "'",
+                                geoh
+                            );
+                        }
+                        break;
+                    case 2:
+                        if (date == null) {
+                            POIbar.getdata(
+                                "table=traffictype_hour where start_geo='" +
+                                geoh +
+                                "' and date='2017-05-01' and timeSeparete='0'",
+                                geoh
+                            );
+                        } else {
+                            POIbar.getdata(
+                                "table=traffictype_hour where start_geo='" +
+                                geoh +
+                                "' and date='" +
+                                date +
+                                "' and timeSeparete='" +
+                                witchhour +
+                                "'",
+                                geoh
+                            );
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
-            break;
-          default:
-            break;
+        },
+        components: {},
+        computed: {},
+        watch: {
+            "$store.state.geohash_state": {
+                handler(state) {
+
+                    //************************更新geohash**********************
+                    //console.log(state.geohash);
+                    this.geohash = state.geohash;
+                    //*****************************************************
+
+                    //////////////////////////////////////////////////////////////////////////////////////////////////
+                    if(this.view_type === 0){
+                        this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
+                        this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
+                    }
+                    else{
+                        this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                        this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+                    }
+                    this.draw_od_matrix();
+                    this.draw_location_ring();
+                    //***********************************************************************************************//
+
+                    this.draw_poi_ring(state.geohash);
+                    this.drawbarchart();
+                    this.changehead();
+                },
+                deep: true
+            },
+            "$store.state.calendar_state": function(newdata, olddata) {
+                this.date = newdata[0];
+                //console.log(this.date);
+                // 需要执行的代码
+                this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+
+                this.draw_od_matrix();
+                this.draw_location_ring();
+
+                this.drawbarchart();
+                this.changehead();
+            },
+            "$store.state.AllDayHour_state": function(newdata, olddata) {
+                this.view_type = newdata;
+                this.changehead();
+                // 需要执行的代码
+                if(newdata === 0){
+                    this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
+                    this.draw_od_matrix(this.geohash);
+                    this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`
+                }
+                else if(newdata === 1){
+                    ////////////////////
+                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    this.draw_od_matrix();
+                    ////////////////////
+                    this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+                    this.draw_location_ring();
+                }
+                else if(newdata === 2){
+                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparete = ${'时间段'}`;
+                }
+            }
         }
-       document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
-    
-    },
-    drawbarchart() {
-      var geoh = this.$store.state.geohash_state.geohash;
-      if (geoh == null) return;
-      var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
-      var witchhour = this.$store.state.calendar_state[1];
-      console.log(date);
-      var selectrange = this.$store.state.AllDayHour_state;
-      switch (selectrange) {
-        case 0:
-          POIbar.getdata(
-            "table=traffictype_all where start_geo='" + geoh + "'",
-            geoh
-          );
-          break;
-        case 1:
-          if (date == null) {
-            POIbar.getdata(
-              "table=traffictype_day where start_geo='" +
-                geoh +
-                "' and date='2017-05-01'",
-              geoh
-            );
-          } else {
-            POIbar.getdata(
-              "table=traffictype_day where start_geo='" +
-                geoh +
-                "' and date='" +
-                date +
-                "'",
-              geoh
-            );
-          }
-          break;
-        case 2:
-          if (date == null) {
-            POIbar.getdata(
-              "table=traffictype_hour where start_geo='" +
-                geoh +
-                "' and date='2017-05-01' and timeSeparete='0'",
-              geoh
-            );
-          } else {
-            POIbar.getdata(
-              "table=traffictype_hour where start_geo='" +
-                geoh +
-                "' and date='" +
-                date +
-                "' and timeSeparete='" +
-                witchhour +
-                "'",
-              geoh
-            );
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  },
-  components: {},
-  computed: {},
-  watch: {
-    "$store.state.geohash_state": {
-      handler(state) {
-        console.log(state.geohash);
-        //this.geohash = state.geohash;
-        //this.draw_od_matrix(state.geohash);
-        // this.draw_poi_ring(state.geohash);
-        this.draw_location_ring(state.geohash);
-        this.drawbarchart();
-        this.changehead();
-      },
-      deep: true
-    },
-    "$store.state.date_state": {
-      handler(state) {
-        this.date = state.date;
-        console.log(state.date);
-      },
-      deep: true
-    },
-    "$store.state.calendar_state": function(newdata, olddata) {
-      // console.log(newdata);
-      // 需要执行的代码
-      this.drawbarchart();
-      this.changehead();
-    },
-     "$store.state.AllDayHour_state": function(newdata, olddata) {
-     this.changehead();
-      // 需要执行的代码
-    }
-  }
-};
+    };
 </script>
 <style>
   .funcbar_warp_bar2 {
@@ -779,8 +810,8 @@
     shape-rendering: crispEdges;
   }
   #barchart h5{
-     font: 15px sans-serif;
-     color: grey !important;
+    font: 15px sans-serif;
+    color: grey !important;
   }
   #barchart .bars text {
     font: 10px sans-serif;

@@ -19,7 +19,7 @@
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import calendar from "@/vuex/Calendar.js"
-  
+
   import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
@@ -79,7 +79,7 @@
         this.handle_feature_change_state()
       },
        "$store.state.AllDayHour_state": function(newdata, olddata) {
-      console.log(newdata);
+      //console.log(newdata);
       if((newdata==1||newdata==0)&&olddata==2)
       calendar.drawday();
       if(newdata==2)
@@ -528,7 +528,7 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-            
+
 
             //title
             this.lc_legend.append('text')
@@ -564,7 +564,7 @@
           d3.selectAll('#lc_title').transition()
                     .duration(300).remove()
 
-          
+
 
           this.lc_svg_g.append("g")
               .attr("class", "x axis")
@@ -689,7 +689,7 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-            
+
 
             //title
             this.lc_legend.append('text')
@@ -705,7 +705,7 @@
           }
 
           //this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
-          
+
         }
         // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
 
@@ -808,7 +808,7 @@
                     }
                   });
               }
-              
+
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
@@ -1107,7 +1107,7 @@
           .attr('width', that.para_FullWidth)
           .attr('height', that.para_FullWidth)
           .append('g')
-          .attr('transform', 
+          .attr('transform',
             "translate(" + that.para_margin.left + "," + that.para_margin.top + ")");
 
           // For each dimension, I build a linear scale. I store all in a y object
@@ -1187,13 +1187,13 @@
               .style("fill", "black")
 
         //console.log(config, species)
-        
+
       }
 
     },
     mounted(){
 
-     
+
       // this.init_heatmap() //previous
        calendar.init_heatmap()
     //   calendar.adddata()
