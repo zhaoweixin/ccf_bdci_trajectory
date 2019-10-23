@@ -80,6 +80,7 @@
 
                     let gird_size = 30;
 
+
                     geo_data.dest_geo = eval(geo_data.dest_geo);
                     geo_data.matrix = eval(geo_data.matrix);
 
