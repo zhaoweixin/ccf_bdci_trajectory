@@ -3,6 +3,7 @@ import DataManager from "../data/DataManager";
 import store from "../vuex/store";
 var calendardata = null;
 var nowday = new Array(); //存储日历图日期数据
+var THIS = null;
 var cellSize = null,
   colors = [
     "#3E5948",
@@ -328,7 +329,7 @@ const calendar = {
           .select(this)
           .select("title")
           .text();
-        store.commit("Calendar_change_state", [newValue]);
+        //store.commit("Calendar_change_state", [newValue]);
       })
       .datum(d3.timeFormat("%Y-%m-%d"))
       .append("title")
@@ -461,6 +462,10 @@ function addLegend(num) {
             return 1;
           }
         });
+    })
+    .on('click', function(d){
+      store.commit('calendar_click_state', d)
+      console.log('click ', "第" + (d + 1) + "类")
     })
     .append("title")
     .text(function(d) {

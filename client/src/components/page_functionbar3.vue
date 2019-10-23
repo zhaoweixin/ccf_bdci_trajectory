@@ -580,7 +580,7 @@
                 text="选择区域"+date+" 0时-6时数据";
               }
               else{
-                console.log(witchhour)
+                
                 switch (parseInt(witchhour)) {
                   case 0:
                     text="选择区域"+date+" 0时-6时数据";
