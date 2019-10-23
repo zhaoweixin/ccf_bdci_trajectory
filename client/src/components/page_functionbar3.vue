@@ -798,7 +798,7 @@
   }
 
   .bar--negative {
-    fill: darkorange;
+    fill: #1A6840;
   }
   #barchart .axis text {
     font: 10px sans-serif;
