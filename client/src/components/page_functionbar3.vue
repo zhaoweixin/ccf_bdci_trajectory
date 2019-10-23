@@ -1,11 +1,11 @@
 <template>
   <div id="page_functionbar3.vue" class="funcbar_warp_bar2">
     <div class="funcbar_warp_header">
-      <h4>INFO</h4>
+      <h4>信息栏</h4>
       <div class="line-separator-1"></div>
     </div>
     <div class="funcbar_warp_header">
-      <h5>ADD TIME/GEO TO HERE</h5>
+      <h5 style="font-size: 1rem"></h5>
       <div class="line-separator-2"></div>
     </div>
 
@@ -81,6 +81,7 @@
 
                     let gird_size = 30;
 
+
                     geo_data.dest_geo = eval(geo_data.dest_geo);
                     geo_data.matrix = eval(geo_data.matrix);
 
@@ -122,7 +123,7 @@
                         .enter()
                         .append("text")
                         .attr("class", "label_row")
-                        .attr("x", 8)
+                        .attr("x", -5)
                         .attr("y", (d, i) => i * gird_size + 45)
                         .text(d => d)
                         .style("text-anchor", "start")
@@ -141,7 +142,7 @@
                         .append("text")
                         .attr("class", "label_col")
                         .attr("x", (d, i) => i * gird_size + 40)
-                        .attr("y", height)
+                        .attr("y", height * 0.95)
                         .text(d => d)
                         .attr("transform", (d, i) => {
                             return "rotate(-20, " + i * gird_size + " " + height + ")";
@@ -579,42 +580,42 @@
                 var text = null;
                 switch (selectrange) {
                     case 0:
-                        text = "选择区域所有数据";
+                        text = "选中位置整个时间跨度内信息";
                         break;
                     case 1:
                         if (date == null) {
-                            text = "选择区域2017-05-01数据";
+                            text = "选中位置2017-05-01信息";
                         }
                         else{
-                            text="选择区域"+date+"数据";
+                            text="选中位置"+date+"信息";
                         }
                         break;
                     case 2:
                         if(date==null)
                         {
-                            text="选择区域2017-05-01 0时-6时数据";
+                            text="选中位置2017-05-01 0时-6时信息";
                         }
                         else{
                             if(witchhour==null){
-                                text="选择区域"+date+" 0时-6时数据";
+                                text="选中位置"+date+" 0时-6时信息";
                             }
                             else{
                                 //console.log(witchhour)
                                 switch (parseInt(witchhour)) {
                                     case 0:
-                                        text="选择区域"+date+" 0时-6时数据";
+                                        text="选中位置"+date+" 0时-6时信息";
                                         break;
                                     case 1:
-                                        text="选择区域"+date+" 6时-10时数据";
+                                        text="选中位置"+date+" 6时-10时信息";
                                         break;
                                     case 2:
-                                        text="选择区域"+date+" 10时-16时数据";
+                                        text="选中位置"+date+" 10时-16时信息";
                                         break;
                                     case 3:
-                                        text="选择区域"+date+" 16时-20时数据";
+                                        text="选中位置"+date+" 16时-20时信息";
                                         break;
                                     case 4:
-                                        text="选择区域"+date+" 20时-14时数据";
+                                        text="选中位置"+date+" 20时-14时信息";
                                         break;
                                     default:
                                         break;
@@ -823,7 +824,7 @@
   }
 
   #od_matrix text {
-    fill: #ffffff;
+    fill: rgb(170, 170, 170);
     font-size: 12px;
   }
 
@@ -853,7 +854,7 @@
   }
 
   .bar--negative {
-    fill: darkorange;
+    fill: #1A6840;
   }
   #barchart .axis text {
     font: 10px sans-serif;
@@ -865,12 +866,16 @@
     stroke: white;
     shape-rendering: crispEdges;
   }
+  #barchart h2{
+    font: 1rem sans-serif;
+    color: grey !important;
+  }
   #barchart h5{
-    font: 15px sans-serif;
+      font: 15px sans-serif !important; 
     color: grey !important;
   }
   #barchart .bars text {
     font: 10px sans-serif;
-    fill: aliceblue;
+    fill: rgb(170, 170, 170);
   }
 </style>>

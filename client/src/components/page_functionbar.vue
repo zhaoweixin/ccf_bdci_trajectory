@@ -1,8 +1,57 @@
 <template>
   <div class="funcbar_warp_bar1">
     <div class="funcbar_warp_header">
-      <h4>PANEL</h4>
+      <h5>操作栏</h5>
       <div class="line-separator-1"></div>
+    </div>
+
+    <div class="funcbar_warp_header">
+      <h6>时间区间</h6>
+      <div class="line-separator-2"></div>
+    </div>
+    <div class="bg">
+      <div>
+        <!-- Group of default radios - option 1 -->
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            id="defaultGroupExample1"
+            name="groupOfDefaultRadios"
+            value="Hour"
+            v-model="config.picked"
+          />
+          <label class="custom-control-label" for="defaultGroupExample1" @click="hour_click()">Hour</label>
+        </div>
+
+        <!-- Group of default radios - option 2 -->
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            id="defaultGroupExample2"
+            name="groupOfDefaultRadios"
+            checked
+            value="Day"
+            v-model="config.picked"
+          />
+          <label class="custom-control-label" for="defaultGroupExample2" @click="day_click()">Day</label>
+        </div>
+
+        <!-- Group of default radios - option 3 -->
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            id="defaultGroupExample3"
+            name="groupOfDefaultRadios"
+            checked
+            value="All"
+            v-model="config.picked"
+          />
+          <label class="custom-control-label" for="defaultGroupExample3" @click="all_click()">All</label>
+        </div>
+      </div>
     </div>
 
     <div class="funcbar_warp_header">
@@ -33,59 +82,6 @@
           <span></span>
         </div>
 
-        <div>
-          <!-- Group of default radios - option 1 -->
-          <div class="custom-control custom-radio">
-            <input
-              type="radio"
-              class="custom-control-input"
-              id="defaultGroupExample1"
-              name="groupOfDefaultRadios"
-              value="Hour"
-              v-model="config.picked"
-            />
-            <label
-              class="custom-control-label"
-              for="defaultGroupExample1"
-              @click="hour_click()"
-            >Hour</label>
-          </div>
-
-          <!-- Group of default radios - option 2 -->
-          <div class="custom-control custom-radio">
-            <input
-              type="radio"
-              class="custom-control-input"
-              id="defaultGroupExample2"
-              name="groupOfDefaultRadios"
-              checked
-              value="Day"
-              v-model="config.picked"
-            />
-            <label class="custom-control-label" for="defaultGroupExample2" @click="day_click()">Day</label>
-          </div>
-
-          <!-- Group of default radios - option 3 -->
-          <div class="custom-control custom-radio">
-            <input
-              type="radio"
-              class="custom-control-input"
-              id="defaultGroupExample3"
-              name="groupOfDefaultRadios"
-              checked
-              value="All"
-              v-model="config.picked"
-            />
-            <label class="custom-control-label" for="defaultGroupExample3" @click="all_click()">All</label>
-          </div>
-        </div>
-
-        <button
-          class="btn btn-primary shadow-none bg-secondary"
-          style="transform: translate(0, -5px); font-size: 12px; width:100px"
-          @click="handle_clickbutton()"
-        >Apply</button>
-
         <div class="line-separator-2"></div>
 
         <div class="chiller_cb">
@@ -109,11 +105,17 @@
           <label for="weatherCheckbox2">节假日</label>
           <span></span>
         </div>
+
+        <button
+          class="btn btn-primary shadow-none bg-secondary"
+          style="transform: translate(0, -5px); font-size: 12px; width:100px"
+          @click="handle_clickbutton()"
+        >Apply</button>
       </div>
     </div>
 
     <div class="funcbar_warp_header">
-      <h5>MAP LAYER</h5>
+      <h6>图层选择</h6>
       <div class="line-separator-2"></div>
     </div>
     <div class="bg">
@@ -156,6 +158,39 @@
         </div>
       </div>
     </div>
+    <div class="funcbar_warp_header">
+      <h6>OD数据选择</h6>
+      <div class="line-separator-2"></div>
+    </div>
+    <div class="bg">
+      <div>
+        <!-- Group of default radios - option 1 -->
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            id="ODdefaultGroupExample1"
+            value="0"
+            v-model="od_config.picked"
+          />
+          <label class="custom-control-label" for="ODdefaultGroupExample1">O</label>
+        </div>
+
+        <!-- Group of default radios - option 2 -->
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            id="ODdefaultGroupExample2"
+            value="1"
+            checked
+            v-model="od_config.picked"
+          />
+
+          <label class="custom-control-label" for="ODdefaultGroupExample2">D</label>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script>
@@ -168,7 +203,7 @@ export default {
       config: {
         checkedNames: ["0"],
         //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
-        picked: "Day",
+        picked: "All",
         status: "3" // update all
       },
       map_config: {
@@ -183,6 +218,10 @@ export default {
       his_weather_config: {
         checkedNames: [],
         status: "3"
+      },
+      od_config: {
+        checkedNames: [],
+        picked: 0
       }
     };
   },
@@ -247,6 +286,13 @@ export default {
       },
 
       deep: true
+    },
+    od_config: {
+      handler(newValue, oldValue) {
+        console.log(newValue.picked);
+        this.$store.commit("change_OD_satte", newValue.picked);
+      },
+      deep: true
     }
   },
   methods: {
@@ -309,7 +355,6 @@ export default {
   width: 50%;
   transform: translate(50%, 0);
 }
-
 .bg {
   display: flex;
   align-items: center;
@@ -320,7 +365,7 @@ export default {
 
 .chiller_cb {
   position: relative;
-  height: 2rem;
+  height: 2.5rem !important;
   display: flex;
   align-items: center;
 }
@@ -362,7 +407,7 @@ export default {
   color: white;
   font-family: initial;
   font-size: 15px;
-  color: rgb(170, 170, 170);
+  color: rgb(170, 170, 170) !important;
   font-weight: bold;
 }
 .chiller_cb span {
@@ -460,8 +505,9 @@ export default {
 /*radio*/
 .custom-control-input {
   display: flex !important;
-  min-height: 32px !important;
+  min-height: 30px !important;
   padding-left: 1.4rem !important;
+  margin-top: 10px !important;
 }
 .custom-control-label {
   padding-left: 10px !important;

@@ -69,6 +69,12 @@
       },
       feature_change_state () {
         return this.$store.state.feature_change_state
+      },
+      AllDayHour_change_state() {
+        return this.$store.state.AllDayHour_state
+      },
+      highlight_paraline_state(){
+        return this.$store.state.calendar_state
       }
     },
     watch:{
@@ -78,14 +84,26 @@
       feature_change_state (val, oldVal) {
         this.handle_feature_change_state()
       },
-       "$store.state.AllDayHour_state": function(newdata, olddata) {
-      //console.log(newdata);
-      if((newdata==1||newdata==0)&&olddata==2)
-      calendar.drawday();
-      if(newdata==2)
-      calendar.drawhour();
-      // 需要执行的代码
-    }
+      AllDayHour_change_state (val, oldVal){
+        //传入的值为0、1、2,0代表All，1代表day，2代表hour
+        if((val==1||val==0)&&oldVal==2) calendar.drawday();
+        if(val==2) calendar.drawhour();
+
+        if(val == 2){
+          this.handle_paraline({
+            'status': 3,
+            'table': 'vector'
+          })
+        } else if(val == 1){
+          this.handle_paraline({
+            'status': 3,
+            'table': 'vector_day'
+          })
+        }
+      },
+      highlight_paraline_state(val, oldVal){
+        this.handle_highlight(val)
+      }
     },
     methods:{
       init_heatmap(){
@@ -374,30 +392,74 @@
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
           yScaleMax = Math.max.apply(null, opt.data[0].yScale),
-          xScaleMin = Math.min.apply(null, opt.data[0].xScale),
-          xScaleMax = Math.max.apply(null, opt.data[0].xScale)
-          // The number of datapoints
-          let n = 21;
-          // 5. X scale will use the index of our data
-          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
-          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
+          xScaleMin = 0,
+          xScaleMax = 1
 
-          this.lc_xScaleLine = d3.scaleLinear()
+          //-----------------------------------------------------------
+          this.lc_bas_xScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([0, that.lc_width]); // output
 
           // 6. Y scale will use the randomly generate number
-          this.lc_yScaleLine = d3.scaleLinear()
+          this.lc_bas_yScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([that.lc_height, 0]); // output
+            //------------------------------------------------------------
+          // 5. X scale will use the index of our data
+          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
+          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
 
-          this.lc_xScaleAxis = d3.scaleLinear()
+          //if type == date timeScale
+          //else type == other scaleLinear
+
+          for(var i=0; i<opt.data.length; i++){
+              xScaleMin = 0,
+              xScaleMax = 1
+
+            if(opt.data[i].xLabel == 'date'){
+              let len = opt['data'][i].xScale.length
+              xScaleMin = new Date(opt['data'][i].xScale[0])
+              xScaleMax = new Date(opt['data'][i].xScale[len-1])
+
+              for(let j=0; j<opt.data[i].values.length; j++){
+                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
+              }
+              for(let j=0; j<opt.data[i].xScale.length; j++){
+                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
+              }
+
+            } else {
+              xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+              xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
+            }
+          }
+          
+
+
+          if(opt.config.unit == 'Hour' || opt.config.unit == 'Day'){
+            this.lc_xScaleLine = d3.scaleLinear()
+              .domain([0, 1]) // input
+              .range([0, that.lc_width]); // output
+
+            // 6. Y scale will use the randomly generate number
+            this.lc_yScaleLine = d3.scaleLinear()
+                .domain([0, 1]) // input
+                .range([that.lc_height, 0]); // output
+
+            this.lc_xScaleAxis = d3.scaleLinear()
               .domain([xScaleMin, xScaleMax]) // input
               .range([0, that.lc_width]); // output
 
-          this.lc_yScaleAxis = d3.scaleLinear()
-              .domain([yScaleMin, yScaleMax]) // input
-              .range([that.lc_height, 0]); // output
+            this.lc_yScaleAxis = d3.scaleLinear()
+                .domain([yScaleMin, yScaleMax]) // input
+                .range([that.lc_height, 0]); // output
+
+          } else if(opt.config.unit == 'All'){
+            this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
+            this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
+            this.lc_xScaleAxis = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]);
+            this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+          }
 
           // 7. d3's line generator
           this.lc_line = d3.line()
@@ -571,14 +633,14 @@
               .attr("transform", "translate( 0," + +that.lc_height + ")")
               .transition()
               .duration(3000)
-              .call(d3.axisBottom(that.lc_xScaleLine)) // Create an axis component with d3.axisBottom
+              .call(d3.axisBottom(that.lc_bas_xScaleLine)) // Create an axis component with d3.axisBottom
 
           // 4. Call the y axis in a group tag
           this.lc_svg_g.append("g")
               .attr("class", "y axis")
               .transition()
               .duration(3000)
-              .call(d3.axisLeft(that.lc_yScaleLine)); // Create an axis component with d3.axisLeft
+              .call(d3.axisLeft(that.lc_bas_yScaleLine)); // Create an axis component with d3.axisLeft
 
           //13. append chart title
           this.lc_svg_g.append('text')
@@ -622,11 +684,14 @@
               let unit = opt.config.unit
               if(unit == 'Hour' || unit == 'Day'){
                 this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
-                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                this.lc_line_generator[unit]['xScaleLine'] = this.lc_bas_xScaleLine
+                this.lc_line_generator[unit]['yScaleLine'] = this.lc_bas_yScaleLine
                 this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
                 this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
-                this.lc_line_generator[unit]['generator'] = this.lc_line
+                this.lc_line_generator[unit]['generator'] = d3.line()
+                                                                .x(function(d,i) {return that.lc_bas_xScaleLine(d.x)})
+                                                                .y(function(d) {return that.lc_bas_yScaleLine(d.y); })
+                                                                .curve(d3.curveMonotoneX)
               } else if(unit == 'All'){
                 this.lc_line_generator[unit] = {}
                 this.lc_line_generator[unit]['xScaleLine'] = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
@@ -1077,7 +1142,6 @@
             'table': status.table
           },
           dataName = status.table
-
         if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
           let data = this.$store.state.DATA_STORE[dataName]
           that.init_paraline(data)
@@ -1092,38 +1156,30 @@
             }
           })
         }
-        /*
-        d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv").then((data) => {
-          let cluster = []
-          data.forEach((d, i) => {
-            cluster.push(d.cluster)
-          })
-          cluster = unique(cluster) //去重获取种类
-          that.init_paraline({
-            'data': data,
-            'cluster': cluster,
-            'dimensions': ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
-          })
-        })
-        */
         function unique (arr) {
           return Array.from(new Set(arr))
         }
       },
       init_paraline(config){
+        if(d3.select('#parallel_coordinates').attr('flag')){
+          d3.select('#parallel_coordinates').select('svg').remove()
+        }
         this.para_FullWidth = document.getElementById('parallel').clientWidth,
         this.para_FullHeight = document.getElementById('parallel').clientHeight,
-        this.para_margin = { top: this.para_FullHeight*0.15, right: this.para_FullWidth*0.2, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
+        this.para_margin = { top: this.para_FullHeight*0.2, right: this.para_FullWidth*0.1, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
         this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
         this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
         let that = this,
           cluster = [...new Set(config.data['cluster'])],
+          dimensions = config.dimensions,
           color = d3.scaleOrdinal()
             .domain(config.species)
-            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#74A686']),
-          dimensions = config.dimensions
+            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#74A686'])
+
+        this.para_color = color
 
         let svg = d3.select('#parallel_coordinates')
+          .attr('flag', 1)
           .append('svg')
           .attr('width', that.para_FullWidth)
           .attr('height', that.para_FullWidth)
@@ -1203,16 +1259,47 @@
               .style("text-anchor", "middle")
               .attr("y", -9)
               .text(function(d) { return d; })
-              .style("fill", "black")
+              .style("fill", "rgb(170, 170, 170)")
 
-        //console.log(config, cluster)
 
+          svg.append('text')
+            .attr('id', 'para_title')
+            .attr('x', () => {return (that.para_width / 2.5)})
+            .attr('y', () => {return - (+that.para_height * 0.14)})
+            .attr('font-size', '15px')
+            .attr('font-weight', 'bold')
+            .attr('fill', 'rgb(170, 170, 170)')
+            .text('特征统计')
+      },
+      handle_highlight(linenum){
+        let that = this
+        var highlight = function(num){
+            let selected_specie = num
+            // first every group turns grey
+            d3.selectAll(".line")
+              .transition().duration(200)
+              .style("stroke", "lightgrey")
+              .style("opacity", "0")
+            // Second the hovered specie takes its color
+            d3.selectAll(".paraline-" + selected_specie)
+              .transition().duration(200)
+              .style("stroke", (d => {return that.para_color(d.cluster) }))
+              .style("opacity", "1")
+          }
+
+        var doNotHighlight = function(num){
+            d3.selectAll(".line")
+              .transition().duration(200).delay(2000)
+              .style("stroke", function(d){ return( that.para_color(d.cluster))} )
+              .style("opacity", "1")
+          }
+        highlight(linenum)
+        doNotHighlight(linenum)
+        
       }
 
     },
     mounted(){
-
-
       // this.init_heatmap() //previous
        calendar.init_heatmap()
     //   calendar.adddata()
@@ -1222,7 +1309,7 @@
         'config': {
           'legend': ['运输需求量'],
           'legend_val': [0],
-          'unit': 'Day'
+          'unit': 'All'
         }
         //'config': ''
       })
@@ -1315,7 +1402,7 @@ text.axis-worktime {
 .weatherRect_disselect {
   z-index: -1;
   stroke: none;
-  fill: grey;
+  fill: #007ACC;
   stroke-width: 0;
 }
 
