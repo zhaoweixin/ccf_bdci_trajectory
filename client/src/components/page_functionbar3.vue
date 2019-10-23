@@ -57,10 +57,8 @@
                     this.draw_poi_ring(this.geohash);
                 else
                     this.draw_buses_info(this.buses_data);
-
             },
             draw_od_matrix() {
-                console.log(1);
                 this.$http.get('query',{
                     params:{
                         table: this.sql_od_matrix
@@ -74,6 +72,9 @@
 
                     //重绘
                     d3.select("#od_matrix").html("");
+
+                    //tittle
+                    d3.select("#od_matrix").append('h5').html('TOP5-OD');
 
                     let width = document.getElementById("od_matrix").clientWidth;
                     let height = document.getElementById("od_matrix").clientHeight;
@@ -180,7 +181,7 @@
                     cards_g.selectAll('rect').append('title').text(d=>d.value)
                 }
             },
-            draw_location_ring(curr_geohash) {
+            draw_location_ring() {
                 this.$http
                     .get("query", {
                         params: {
@@ -198,7 +199,7 @@
                     let pie_height = document.getElementById("location_info").clientHeight - 40;
                     //pie_width = pie_height < pie_width ? pie_height : pie_width;
                     //let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
-                    let rdata = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+                    let rdata = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
                     let max_index = 0,
                         min_index = 0;
 
@@ -228,8 +229,8 @@
 
                     let piedata = pie(rdata);
 
-                    let outerRadius = pie_width / 3.5; //外半径
-                    let innerRadius = outerRadius / 1.5; //内半径
+                    let outerRadius = pie_width / 4; //外半径
+                    let innerRadius = outerRadius / 2; //内半径
                     let markerSize = innerRadius; //三角标记大小
 
                     let KOUSHAOLV = d3.rgb(93, 190, 138);
@@ -345,9 +346,28 @@
                             return color(linear(dataset[i]));
                         });
 
+
+                   let texts =  pie_svg.selectAll('.chart')
+                        .append('text')
+                        //.attr('transform',(d)=>{
+                        //   //console.log(d);
+                        //   return "translate("+arc.centroid(d)+")";
+                        // })
+                        .attr('x', (d,i) => Math.sin(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
+                        .attr('y', (d,i) => Math.cos(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
+                        .attr("text-anchor", "middle") //文字居中
+                        .attr("font-size", "80%")//文字大小
+                        .attr("text-anchor", "middle") //文字居中
+                        .attr("fill","#FFF")
+                        .text((d,i)=>{
+                            if(i<12)
+                            return i*30
+                        })
+
+
                     //////////////////////
 
-                    let color_category = [
+                    /*let color_category = [
                         "#00FFFF",
                         "#00FF00",
                         "#FFFF00",
@@ -385,7 +405,7 @@
                         .attr("fill", (d, i) => inner_color(i))
                         .attr("d", d => mini_arc(d))
                         .attr("stroke", "#FFFFFF")
-                        .style("opacity", 0.4);
+                        .style("opacity", 0.4);*/
 
                     /////////////////////
                 };
@@ -579,7 +599,7 @@
                                 text="选择区域"+date+" 0时-6时数据";
                             }
                             else{
-                                console.log(witchhour)
+                                //console.log(witchhour)
                                 switch (parseInt(witchhour)) {
                                     case 0:
                                         text="选择区域"+date+" 0时-6时数据";
@@ -613,7 +633,7 @@
                 if (geoh == null) return;
                 var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
                 var witchhour = this.$store.state.calendar_state[1];
-                console.log(date);
+                //console.log(date);
                 var selectrange = this.$store.state.AllDayHour_state;
                 switch (selectrange) {
                     case 0:
@@ -683,10 +703,13 @@
                         this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
                         this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
                     }
-                    else{
+                    else if(this.view_type === 1){
                         this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                         this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                     }
+                    //else{
+                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+                    //}
                     this.draw_od_matrix();
                     this.draw_location_ring();
                     //***********************************************************************************************//
@@ -698,11 +721,28 @@
                 deep: true
             },
             "$store.state.calendar_state": function(newdata, olddata) {
-                this.date = newdata[0];
-                //console.log(this.date);
+                let format = d3.timeFormat("%Y-%m-%d");
+                let separate = {
+                    '0-6':0,
+                    '6-10':1,
+                    '10-16':2,
+                    '16-20':3,
+                    '20-24':4
+                };
+
+                this.date = format(new Date(newdata[0])).toString();
+
                 // 需要执行的代码
-                this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
-                this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+                if(this.view_type === 1){
+                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
+                }
+                else if(this.view_type === 2){
+                    let time = separate[newdata[1].replace('时','')];
+                    console.log(time);
+                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparete = ${'时间段'}`;
+                }
 
                 this.draw_od_matrix();
                 this.draw_location_ring();
@@ -717,7 +757,8 @@
                 if(newdata === 0){
                     this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
                     this.draw_od_matrix(this.geohash);
-                    this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`
+                    this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
+                    this.draw_location_ring();
                 }
                 else if(newdata === 1){
                     ////////////////////
@@ -726,9 +767,16 @@
                     ////////////////////
                     this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                     this.draw_location_ring();
+                    //////////////////////
                 }
                 else if(newdata === 2){
-                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparete = ${'时间段'}`;
+                    ////////////////////
+                    //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    //this.draw_od_matrix();
+                    ////////////////////
+                    this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparate = '0'`;
+                    this.draw_location_ring();
+                    //////////////////////
                 }
             }
         }
@@ -761,6 +809,14 @@
     height: 30%;
     /*background-color: #71ff70;*/
   }
+  #od_matrix h5{
+    position: absolute;
+    left: 40%;
+    z-index: 10;
+    font: 15px sans-serif;
+    color: grey !important;
+  }
+
   #od_matrix .od_card {
     stroke: #e6e6e6;
     stroke-width: 1px;
