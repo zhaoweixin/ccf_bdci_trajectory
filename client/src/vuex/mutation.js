@@ -16,7 +16,6 @@ const mutation = {
   UPDATE_DATA_STORE(state, payload) {
     let name = payload.name,
       data = payload.data;
-
     state.DATA_STORE[name] = JSON.parse(JSON.stringify(data));
   },
   UPDATE_PARA_STORE(state, payload){

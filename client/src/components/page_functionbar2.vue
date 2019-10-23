@@ -19,7 +19,7 @@
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import calendar from "@/vuex/Calendar.js"
-  
+
   import $ from 'jquery'
   export default{
     name: 'page_functionbar2',
@@ -546,7 +546,7 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-            
+
 
             //title
             this.lc_legend.append('text')
@@ -582,7 +582,7 @@
           d3.selectAll('#lc_title').transition()
                     .duration(300).remove()
 
-          
+
 
           this.lc_svg_g.append("g")
               .attr("class", "x axis")
@@ -707,7 +707,7 @@
               .transition()
               .duration(3000)
               .style('opacity', 1)
-            
+
 
             //title
             this.lc_legend.append('text')
@@ -723,7 +723,7 @@
           }
 
           //this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
-          
+
         }
         // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
 
@@ -826,7 +826,7 @@
                     }
                   });
               }
-              
+
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
@@ -1097,7 +1097,7 @@
           dataName = status.table
         if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
           let data = this.$store.state.DATA_STORE[dataName]
-          that.init_paraline(data)  
+          that.init_paraline(data)
         } else {
           DataManager.getParaData(req).then((data, err) => {
             if (err){
@@ -1111,7 +1111,7 @@
         }
         function unique (arr) {
           return Array.from(new Set(arr))
-        } 
+        }
       },
       init_paraline(config){
         if(d3.select('#parallel_coordinates').attr('flag')){
@@ -1137,7 +1137,7 @@
           .attr('width', that.para_FullWidth)
           .attr('height', that.para_FullWidth)
           .append('g')
-          .attr('transform', 
+          .attr('transform',
             "translate(" + that.para_margin.left + "," + that.para_margin.top + ")");
 
           // For each dimension, I build a linear scale. I store all in a y object
@@ -1223,7 +1223,6 @@
             .attr('font-weight', 'bold')
             .attr('fill', 'rgb(170, 170, 170)')
             .text('特征统计')
-
       },
       handle_highlight(linenum){
         let that = this
