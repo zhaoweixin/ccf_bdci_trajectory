@@ -158,12 +158,36 @@ const calendar = {
 
       // 定义小方格的title属性文本为 日期后面加小方格value对应的的百分比格式
       .text(function(d) {
-        if (index < data.length) return data[index++]["date"] + ":" + (d - 1);
+        var subhour = null;
+        switch (parseInt(d - 1)) {
+          case 0:
+            subhour = "0-6时";
+            break;
+          case 1:
+            subhour = "6-10时";
+            break;
+          case 2:
+            subhour = "10-16时";
+            break;
+          case 3:
+            subhour = "16-20时";
+            break;
+          case 4:
+            subhour = "20-14时";
+            break;
+          default:
+            break;
+        }
+        if (index < data.length) return data[index++]["date"] + ":" + subhour;
         return d;
       });
     var indexs = 0;
+    index = 0;
     rect
       .selectAll("rect")
+      .attr("cluster", function(d) {
+        if (index < data.length) return parseInt(data[index++].value);
+      })
       .attr("fill", function(d) {
         if (indexs < data.length) return colorScale2(data[indexs++].value);
       })
@@ -193,11 +217,16 @@ const calendar = {
   },
   dayadddata(data) {
     var indexs = 0;
+    var index = 0;
     svg
       .select(".rects")
       .selectAll("rect")
+      .attr("cluster", function(d) {
+        if (index < data.length) return parseInt(data[index++].value);
+      })
       .attr("fill", function(d) {
-        if (indexs < data.length) return colorScale(data[indexs++].value);
+        if (indexs < data.length)
+          return colorScale(parseInt(data[indexs++].value));
       })
       .on("mouseover", function(d) {
         var tcolor = d3.select(this).attr("fill");
@@ -228,6 +257,8 @@ const calendar = {
         .select(this)
         .select("title")
         .text();
+      var cs = d3.select(this).attr("cluster");
+      store.commit("change_calendar_cluster", cs);
       newValue = newValue.split(":");
       store.commit("Calendar_change_state", newValue);
     });
@@ -330,6 +361,9 @@ const calendar = {
           .select("title")
           .text();
         //store.commit("Calendar_change_state", [newValue]);
+        var cs = d3.select(this).attr("cluster");
+        store.commit("change_calendar_cluster", cs);
+        store.commit("Calendar_change_state", [newValue]);
       })
       .datum(d3.timeFormat("%Y-%m-%d"))
       .append("title")
@@ -414,6 +448,10 @@ function initdaydata() {
 }
 
 function addLegend(num) {
+  d3.select("#heatmap_chart")
+    .select("svg")
+    .select(".legend")
+    .remove();
   var Dates = new Date(2017, 8, 29);
   var legend = svg
     .append("g")

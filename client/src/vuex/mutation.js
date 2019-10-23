@@ -39,6 +39,10 @@ const mutation = {
   },
   calendar_click_state(state, payload){
     state.calendar_state = payload
+  },
+  change_calendar_cluster(state, payload) {
+    state.calendar_cluster = JSON.parse(JSON.stringify(payload));
   }
 };
+
 export default mutation;

@@ -1243,7 +1243,7 @@
 
         var doNotHighlight = function(num){
             d3.selectAll(".line")
-              .transition().duration(200).delay(1000)
+              .transition().duration(200).delay(2000)
               .style("stroke", function(d){ return( that.para_color(d.cluster))} )
               .style("opacity", "1")
           }
