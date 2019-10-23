@@ -176,7 +176,7 @@ export default {
       config: {
         checkedNames: ["0"],
         //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
-        picked: "Day",
+        picked: "All",
         status: "3" // update all
       },
       map_config: {

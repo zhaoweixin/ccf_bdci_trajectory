@@ -5,7 +5,7 @@
       <div class="line-separator-1"></div>
     </div>
     <div class="funcbar_warp_header">
-      <h5></h5>
+      <h5 style="font-size: 1rem"></h5>
       <div class="line-separator-2"></div>
     </div>
 
@@ -560,42 +560,42 @@
                 var text = null;
                 switch (selectrange) {
                     case 0:
-                        text = "选择区域所有数据";
+                        text = "选中位置整个时间跨度内信息";
                         break;
                     case 1:
                         if (date == null) {
-                            text = "选择区域2017-05-01数据";
+                            text = "选中位置2017-05-01信息";
                         }
                         else{
-                            text="选择区域"+date+"数据";
+                            text="选中位置"+date+"信息";
                         }
                         break;
                     case 2:
                         if(date==null)
                         {
-                            text="选择区域2017-05-01 0时-6时数据";
+                            text="选中位置2017-05-01 0时-6时信息";
                         }
                         else{
                             if(witchhour==null){
-                                text="选择区域"+date+" 0时-6时数据";
+                                text="选中位置"+date+" 0时-6时信息";
                             }
                             else{
                                 console.log(witchhour)
                                 switch (parseInt(witchhour)) {
                                     case 0:
-                                        text="选择区域"+date+" 0时-6时数据";
+                                        text="选中位置"+date+" 0时-6时信息";
                                         break;
                                     case 1:
-                                        text="选择区域"+date+" 6时-10时数据";
+                                        text="选中位置"+date+" 6时-10时信息";
                                         break;
                                     case 2:
-                                        text="选择区域"+date+" 10时-16时数据";
+                                        text="选中位置"+date+" 10时-16时信息";
                                         break;
                                     case 3:
-                                        text="选择区域"+date+" 16时-20时数据";
+                                        text="选中位置"+date+" 16时-20时信息";
                                         break;
                                     case 4:
-                                        text="选择区域"+date+" 20时-14时数据";
+                                        text="选中位置"+date+" 20时-14时信息";
                                         break;
                                     default:
                                         break;
@@ -810,8 +810,12 @@
     stroke: white;
     shape-rendering: crispEdges;
   }
+  #barchart h2{
+    font: 1rem sans-serif;
+    color: grey !important;
+  }
   #barchart h5{
-    font: 15px sans-serif;
+      font: 15px sans-serif !important; 
     color: grey !important;
   }
   #barchart .bars text {
