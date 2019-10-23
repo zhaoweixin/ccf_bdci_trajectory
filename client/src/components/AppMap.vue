@@ -597,7 +597,7 @@
                         },
                         "paint": {
                             "line-color": ['get','color'],
-                            "line-width": 0.3,
+                            "line-width": 1,
                             "line-opacity": 0.4
                         }
                     });
