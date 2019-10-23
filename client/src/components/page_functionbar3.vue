@@ -552,10 +552,11 @@
 
             },
     changehead() {
-      d3.select(".funcbar_warp_header").text(function() {
-        var selectrange = this.$store.state.AllDayHour_state;
-        var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
-        var witchhour = this.$store.state.calendar_state[1];
+      let that=this;
+     
+        var selectrange = that.$store.state.AllDayHour_state;
+        var date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
+        var witchhour = that.$store.state.calendar_state[1];
         var text = null;
         switch (selectrange) {
           case 0:
@@ -563,15 +564,50 @@
             break;
           case 1:
             if (date == null) {
-              text = "";
+              text = "选择区域2017-05-01数据";
+            }
+            else{
+              text="选择区域"+date+"数据";
             }
             break;
           case 2:
+            if(date==null)
+            {
+              text="选择区域2017-05-01 0时-6时数据";
+            }
+            else{
+              if(witchhour==null){
+                text="选择区域"+date+" 0时-6时数据";
+              }
+              else{
+                console.log(witchhour)
+                switch (parseInt(witchhour)) {
+                  case 0:
+                    text="选择区域"+date+" 0时-6时数据";
+                    break;
+                  case 1:
+                    text="选择区域"+date+" 6时-10时数据";
+                    break;
+                  case 2:
+                    text="选择区域"+date+" 10时-16时数据";
+                    break;
+                  case 3:
+                    text="选择区域"+date+" 16时-20时数据";
+                    break;
+                  case 4:
+                    text="选择区域"+date+" 20时-14时数据";
+                    break;
+                  default:
+                    break;
+                }
+              }
+            }
             break;
           default:
             break;
         }
-      });
+       document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
+    
     },
     drawbarchart() {
       var geoh = this.$store.state.geohash_state.geohash;
@@ -643,6 +679,7 @@
         // this.draw_poi_ring(state.geohash);
         this.draw_location_ring(state.geohash);
         this.drawbarchart();
+        this.changehead();
       },
       deep: true
     },
@@ -657,6 +694,7 @@
       // console.log(newdata);
       // 需要执行的代码
       this.drawbarchart();
+      this.changehead();
     }
   }
 };
