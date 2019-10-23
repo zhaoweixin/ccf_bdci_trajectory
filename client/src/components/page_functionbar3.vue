@@ -778,8 +778,12 @@
     stroke: white;
     shape-rendering: crispEdges;
   }
+  #barchart h5{
+     font: 15px sans-serif;
+     color: grey !important;
+  }
   #barchart .bars text {
-    font: 7px sans-serif;
+    font: 10px sans-serif;
     fill: aliceblue;
   }
 </style>>

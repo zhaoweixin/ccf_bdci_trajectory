@@ -79,6 +79,15 @@ const calendar = {
       .text(function(d) {
         return d;
       });
+    svg
+      .append("text")
+      //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
+      .attr("transform", "translate(5," + cellSize * 3 + ")rotate(-90)")
+      .style("font-family", "sans-serif")
+      .style("font-size", 12)
+      .style("text-anchor", "middle")
+      .style("fill", "rgb(170,170,170)")
+      .text("聚类日历图");
     //添加星期
     svg
       .append("g")

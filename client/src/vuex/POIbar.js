@@ -42,6 +42,10 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
+    d3.select("#barchart")
+      .append("h5")
+      .attr("height", 20)
+      .text("订单类型与POI数据");
     svg = d3
       .select("#barchart")
       .append("svg")
@@ -162,7 +166,11 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .attr("width", function(d) {
         return Math.abs(x(d.value) - x(0));
       })
-      .attr("height", y.bandwidth() - 5);
+      .attr("height", y.bandwidth() - 5)
+      .append("title")
+      .text(function(d) {
+        return d.percentage;
+      });
     svg
       .selectAll("text")
       .data(result)
