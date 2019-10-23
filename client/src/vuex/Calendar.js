@@ -328,6 +328,8 @@ const calendar = {
           .select(this)
           .select("title")
           .text();
+        var cs = d3.select(this).attr("fill");
+        console.log(colorScale.invertExtent(cs));
         store.commit("Calendar_change_state", [newValue]);
       })
       .datum(d3.timeFormat("%Y-%m-%d"))

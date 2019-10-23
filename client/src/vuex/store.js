@@ -30,7 +30,8 @@ const store = new Vuex.Store({
     },
     AllDayHour_state: 0, //传入的值为0、1、2,0代表All，1代表day，2代表hour
     calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
-    DATA_STORE: {}
+    DATA_STORE: {},
+    calendar_cluster: {} //日历图点击所属聚类类别
   },
   mutations: mutation,
   actions: action,

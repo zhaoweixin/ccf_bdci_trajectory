@@ -651,7 +651,8 @@
               geoh
             );
           } else {
-            POIbar.getdata(
+            if(witchhour==null){
+              POIbar.getdata(
               "table=traffictype_hour where start_geo='" +
                 geoh +
                 "' and date='" +
@@ -661,6 +662,20 @@
                 "'",
               geoh
             );
+            }
+            else{
+               POIbar.getdata(
+              "table=traffictype_hour where start_geo='" +
+                geoh +
+                "' and date='" +
+                date +
+                "' and timeSeparete='" +
+                witchhour +
+                "'",
+              geoh
+            );
+            }
+           
           }
           break;
         default:

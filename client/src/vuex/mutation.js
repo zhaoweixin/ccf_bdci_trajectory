@@ -35,6 +35,9 @@ const mutation = {
     state.buses_routes_state = JSON.parse(JSON.stringify(payload));
 
     //console.log(state.buses_routes_state);
+  },
+  change_calendar_cluster(state, payload) {
+    state.calendar_cluster = JSON.parse(JSON.stringify(payload));
   }
 };
 export default mutation;
