@@ -169,7 +169,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .enter()
       .append("text")
       .text(function(d) {
-        return d.percentage + " " + d.text;
+        return d.text;
       })
       .attr("transform", function(d) {
         "translate(" + x(d.value) + "," + 0 + ")";

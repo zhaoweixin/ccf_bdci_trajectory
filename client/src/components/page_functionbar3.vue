@@ -695,6 +695,10 @@
       // 需要执行的代码
       this.drawbarchart();
       this.changehead();
+    },
+     "$store.state.AllDayHour_state": function(newdata, olddata) {
+     this.changehead();
+      // 需要执行的代码
     }
   }
 };
