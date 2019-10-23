@@ -45,6 +45,8 @@
             //console.log(POIbar);
             //POIbar.initchart();
             //POIbar.initdata();
+            POIbar.initchart();
+            POIbar.initdata();
         },
         updated(){
         },
@@ -548,36 +550,158 @@
                     myChart.setOption(option, true);
                 }
 
+            },
+    changehead() {
+      let that=this;
+     
+        var selectrange = that.$store.state.AllDayHour_state;
+        var date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
+        var witchhour = that.$store.state.calendar_state[1];
+        var text = null;
+        switch (selectrange) {
+          case 0:
+            text = "选择区域所有数据";
+            break;
+          case 1:
+            if (date == null) {
+              text = "选择区域2017-05-01数据";
             }
-        },
-        components: {},
-        computed: {},
-        watch: {
-            "$store.state.geohash_state": {
-                handler(state) {
-                    console.log(state.geohash);
-                    this.geohash = state.geohash;
-                    this.draw_location_ring(state.geohash);
-                    //this.draw_od_matrix(state.geohash);
-                    //this.draw_poi_ring(state.geohash);
-                },
-                deep: true
-            },
-            "$store.state.calendar_state": function(newdata, olddata) {
-                //console.log(newdata);
-                POIbar.addData();
-                // 需要执行的代码
-            },
-            "$store.state.buses_routes_state":{
-                handler(data){
-                    //console.log(data.routes)
-                    this.buses_data = data.routes;
-                    //this.draw_buses_info(data.routes);
+            else{
+              text="选择区域"+date+"数据";
+            }
+            break;
+          case 2:
+            if(date==null)
+            {
+              text="选择区域2017-05-01 0时-6时数据";
+            }
+            else{
+              if(witchhour==null){
+                text="选择区域"+date+" 0时-6时数据";
+              }
+              else{
+                console.log(witchhour)
+                switch (parseInt(witchhour)) {
+                  case 0:
+                    text="选择区域"+date+" 0时-6时数据";
+                    break;
+                  case 1:
+                    text="选择区域"+date+" 6时-10时数据";
+                    break;
+                  case 2:
+                    text="选择区域"+date+" 10时-16时数据";
+                    break;
+                  case 3:
+                    text="选择区域"+date+" 16时-20时数据";
+                    break;
+                  case 4:
+                    text="选择区域"+date+" 20时-14时数据";
+                    break;
+                  default:
+                    break;
                 }
+              }
             }
-            ////////////监听类型的改变///////////
+            break;
+          default:
+            break;
         }
-    };
+       document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
+    
+    },
+    drawbarchart() {
+      var geoh = this.$store.state.geohash_state.geohash;
+      if (geoh == null) return;
+      var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+      var witchhour = this.$store.state.calendar_state[1];
+      console.log(date);
+      var selectrange = this.$store.state.AllDayHour_state;
+      switch (selectrange) {
+        case 0:
+          POIbar.getdata(
+            "table=traffictype_all where start_geo='" + geoh + "'",
+            geoh
+          );
+          break;
+        case 1:
+          if (date == null) {
+            POIbar.getdata(
+              "table=traffictype_day where start_geo='" +
+                geoh +
+                "' and date='2017-05-01'",
+              geoh
+            );
+          } else {
+            POIbar.getdata(
+              "table=traffictype_day where start_geo='" +
+                geoh +
+                "' and date='" +
+                date +
+                "'",
+              geoh
+            );
+          }
+          break;
+        case 2:
+          if (date == null) {
+            POIbar.getdata(
+              "table=traffictype_hour where start_geo='" +
+                geoh +
+                "' and date='2017-05-01' and timeSeparete='0'",
+              geoh
+            );
+          } else {
+            POIbar.getdata(
+              "table=traffictype_hour where start_geo='" +
+                geoh +
+                "' and date='" +
+                date +
+                "' and timeSeparete='" +
+                witchhour +
+                "'",
+              geoh
+            );
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  },
+  components: {},
+  computed: {},
+  watch: {
+    "$store.state.geohash_state": {
+      handler(state) {
+        console.log(state.geohash);
+        //this.geohash = state.geohash;
+        //this.draw_od_matrix(state.geohash);
+        // this.draw_poi_ring(state.geohash);
+        this.draw_location_ring(state.geohash);
+        this.drawbarchart();
+        this.changehead();
+      },
+      deep: true
+    },
+    "$store.state.date_state": {
+      handler(state) {
+        this.date = state.date;
+        console.log(state.date);
+      },
+      deep: true
+    },
+    "$store.state.calendar_state": function(newdata, olddata) {
+      // console.log(newdata);
+      // 需要执行的代码
+      this.drawbarchart();
+      this.changehead();
+    },
+     "$store.state.AllDayHour_state": function(newdata, olddata) {
+     this.changehead();
+      // 需要执行的代码
+    }
+  }
+};
 </script>
 <style>
   .funcbar_warp_bar2 {
@@ -654,8 +778,12 @@
     stroke: white;
     shape-rendering: crispEdges;
   }
+  #barchart h5{
+     font: 15px sans-serif;
+     color: grey !important;
+  }
   #barchart .bars text {
-    font: 7px sans-serif;
+    font: 10px sans-serif;
     fill: aliceblue;
   }
 </style>>

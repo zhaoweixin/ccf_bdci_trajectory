@@ -10,12 +10,12 @@ const store = new Vuex.Store({
   // 定义状态
   state: {
     // date_state: {},//当前日期
-    geohash_state:{
-      'geohash':''
-    },//当前geohash
+    geohash_state: {
+      geohash: ""
+    }, //当前geohash
     map_state: {}, //地图图层操作
 
-    buses_routes_state:{},//公交路线
+    buses_routes_state: {}, //公交路线
 
     operater_state: {
       checkedNames: [],
@@ -28,7 +28,7 @@ const store = new Vuex.Store({
         remove: []
       }
     },
-
+    AllDayHour_state: 0, //传入的值为0、1、2,0代表All，1代表day，2代表hour
     calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
     DATA_STORE: {}
   },

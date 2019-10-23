@@ -26,7 +26,7 @@ export default class DataManager {
       }
     );
   }
-  static getVectorData(path) {
+  static getTableData(path) {
     return axios.get(path);
   }
   static getPoiData() {

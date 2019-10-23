@@ -27,8 +27,13 @@ const mutation = {
     state.geohash_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.geohash_state);
   },
+  AllDayHour_state(state, payload) {
+    console.log(payload);
+    state.AllDayHour_state = JSON.parse(JSON.stringify(payload));
+  },
   buses_routes_state(state, payload) {
     state.buses_routes_state = JSON.parse(JSON.stringify(payload));
+
     //console.log(state.buses_routes_state);
   }
 };
