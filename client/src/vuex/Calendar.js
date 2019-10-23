@@ -68,26 +68,39 @@ const calendar = {
         "translate(" + margin.left / 0.8 + "," + margin.top / 2 + ")"
       );
     // 定义每个年份对应的group旁边的标签
+    // svg
+    //   .append("text")
+    //   //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
+    //   .attr("transform", "translate(5," + cellSize + ")rotate(-90)")
+    //   .style("font-family", "sans-serif")
+    //   .style("font-size", 12)
+    //   .style("text-anchor", "middle")
+    //   .style("fill", "rgb(170,170,170)")
+    //   .text(function(d) {
+    //     return d;
+    //   });
     svg
       .append("text")
-      //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
-      .attr("transform", "translate(5," + cellSize + ")rotate(-90)")
-      .style("font-family", "sans-serif")
-      .style("font-size", 12)
-      .style("text-anchor", "middle")
-      .style("fill", "rgb(170,170,170)")
-      .text(function(d) {
-        return d;
-      });
-    svg
-      .append("text")
-      //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
-      .attr("transform", "translate(5," + cellSize * 3 + ")rotate(-90)")
+      .attr(
+        "transform",
+        "translate(" + cellSize * 12 + "," + cellSize / 4 + ")"
+      )
       .style("font-family", "sans-serif")
       .style("font-size", 12)
       .style("text-anchor", "middle")
       .style("fill", "rgb(170,170,170)")
       .text("聚类日历图");
+    svg
+      .append("text")
+      .attr(
+        "transform",
+        "translate(" + cellSize * 22.35 + "," + cellSize / 4 + ")"
+      )
+      .style("font-family", "sans-serif")
+      .style("font-size", 12)
+      .style("text-anchor", "middle")
+      .style("fill", "rgb(170,170,170)")
+      .text("类别");
     //添加星期
     svg
       .append("g")
@@ -98,7 +111,7 @@ const calendar = {
       .style("fill", "rgb(170,170,170)")
       .attr("transform", function(d, i) {
         if (i <= 6) {
-          return "translate(25," + cellSize * 3.5 + ")";
+          return "translate(25," + (cellSize * 3.5 + cellSize / 2) + ")";
         }
       })
 
@@ -137,7 +150,10 @@ const calendar = {
       })
       .enter()
       .append("path")
-      .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
+      .attr(
+        "transform",
+        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+      )
       .attr("d", pathMonth);
     this.drawday();
     // drawhour();
@@ -270,7 +286,10 @@ const calendar = {
       .attr("class", "rects")
       .attr("fill", "none")
       .attr("stroke", "#ccc")
-      .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
+      .attr(
+        "transform",
+        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+      )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
       .data(function(d) {
@@ -336,7 +355,10 @@ const calendar = {
       .attr("class", "rects")
       .attr("fill", "none")
       .attr("stroke", "#ccc")
-      .attr("transform", "translate(" + cellSize * -11 + "," + 0 + ")")
+      .attr(
+        "transform",
+        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+      )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
       .data(function(d) {
@@ -450,24 +472,25 @@ function addLegend(num) {
     .select("svg")
     .select(".legend")
     .remove();
+  var index = 0;
   var Dates = new Date(2017, 8, 29);
   var legend = svg
     .append("g")
     .attr("class", "legend")
     .attr("fill", "none")
-    .attr("stroke", "#000");
+    .attr("stroke", "white");
   var legendrects = legend
     .selectAll("rect")
     .data(d3.range(0, num))
     .enter()
     .append("rect")
     .attr("width", cellSize / 1.2)
-    .attr("height", cellSize / 4)
+    .attr("height", cellSize / 2)
     .attr("x", function(d) {
       return d3.timeWeek.count(d3.timeYear(Dates), Dates) * cellSize * 0.58;
     })
     .attr("y", function(d) {
-      return ((d - 1) * cellSize) / 4;
+      return ((d - 1) * cellSize) / 2 + cellSize * 1.5 + 5 * index++;
     })
     .attr("fill", function(d) {
       if (num == 6) return colorScale(d);
