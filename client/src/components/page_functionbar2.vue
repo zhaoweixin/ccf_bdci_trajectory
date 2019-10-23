@@ -1064,22 +1064,43 @@
         function getFeatureRectStatus(){}
       },
       handle_paraline(status){
-        let that = this
-        d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv").then((data) => {
-          let species = []
-          data.forEach((d, i) => {
-            species.push(d.Species)
+        let that = this,
+          req = {
+            'table': status.table
+          },
+          dataName = status.table
+
+        if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+          let data = this.$store.state.DATA_STORE[dataName]
+          that.init_paraline(data)  
+        } else {
+          DataManager.getParaData(req).then((data, err) => {
+            if (err){
+              console.log(err);
+              return ;
+            }else{
+              that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': data.data})
+              that.init_paraline(data.data)
+            }
           })
-          species = unique(species) //去重获取种类
+        }
+        /*
+        d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv").then((data) => {
+          let cluster = []
+          data.forEach((d, i) => {
+            cluster.push(d.cluster)
+          })
+          cluster = unique(cluster) //去重获取种类
           that.init_paraline({
             'data': data,
-            'species': species,
+            'cluster': cluster,
             'dimensions': ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
           })
         })
+        */
         function unique (arr) {
           return Array.from(new Set(arr))
-        }
+        } 
       },
       init_paraline(config){
         this.para_FullWidth = document.getElementById('parallel').clientWidth,
@@ -1088,7 +1109,7 @@
         this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
         this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
         let that = this,
-          species = [...new Set(config.data['Species'])],
+          cluster = [...new Set(config.data['cluster'])],
           color = d3.scaleOrdinal()
             .domain(config.species)
             .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#74A686']),
@@ -1107,7 +1128,7 @@
           for (let i in dimensions) {
             name = dimensions[i]
             y[name] = d3.scaleLinear()
-              .domain( [0,8] ) // --> Same axis range for each group
+              .domain( [0,1] ) // --> Same axis range for each group
               // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
               .range([that.para_height, 0])
           }
@@ -1119,16 +1140,14 @@
 
             // Highlight the specie that is hovered
           var highlight = function(d){
-
-            let selected_specie = d.Species
-
+            let selected_specie = d.cluster
             // first every group turns grey
             d3.selectAll(".line")
               .transition().duration(200)
               .style("stroke", "lightgrey")
-              .style("opacity", "0.2")
+              .style("opacity", "0")
             // Second the hovered specie takes its color
-            d3.selectAll("." + selected_specie)
+            d3.selectAll(".paraline-" + selected_specie)
               .transition().duration(200)
               .style("stroke", color(selected_specie))
               .style("opacity", "1")
@@ -1138,7 +1157,7 @@
           var doNotHighlight = function(d){
             d3.selectAll(".line")
               .transition().duration(200).delay(1000)
-              .style("stroke", function(d){ return( color(d.Species))} )
+              .style("stroke", function(d){ return( color(d.cluster))} )
               .style("opacity", "1")
           }
 
@@ -1153,10 +1172,10 @@
             .data(config.data)
             .enter()
             .append("path")
-              .attr("class", function (d) { return "line " + d.Species } ) // 2 class for each line: 'line' and the group name
+              .attr("class", function (d) {return "line paraline-" + d.cluster } ) // 2 class for each line: 'line' and the group name
               .attr("d",  path)
               .style("fill", "none" )
-              .style("stroke", function(d){ return( color(d.Species))} )
+              .style("stroke", function(d){ return( color(d.cluster))} )
               .style("opacity", 0.5)
               .on("mouseover", highlight)
               .on("mouseleave", doNotHighlight )
@@ -1178,7 +1197,7 @@
               .text(function(d) { return d; })
               .style("fill", "black")
 
-        //console.log(config, species)
+        //console.log(config, cluster)
         
       }
 
@@ -1200,7 +1219,8 @@
         //'config': ''
       })
       this.handle_paraline({
-        'status':3
+        'status':3,
+        'table': 'vector'
       })
     }
   }

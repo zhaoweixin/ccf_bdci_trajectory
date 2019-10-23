@@ -270,6 +270,40 @@ module.exports = {
                 //res.send(resData)
             })
         })
+    },
+    para_line: function(req, res, next){
+        console.log('select para_line from vector')
+        pool.getConnection(function(err, connection){
+            /*
+                req.body = {'table', 'vector'}
+            */
+
+            let sql_key = req.body.table
+
+            connection.query(`select * from ${sql_key}`, function(err, result){
+                result = JSON.parse(JSON.stringify(result))
+                if(err) res.send(err)
+                
+                
+                let species = []
+                result.forEach((d,i) => {
+                    if(species.indexOf(d.cluster) == -1){
+                        species.push(d.cluster)
+                    }
+                })
+
+                let obj = {
+                    'type': req.body.table,
+                    'data': result,
+                    'dimensions': ['f1', 'f2', 'f3', 'f4', 'f5'],
+                    'species': species.sort() //cluster
+                }
+                
+                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.send(obj)
+            })
+            
+        })
     }
 };
 

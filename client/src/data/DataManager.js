@@ -32,6 +32,13 @@ export default class DataManager {
   static getPoiData() {
     return axios.get("http://127.0.0.1:3000/poi_data");
   }
+  static getParaData(data){
+    return axios.post("http://127.0.0.1:3000/para_line", qs.stringify(data), {
+      header: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    });
+  }
   /*
 import axios from "axios";
 import qs from "qs";
