@@ -1,39 +1,17 @@
 <template>
   <div class="funcbar_warp_bar1">
     <div class="funcbar_warp_header">
-      <h4>PANEL</h4>
+      <h4>操作栏</h4>
       <div class="line-separator-1"></div>
     </div>
 
+
     <div class="funcbar_warp_header">
-      <h5>LINE</h5>
+      <h5>时间区间</h5>
       <div class="line-separator-2"></div>
     </div>
-
     <div class="bg">
       <div>
-        <div class="chiller_cb">
-          <input id="myCheckbox" type="checkbox" value="0" checked v-model="config.checkedNames" />
-          <label for="myCheckbox">运输需求量</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
-          <input id="myCheckbox2" type="checkbox" value="1" v-model="config.checkedNames" />
-          <label for="myCheckbox2">运行距离</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
-          <input id="myCheckbox4" type="checkbox" value="3" v-model="config.checkedNames" />
-          <label for="myCheckbox4">运行时间</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
-          <input id="myCheckbox5" type="checkbox" value="4" v-model="config.checkedNames" />
-          <label for="myCheckbox5">运行速度</label>
-          <span></span>
-        </div>
-
-        <div>
           <!-- Group of default radios - option 1 -->
           <div class="custom-control custom-radio">
             <input
@@ -79,14 +57,38 @@
             <label class="custom-control-label" for="defaultGroupExample3" @click="all_click()">All</label>
           </div>
         </div>
+    </div>
 
-        <button
-          class="btn btn-primary shadow-none bg-secondary"
-          style="transform: translate(0, -5px); font-size: 12px; width:100px"
-          @click="handle_clickbutton()"
-        >Apply</button>
 
-        <div class="line-separator-2"></div>
+    <div class="funcbar_warp_header">
+      <h5>LINE</h5>
+      <div class="line-separator-2"></div>
+    </div>
+
+    <div class="bg">
+      <div>
+        <div class="chiller_cb">
+          <input id="myCheckbox" type="checkbox" value="0" checked v-model="config.checkedNames" />
+          <label for="myCheckbox">运输需求量</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox2" type="checkbox" value="1" v-model="config.checkedNames" />
+          <label for="myCheckbox2">运行距离</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox4" type="checkbox" value="3" v-model="config.checkedNames" />
+          <label for="myCheckbox4">运行时间</label>
+          <span></span>
+        </div>
+        <div class="chiller_cb">
+          <input id="myCheckbox5" type="checkbox" value="4" v-model="config.checkedNames" />
+          <label for="myCheckbox5">运行速度</label>
+          <span></span>
+        </div>
+
+        <div class="line-separator-2"></div>        
 
         <div class="chiller_cb">
           <input
@@ -109,11 +111,17 @@
           <label for="weatherCheckbox2">节假日</label>
           <span></span>
         </div>
+
+        <button
+          class="btn btn-primary shadow-none bg-secondary"
+          style="transform: translate(0, -5px); font-size: 12px; width:100px"
+          @click="handle_clickbutton()"
+        >Apply</button>
       </div>
     </div>
 
     <div class="funcbar_warp_header">
-      <h5>MAP LAYER</h5>
+      <h5>图层选择</h5>
       <div class="line-separator-2"></div>
     </div>
     <div class="bg">
@@ -320,7 +328,7 @@ export default {
 
 .chiller_cb {
   position: relative;
-  height: 2rem;
+  height: 2.5rem !important;
   display: flex;
   align-items: center;
 }
@@ -362,7 +370,7 @@ export default {
   color: white;
   font-family: initial;
   font-size: 15px;
-  color: rgb(170, 170, 170);
+  color: rgb(170, 170, 170) !important;
   font-weight: bold;
 }
 .chiller_cb span {
@@ -460,8 +468,9 @@ export default {
 /*radio*/
 .custom-control-input {
   display: flex !important;
-  min-height: 32px !important;
+  min-height: 30px !important;
   padding-left: 1.4rem !important;
+  margin-top: 10px !important;
 }
 .custom-control-label {
   padding-left: 10px !important;
