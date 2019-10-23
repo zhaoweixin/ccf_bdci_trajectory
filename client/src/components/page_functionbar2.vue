@@ -89,7 +89,7 @@
         if((val==1||val==0)&&oldVal==2) calendar.drawday();
         if(val==2) calendar.drawhour();
 
-        if(val == 0){
+        if(val == 2){
           this.handle_paraline({
             'status': 3,
             'table': 'vector'
@@ -392,30 +392,74 @@
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
           yScaleMax = Math.max.apply(null, opt.data[0].yScale),
-          xScaleMin = Math.min.apply(null, opt.data[0].xScale),
-          xScaleMax = Math.max.apply(null, opt.data[0].xScale)
-          // The number of datapoints
-          let n = 21;
-          // 5. X scale will use the index of our data
-          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
-          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
+          xScaleMin = 0,
+          xScaleMax = 1
 
-          this.lc_xScaleLine = d3.scaleLinear()
+          //-----------------------------------------------------------
+          this.lc_bas_xScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([0, that.lc_width]); // output
 
           // 6. Y scale will use the randomly generate number
-          this.lc_yScaleLine = d3.scaleLinear()
+          this.lc_bas_yScaleLine = d3.scaleLinear()
               .domain([0, 1]) // input
               .range([that.lc_height, 0]); // output
+            //------------------------------------------------------------
+          // 5. X scale will use the index of our data
+          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
+          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
 
-          this.lc_xScaleAxis = d3.scaleLinear()
+          //if type == date timeScale
+          //else type == other scaleLinear
+
+          for(var i=0; i<opt.data.length; i++){
+              xScaleMin = 0,
+              xScaleMax = 1
+
+            if(opt.data[i].xLabel == 'date'){
+              let len = opt['data'][i].xScale.length
+              xScaleMin = new Date(opt['data'][i].xScale[0])
+              xScaleMax = new Date(opt['data'][i].xScale[len-1])
+
+              for(let j=0; j<opt.data[i].values.length; j++){
+                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
+              }
+              for(let j=0; j<opt.data[i].xScale.length; j++){
+                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
+              }
+
+            } else {
+              xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+              xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
+            }
+          }
+          
+
+
+          if(opt.config.unit == 'Hour' || opt.config.unit == 'Day'){
+            this.lc_xScaleLine = d3.scaleLinear()
+              .domain([0, 1]) // input
+              .range([0, that.lc_width]); // output
+
+            // 6. Y scale will use the randomly generate number
+            this.lc_yScaleLine = d3.scaleLinear()
+                .domain([0, 1]) // input
+                .range([that.lc_height, 0]); // output
+
+            this.lc_xScaleAxis = d3.scaleLinear()
               .domain([xScaleMin, xScaleMax]) // input
               .range([0, that.lc_width]); // output
 
-          this.lc_yScaleAxis = d3.scaleLinear()
-              .domain([yScaleMin, yScaleMax]) // input
-              .range([that.lc_height, 0]); // output
+            this.lc_yScaleAxis = d3.scaleLinear()
+                .domain([yScaleMin, yScaleMax]) // input
+                .range([that.lc_height, 0]); // output
+
+          } else if(opt.config.unit == 'All'){
+            this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
+            this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
+            this.lc_xScaleAxis = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]);
+            this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+          }
 
           // 7. d3's line generator
           this.lc_line = d3.line()
@@ -589,14 +633,14 @@
               .attr("transform", "translate( 0," + +that.lc_height + ")")
               .transition()
               .duration(3000)
-              .call(d3.axisBottom(that.lc_xScaleLine)) // Create an axis component with d3.axisBottom
+              .call(d3.axisBottom(that.lc_bas_xScaleLine)) // Create an axis component with d3.axisBottom
 
           // 4. Call the y axis in a group tag
           this.lc_svg_g.append("g")
               .attr("class", "y axis")
               .transition()
               .duration(3000)
-              .call(d3.axisLeft(that.lc_yScaleLine)); // Create an axis component with d3.axisLeft
+              .call(d3.axisLeft(that.lc_bas_yScaleLine)); // Create an axis component with d3.axisLeft
 
           //13. append chart title
           this.lc_svg_g.append('text')
@@ -640,11 +684,14 @@
               let unit = opt.config.unit
               if(unit == 'Hour' || unit == 'Day'){
                 this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
-                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                this.lc_line_generator[unit]['xScaleLine'] = this.lc_bas_xScaleLine
+                this.lc_line_generator[unit]['yScaleLine'] = this.lc_bas_yScaleLine
                 this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
                 this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
-                this.lc_line_generator[unit]['generator'] = this.lc_line
+                this.lc_line_generator[unit]['generator'] = d3.line()
+                                                                .x(function(d,i) {return that.lc_bas_xScaleLine(d.x)})
+                                                                .y(function(d) {return that.lc_bas_yScaleLine(d.y); })
+                                                                .curve(d3.curveMonotoneX)
               } else if(unit == 'All'){
                 this.lc_line_generator[unit] = {}
                 this.lc_line_generator[unit]['xScaleLine'] = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
@@ -1262,7 +1309,7 @@
         'config': {
           'legend': ['运输需求量'],
           'legend_val': [0],
-          'unit': 'Day'
+          'unit': 'All'
         }
         //'config': ''
       })
