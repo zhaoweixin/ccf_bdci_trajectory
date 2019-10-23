@@ -3,11 +3,14 @@
     <!-- <div id="pie" style="width:12%; height:100%; float:left">
       <div id="pie_chart"></div>
     </div> -->
-    <div id="line" style="width:49%;height:100%;float:left">
+    <div id="line" style="width:40%;height:100%;float:left">
       <div id="line_chart"></div>
     </div>
-    <div id="heatmap" style="width:50%; height:100%; float:right">
+    <div id="heatmap" style="width:40%; height:100%; float:left">
       <div id="heatmap_chart"></div>
+    </div>
+    <div id="parallel" style="width:19%; height:100%; float:left">
+      <div id="parallel_coordinates"></div>
     </div>
   </div>
 </template>
@@ -50,7 +53,12 @@
           'Hour': '每个小时平均值统计',
           'Day': '每周平均值统计',
           'All': '整体时间段统计'
-        }
+        },
+        para_margin:{},
+        para_FullWidth:0,
+        para_FullHeight:0,
+        para_width:0,
+        para_height:0
       }
     },
     components: {
@@ -1054,6 +1062,124 @@
         }
 
         function getFeatureRectStatus(){}
+      },
+      handle_paraline(status){
+        let that = this
+        d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv").then((data) => {
+          let species = []
+          data.forEach((d, i) => {
+            species.push(d.Species)
+          })
+          species = unique(species) //去重获取种类
+          that.init_paraline({
+            'data': data,
+            'species': species,
+            'dimensions': ["Petal_Length", "Petal_Width", "Sepal_Length", "Sepal_Width"]
+          })
+        })
+        function unique (arr) {
+          return Array.from(new Set(arr))
+        }
+      },
+      init_paraline(config){
+        this.para_FullWidth = document.getElementById('parallel').clientWidth,
+        this.para_FullHeight = document.getElementById('parallel').clientHeight,
+        this.para_margin = { top: this.para_FullHeight*0.15, right: this.para_FullWidth*0.2, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
+        this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
+        this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
+        let that = this,
+          species = [...new Set(config.data['Species'])],
+          color = d3.scaleOrdinal()
+            .domain(config.species)
+            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#74A686']),
+          dimensions = config.dimensions
+
+        let svg = d3.select('#parallel_coordinates')
+          .append('svg')
+          .attr('width', that.para_FullWidth)
+          .attr('height', that.para_FullWidth)
+          .append('g')
+          .attr('transform', 
+            "translate(" + that.para_margin.left + "," + that.para_margin.top + ")");
+
+          // For each dimension, I build a linear scale. I store all in a y object
+          let y = {}
+          for (let i in dimensions) {
+            name = dimensions[i]
+            y[name] = d3.scaleLinear()
+              .domain( [0,8] ) // --> Same axis range for each group
+              // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+              .range([that.para_height, 0])
+          }
+
+          // Build the X scale -> it find the best position for each Y axis
+          let x = d3.scalePoint()
+            .range([0, that.para_width])
+            .domain(dimensions);
+
+            // Highlight the specie that is hovered
+          var highlight = function(d){
+
+            let selected_specie = d.Species
+
+            // first every group turns grey
+            d3.selectAll(".line")
+              .transition().duration(200)
+              .style("stroke", "lightgrey")
+              .style("opacity", "0.2")
+            // Second the hovered specie takes its color
+            d3.selectAll("." + selected_specie)
+              .transition().duration(200)
+              .style("stroke", color(selected_specie))
+              .style("opacity", "1")
+          }
+
+          // Unhighlight
+          var doNotHighlight = function(d){
+            d3.selectAll(".line")
+              .transition().duration(200).delay(1000)
+              .style("stroke", function(d){ return( color(d.Species))} )
+              .style("opacity", "1")
+          }
+
+          // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+          function path(d) {
+              return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+          }
+
+          // Draw the lines
+          svg
+            .selectAll("myPath")
+            .data(config.data)
+            .enter()
+            .append("path")
+              .attr("class", function (d) { return "line " + d.Species } ) // 2 class for each line: 'line' and the group name
+              .attr("d",  path)
+              .style("fill", "none" )
+              .style("stroke", function(d){ return( color(d.Species))} )
+              .style("opacity", 0.5)
+              .on("mouseover", highlight)
+              .on("mouseleave", doNotHighlight )
+
+          // Draw the axis:
+          svg.selectAll("myAxis")
+            // For each dimension of the dataset I add a 'g' element:
+            .data(dimensions).enter()
+            .append("g")
+            .attr("class", "axis")
+            // I translate this element to its right position on the x axis
+            .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+            // And I build the axis with the call function
+            .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
+            // Add axis title
+            .append("text")
+              .style("text-anchor", "middle")
+              .attr("y", -9)
+              .text(function(d) { return d; })
+              .style("fill", "black")
+
+        //console.log(config, species)
+        
       }
 
     },
@@ -1072,6 +1198,9 @@
           'unit': 'Day'
         }
         //'config': ''
+      })
+      this.handle_paraline({
+        'status':3
       })
     }
   }
