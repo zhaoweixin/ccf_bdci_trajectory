@@ -18,6 +18,9 @@ const mutation = {
       data = payload.data;
     state.DATA_STORE[name] = JSON.parse(JSON.stringify(data));
   },
+  UPDATE_PARA_STORE(state, payload){
+    state.para_state = payload
+  },
   // date_state(state, payload) {
   //   state.date_state = JSON.parse(JSON.stringify(payload));
   //   //console.log(state.date_state);
@@ -27,15 +30,18 @@ const mutation = {
     //console.log(state.geohash_state);
   },
   AllDayHour_state(state, payload) {
-    //console.log(payload);
     state.AllDayHour_state = JSON.parse(JSON.stringify(payload));
   },
   buses_routes_state(state, payload) {
     state.buses_routes_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.buses_routes_state);
   },
+  calendar_click_state(state, payload){
+    state.calendar_state = payload
+  },
   change_calendar_cluster(state, payload) {
     state.calendar_cluster = JSON.parse(JSON.stringify(payload));
   }
 };
+
 export default mutation;

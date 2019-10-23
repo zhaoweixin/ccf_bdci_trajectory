@@ -71,7 +71,7 @@
                     container: this.$refs.basicMapbox,
                     style: 'mapbox://styles/mapbox/dark-v9',
                     center: [110.32953682031234,19.973591989780688], // 设置地图中心
-                    zoom: 11  // 设置地图比例
+                    zoom: 12  // 设置地图比例
                     //pitch:50
                 });
                 // this.map.on('click',(e)=>{

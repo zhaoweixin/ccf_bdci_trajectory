@@ -1,11 +1,11 @@
 <template>
   <div id="page_functionbar3.vue" class="funcbar_warp_bar2">
     <div class="funcbar_warp_header">
-      <h4>INFO</h4>
+      <h4>信息栏</h4>
       <div class="line-separator-1"></div>
     </div>
     <div class="funcbar_warp_header">
-      <h5>ADD TIME/GEO TO HERE</h5>
+      <h5></h5>
       <div class="line-separator-2"></div>
     </div>
 
@@ -122,7 +122,7 @@
                         .enter()
                         .append("text")
                         .attr("class", "label_row")
-                        .attr("x", 8)
+                        .attr("x", -5)
                         .attr("y", (d, i) => i * gird_size + 45)
                         .text(d => d)
                         .style("text-anchor", "start")
@@ -141,7 +141,7 @@
                         .append("text")
                         .attr("class", "label_col")
                         .attr("x", (d, i) => i * gird_size + 40)
-                        .attr("y", height)
+                        .attr("y", height * 0.95)
                         .text(d => d)
                         .attr("transform", (d, i) => {
                             return "rotate(-20, " + i * gird_size + " " + height + ")";
@@ -768,7 +768,7 @@
   }
 
   #od_matrix text {
-    fill: #ffffff;
+    fill: rgb(170, 170, 170);
     font-size: 12px;
   }
 
@@ -816,6 +816,6 @@
   }
   #barchart .bars text {
     font: 10px sans-serif;
-    fill: aliceblue;
+    fill: rgb(170, 170, 170);
   }
 </style>>
