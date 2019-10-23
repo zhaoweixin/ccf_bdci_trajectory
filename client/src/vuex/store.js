@@ -29,12 +29,12 @@ const store = new Vuex.Store({
       }
     },
     AllDayHour_state: 0, //传入的值为0、1、2,0代表All，1代表day，2代表hour
-    calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
+    //calendar_state: {}, //日历图点击时间段，数据格式[日期,第几个时间段]
     para_state: 1, //点击日历图更新平行坐标，根据点击的类更新
     DATA_STORE: {},
     calendar_state: 0,
     calendar_cluster: {}, //日历图点击所属聚类类别
-    OD_satte: {} //OD选择 0 为O 1为D
+    OD_state: {} //OD选择 0 为O 1为D
   },
   mutations: mutation,
   actions: action,

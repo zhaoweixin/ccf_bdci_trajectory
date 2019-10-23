@@ -289,15 +289,14 @@ export default {
     },
     od_config: {
       handler(newValue, oldValue) {
-        console.log(newValue.picked);
-        this.$store.commit("change_OD_satte", newValue.picked);
+        //console.log(newValue.picked);
+        this.$store.commit("change_OD_state", newValue.picked);
       },
       deep: true
     }
   },
   methods: {
     handle_clickbutton() {
-      let that = this;
       //直接全部重画
       if (
         JSON.stringify(this.$store.state.operater_state) !==
@@ -306,9 +305,6 @@ export default {
         this.$store.commit("operater_state", this.config);
       } else {
       }
-    },
-    date_update(date) {
-      this.$store.commit("date_state", { date: date });
     },
     hour_click() {
       this.$store.commit("AllDayHour_state", 2);
@@ -342,7 +338,7 @@ export default {
   font-size: 13px;
 }
 .funcbar_warp_header {
-  padding-top: 10px;
+  padding-top: 5px;
   color: grey !important;
 }
 .line-separator-1 {
@@ -365,7 +361,7 @@ export default {
 
 .chiller_cb {
   position: relative;
-  height: 2.5rem !important;
+  height: 2rem !important;
   display: flex;
   align-items: center;
 }

@@ -42,8 +42,8 @@ const mutation = {
   change_calendar_cluster(state, payload) {
     state.calendar_cluster = JSON.parse(JSON.stringify(payload));
   },
-  change_OD_satte(state, payload) {
-    state.OD_satte = JSON.parse(JSON.stringify(payload));
+  change_OD_state(state, payload) {
+    state.OD_state = JSON.parse(JSON.stringify(payload));
   }
 };
 

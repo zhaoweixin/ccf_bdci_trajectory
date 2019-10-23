@@ -676,9 +676,18 @@
                 //console.log(this.geo_routes[curr_geohash]);
                 this.draw_geo_buses(curr_geohash);
 
+                let attributes = ['start_geo','dest_geo'];
+                let attribute;
+
+                if(this.od_type === 'od')
+                    attribute = attributes[0];
+                else
+                    attribute = attributes[1];
+
+
                 this.$http.get('query',{
                     params:{
-                        table: `${this.sql_table} where start_geo = '${curr_geohash}'`
+                        table: `${this.sql_table} where ${attribute} = '${curr_geohash}'`
 
                     }}).then((res) => {
                     update(res.body);
@@ -695,10 +704,17 @@
                         .range([0.1, .8]);
 
                     //console.log(d3.max(data,(d)=>d.count));
+                    let attributes = ['start_geo','dest_geo'];
+                    let attribute;
+
+                    if(this.od_type === 'od')
+                        attribute = attributes[1];
+                    else
+                        attribute = attributes[0];
 
                     data.forEach(d =>{
 
-                        let bbox = ngeohash.decode_bbox(d.dest_geo);
+                        let bbox = ngeohash.decode_bbox(d[attribute]);
 
                         let color = '';
 
@@ -706,6 +722,8 @@
                             color = '#04759D';
                         else
                             color = '#d8363a';
+
+                        console.log(color);
 
                         //console.log(linear(d.count));
 
@@ -900,11 +918,18 @@
                 }
                 this.geohash_update();
             },
-            //"$store.state.od_type":{
-            // handler(type){
-            //  this.od_type = type;
-            // }
-            // }
+            "$store.state.OD_state":{
+                handler(od_type){
+                    console.log(od_type);
+                    if(od_type === '0')
+                        this.od_type = 'od';
+                    else if(od_type === '1')
+                        this.od_type = 'do';
+                    console.log(this.od_type);
+                    this.geohash_update();
+                    },
+                deep:true
+            }
         }
     }
 </script>
