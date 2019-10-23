@@ -26,6 +26,10 @@ const mutation = {
   geohash_state(state, payload) {
     state.geohash_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.geohash_state);
+  },
+  AllDayHour_state(state, payload) {
+    console.log(payload);
+    state.AllDayHour_state = JSON.parse(JSON.stringify(payload));
   }
 };
 export default mutation;

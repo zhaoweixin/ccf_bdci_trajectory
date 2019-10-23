@@ -441,6 +441,86 @@ export default {
           ]
         });
       }
+    },
+    changehead() {
+      d3.select(".funcbar_warp_header").text(function() {
+        var selectrange = this.$store.state.AllDayHour_state;
+        var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+        var witchhour = this.$store.state.calendar_state[1];
+        var text = null;
+        switch (selectrange) {
+          case 0:
+            text = "选择区域所有数据";
+            break;
+          case 1:
+            if (date == null) {
+              text = "";
+            }
+            break;
+          case 2:
+            break;
+          default:
+            break;
+        }
+      });
+    },
+    drawbarchart() {
+      var geoh = this.$store.state.geohash_state.geohash;
+      if (geoh == null) return;
+      var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+      var witchhour = this.$store.state.calendar_state[1];
+      console.log(date);
+      var selectrange = this.$store.state.AllDayHour_state;
+      switch (selectrange) {
+        case 0:
+          POIbar.getdata(
+            "table=traffictype_all where start_geo='" + geoh + "'",
+            geoh
+          );
+          break;
+        case 1:
+          if (date == null) {
+            POIbar.getdata(
+              "table=traffictype_day where start_geo='" +
+                geoh +
+                "' and date='2017-05-01'",
+              geoh
+            );
+          } else {
+            POIbar.getdata(
+              "table=traffictype_day where start_geo='" +
+                geoh +
+                "' and date='" +
+                date +
+                "'",
+              geoh
+            );
+          }
+          break;
+        case 2:
+          if (date == null) {
+            POIbar.getdata(
+              "table=traffictype_hour where start_geo='" +
+                geoh +
+                "' and date='2017-05-01' and timeSeparete='0'",
+              geoh
+            );
+          } else {
+            POIbar.getdata(
+              "table=traffictype_hour where start_geo='" +
+                geoh +
+                "' and date='" +
+                date +
+                "' and timeSeparete='" +
+                witchhour +
+                "'",
+              geoh
+            );
+          }
+          break;
+        default:
+          break;
+      }
     }
   },
   components: {},
@@ -453,6 +533,7 @@ export default {
         //this.draw_od_matrix(state.geohash);
         // this.draw_poi_ring(state.geohash);
         this.draw_location_ring(state.geohash);
+        this.drawbarchart();
       },
       deep: true
     },
@@ -464,9 +545,9 @@ export default {
       deep: true
     },
     "$store.state.calendar_state": function(newdata, olddata) {
-      console.log(newdata);
-      POIbar.addData();
+      // console.log(newdata);
       // 需要执行的代码
+      this.drawbarchart();
     }
   }
 };

@@ -64,7 +64,15 @@
       },
       feature_change_state (val, oldVal) {
         this.handle_feature_change_state()
-      }
+      },
+       "$store.state.AllDayHour_state": function(newdata, olddata) {
+      console.log(newdata);
+      if((newdata==1||newdata==0)&&olddata==2)
+      calendar.drawday();
+      if(newdata==2)
+      calendar.drawhour();
+      // 需要执行的代码
+    }
     },
     methods:{
       init_heatmap(){

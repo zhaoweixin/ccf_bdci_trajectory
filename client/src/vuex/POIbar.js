@@ -190,6 +190,57 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
     console.log(pois);
+  },
+  getdata(path, geohash) {
+    var getdatas = function(tsvFile) {
+      (async function() {
+        const response = await DataManager.getTableData(
+          "http://localhost:3000/query?" + path
+        );
+        var retdata = response.data;
+        if (retdata.length <= 0) {
+          retdata = {
+            name: geohash,
+            trafficdata: []
+          };
+          POIData.addData(retdata);
+        } else {
+          var trmap = d3.map(
+            d3
+              .nest()
+              .key(function(d) {
+                return d.traffic_type;
+              })
+              .entries(retdata)
+          );
+          var keys = trmap.keys();
+          var trafficdatas = new Array();
+          var index = 0;
+          for (var i = 0; i < keys.length; i++) {
+            var counts = 0;
+            var trtypes = trmap.get(keys[i]).values;
+            for (var j = 0; j < trtypes.length; j++) {
+              counts = counts + parseInt(trtypes[j].count);
+            }
+            console.log(counts);
+            trafficdatas[index++] = {
+              name: parseInt(trmap.get(keys[i]).key),
+              value: counts
+            };
+          }
+          retdata = {
+            name: geohash,
+            trafficdata: trafficdatas
+          };
+          console.log(retdata);
+          POIData.addData(retdata);
+        }
+
+        // calendardata = data;
+        // console.log(calendardata);
+      })();
+    };
+    getdatas(path);
   }
 };
 //排序函数,从大到小排列
