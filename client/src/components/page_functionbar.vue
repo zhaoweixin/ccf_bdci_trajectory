@@ -23,11 +23,6 @@
           <span></span>
         </div>
         <div class="chiller_cb">
-          <input id="myCheckbox3" type="checkbox" value="2" v-model="config.checkedNames" />
-          <label for="myCheckbox3">运行流向</label>
-          <span></span>
-        </div>
-        <div class="chiller_cb">
           <input id="myCheckbox4" type="checkbox" value="3" v-model="config.checkedNames" />
           <label for="myCheckbox4">运行时间</label>
           <span></span>
@@ -87,9 +82,33 @@
 
         <button
           class="btn btn-primary shadow-none bg-secondary"
-          style="transform: translate(0, 5px); font-size: 12px"
+          style="transform: translate(0, -5px); font-size: 12px; width:100px"
           @click="handle_clickbutton()"
         >Apply</button>
+
+        <div class="line-separator-2"></div>
+
+        <div class="chiller_cb">
+          <input
+            id="weatherCheckbox1"
+            type="checkbox"
+            value="0"
+            v-model="weather_config.checkedNames"
+          />
+          <label for="weatherCheckbox1">天气</label>
+          <span></span>
+        </div>
+
+        <div class="chiller_cb">
+          <input
+            id="weatherCheckbox2"
+            type="checkbox"
+            value="1"
+            v-model="weather_config.checkedNames"
+          />
+          <label for="weatherCheckbox2">节假日</label>
+          <span></span>
+        </div>
       </div>
     </div>
 
@@ -137,39 +156,6 @@
         </div>
       </div>
     </div>
-
-    <div class="funcbar_warp_header">
-      <h5>DATE</h5>
-      <div class="line-separator-2"></div>
-    </div>
-
-    <DatePicker
-      :value="start_date"
-      type="date"
-      placeholder="选择日期"
-      style="padding: 10px; width: 135px"
-      placement="right-end"
-      @on-change="date_update"
-    ></DatePicker>
-
-    <div class="funcbar_warp_header">
-      <h5>WEATHER</h5>
-      <div class="line-separator-2"></div>
-    </div>
-    <div class="bg">
-      <div>
-        <div class="chiller_cb">
-          <input
-            id="weatherCheckbox1"
-            type="checkbox"
-            value="0"
-            v-model="weather_config.checkedNames"
-          />
-          <label for="weatherCheckbox1">天气</label>
-          <span></span>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 <script>
@@ -179,7 +165,6 @@ export default {
   name: "page_funtionbar",
   data() {
     return {
-      start_date: "2017-05-01",
       config: {
         checkedNames: ["0"],
         //0 运输需求量 1 运输距离 2 运输流向 3 起运时间 4 速度
@@ -224,11 +209,14 @@ export default {
       handler(newValue, oldValue) {
         let res = {
           status: "3",
+
           config: {
             add: [],
+
             remove: []
           }
         };
+
         newValue.checkedNames.forEach((d, i) => {
           if (
             this.his_weather_config.checkedNames.indexOf(
@@ -248,11 +236,16 @@ export default {
             res.config.remove.push(this.his_weather_config.checkedNames[i]);
           } //旧数组中不存在该元素，需添加
         });
+
         //新数组中存在该元素，需
+
         //console.log(newValue, oldValue)
+
         this.his_weather_config = JSON.parse(JSON.stringify(newValue));
-        this.$store.commit("weather_change_state", newValue);
+
+        this.$store.commit("feature_change_state", newValue);
       },
+
       deep: true
     }
   },
@@ -325,16 +318,73 @@ export default {
   padding-top: 1px;
 }
 
-.span_pseudo,
-.chiller_cb span:before,
-.chiller_cb span:after {
-  content: "";
+.chiller_cb {
+  position: relative;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+}
+.chiller_cb input {
+  display: none;
+}
+.chiller_cb input:checked ~ span {
+  background: rgb(37, 52, 148);
+  border-color: rgb(37, 52, 148);
+}
+.chiller_cb input:checked ~ span:before {
+  width: 1rem;
+  height: 0.15rem;
+  transition: width 0.1s;
+  transition-delay: 0.3s;
+}
+.chiller_cb input:checked ~ span:after {
+  width: 0.4rem;
+  height: 0.15rem;
+  transition: width 0.1s;
+  transition-delay: 0.2s;
+}
+.chiller_cb input:disabled ~ span {
+  background: #ececec;
+  border-color: #dcdcdc;
+}
+.chiller_cb input:disabled ~ label {
+  color: #dcdcdc;
+}
+.chiller_cb input:disabled ~ label:hover {
+  cursor: default;
+}
+.chiller_cb label {
+  padding-left: 2rem;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  margin-bottom: 0;
+  color: white;
+  font-family: initial;
+  font-size: 15px;
+  color: rgb(170, 170, 170);
+  font-weight: bold;
+}
+.chiller_cb span {
   display: inline-block;
-  background: #fff;
-  width: 0;
-  height: 0.2rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1px solid #ccc;
   position: absolute;
-  transform-origin: 0% 0%;
+  left: 0;
+  transition: all 0.2s;
+  z-index: 1;
+  box-sizing: content-box;
+}
+.chiller_cb span:before {
+  transform: rotate(-55deg);
+  top: 0.5rem;
+  left: 0.37rem;
+}
+.chiller_cb span:after {
+  transform: rotate(35deg);
+  bottom: 0.35rem;
+  left: 0.2rem;
 }
 
 .chiller_cb {
@@ -417,7 +467,7 @@ export default {
   padding-left: 10px !important;
   padding-top: 2px !important;
   display: relative !important;
-  color: white !important;
+  color: rgb(170, 170, 170) !important;
   font-family: initial !important;
 }
 .custom-control {
@@ -442,5 +492,13 @@ export default {
 .chiller_cb input:checked ~ span {
   background: #99c779 !important;
   border-color: #99c779 !important;
+}
+
+.custom-control-label::after {
+  top: 0.24rem !important;
+  left: -1.505rem !important;
+}
+.custom-radio .custom-control-input:checked ~ .custom-control-label::after {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%2399C779'/%3e%3c/svg%3e") !important;
 }
 </style>

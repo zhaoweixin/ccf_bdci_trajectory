@@ -45,6 +45,11 @@
         his_feature_config:{
           checkedNames: [],
           status: '3'
+        },
+        LINECHART_TITLE:{
+          'Hour': '每个小时平均值统计',
+          'Day': '每周平均值统计',
+          'All': '整体时间段统计'
         }
       }
     },
@@ -257,7 +262,6 @@
           })
 
           //forbidden reload error
-          console.log(requestInfo.config.legend_val)
           if(requestInfo.config.legend_val.length != 0){
             DataManager.getLineChartData(requestInfo).then((res) => {
             requestInfo.config.legend_val.forEach((d,i) => {
@@ -279,9 +283,6 @@
               }
             })
           }
-
-
-
 
         } else if(opt.status == '1'){
           //add
@@ -325,7 +326,6 @@
 
 
           //forbidden reload error
-          console.log(requestInfo.config.legend_val)
           if(requestInfo.config.legend.length != 0){
             DataManager.getLineChartData(requestInfo).then((res) => {
 
@@ -361,7 +361,7 @@
           let that = this
           this.lc_FullWidth = document.getElementById('line').clientWidth,
           this.lc_FullHeight = document.getElementById('line').clientHeight,
-          this.lc_margin = { top: this.lc_FullHeight*0.1, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
+          this.lc_margin = { top: this.lc_FullHeight*0.15, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
           this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
           this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
           let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
@@ -421,32 +421,6 @@
                 return 'translate(' + x + ',' + y + ')'
             })
 
-          let legend = this.lc_legend.selectAll('.legend_line')
-            .data(opt.config.legend)
-            .enter()
-
-          this.lc_legend_circle = legend.append('circle')
-              .attr("class", "legend_line") // Assign a class for styling
-              .attr("cx", (d, i) => { return that.lc_width * 0.04 })
-              .attr("cy", (d, i) => { return that.lc_height * 0.15 * i + 20})
-              .attr("r", 2)
-              .style('fill', (d, i) => {return that.lc_linecolor[i]})
-              .style('opacity', 0)
-              .transition()
-              .duration(3000)
-              .style('opacity', 1)
-
-          //title
-          this.lc_legend_text = legend.append('text')
-              .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
-              .text((d,i) => {return d})
-              .style('opacity', 0)
-              .attr('class', 'legend_text')
-              .transition()
-              .duration(3000)
-              .style('opacity', 1)
-
           this.lc_svg_g = this.lc_svg.append("g")
               .attr('id', 'line_chart_g')
               .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")");
@@ -470,12 +444,12 @@
           this.lc_svg_g.append('text')
             .attr('id', "lc_title")
             .attr('x', that.lc_width/2)
-            .attr('y', 0)
+            .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
             .attr('font-size', '15px')
             .attr('font-weight', 'bold')
             .attr('fill', 'rgb(170, 170, 170)')
             .text(function() {
-              return 'TITLE'  // Value of the text
+              return that.LINECHART_TITLE[opt.config.unit]
             });
 
           // 9. Append the path, bind the data, and call the line generator
@@ -528,6 +502,36 @@
               .transition()
               .duration(1500)
               .style('opacity', 1)
+
+
+            this.lc_legend.append('circle')
+              .attr("class",  () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
+              .attr("cx", () => { return that.lc_width * 0.04 })
+              .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
+              .attr('num', i)
+              .attr("linenum", i)
+              .attr('unit', opt.config.unit)
+              .attr('type', 'legend')
+              .attr("r", 2)
+              .style('fill', () => { return that.lc_linecolor[i]})
+              .on('mouseover', circle_handleMouseOver)
+              .on('mouseout', circle_handleMouseOut)
+              .style('opacity', 0)
+              .transition()
+              .duration(3000)
+              .style('opacity', 1)
+            
+
+            //title
+            this.lc_legend.append('text')
+                .attr('x', () => { return that.lc_width * 0.04 + 10 })
+                .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
+                .text(() => { return opt.config.legend[i]})
+                .style('opacity', 0)
+                .attr('class', 'legend_text')
+                .transition()
+                .duration(3000)
+                .style('opacity', 1)
           }
           //change color
           this.lc_linecount = this.lc_linecount + 1
@@ -549,6 +553,11 @@
           d3.selectAll('.y.axis').transition()
                    .duration(300).remove()
 
+          d3.selectAll('#lc_title').transition()
+                    .duration(300).remove()
+
+          
+
           this.lc_svg_g.append("g")
               .attr("class", "x axis")
               .attr("transform", "translate( 0," + +that.lc_height + ")")
@@ -562,6 +571,19 @@
               .transition()
               .duration(3000)
               .call(d3.axisLeft(that.lc_yScaleLine)); // Create an axis component with d3.axisLeft
+
+          //13. append chart title
+          this.lc_svg_g.append('text')
+            .attr('id', "lc_title")
+            .attr('x', that.lc_width/2)
+            .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
+            .attr('font-size', '15px')
+            .attr('font-weight', 'bold')
+            .attr('fill', 'rgb(170, 170, 170)')
+            .text(function() {
+              return that.LINECHART_TITLE[opt.config.unit]
+              return 'TITLE'  // Value of the text
+            });
 
           for(var i=0; i<opt.data.length; i++){
             let draw_data = opt.data[i].values,
@@ -623,7 +645,7 @@
                 .style('stroke', that.lc_linecolor[i])
                 .style("stroke-width", '1px')
 
-              this.lc_svg_g.selectAll(".ddot")
+            this.lc_svg_g.selectAll(".ddot")
                 .data(draw_data)
               .enter().append("circle")
               // Uses the enter().append() method
@@ -642,34 +664,40 @@
                 .transition()
                 .duration(2000)
                 .style('opacity', 1)
+
+            this.lc_legend.append('circle')
+              .attr("class", () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
+              .attr("cx", () => { return that.lc_width * 0.04 })
+              .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
+              .attr('num', i)
+              .attr("linenum", i)
+              .attr('unit', opt.config.unit)
+              .attr('type', 'legend')
+              .attr("r", 2)
+              .style('fill', () => { return that.lc_linecolor[i]})
+              .on('mouseover', circle_handleMouseOver)
+              .on('mouseout', circle_handleMouseOut)
+              .style('opacity', 0)
+              .transition()
+              .duration(3000)
+              .style('opacity', 1)
+            
+
+            //title
+            this.lc_legend.append('text')
+                .attr('x', () => { return that.lc_width * 0.04 + 10 })
+                .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
+                .text(() => { return opt.config.legend[i]})
+                .style('opacity', 0)
+                .attr('class', 'legend_text')
+                .transition()
+                .duration(3000)
+                .style('opacity', 1)
+
           }
 
-          this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
-          let legend = this.lc_legend.selectAll('.legend_line')
-            .data(opt.config.legend)
-            .enter()
-
-          this.lc_legend_circle = legend.append('circle')
-              .attr("class", "legend_line") // Assign a class for styling
-              .attr("cx", (d, i) => { return that.lc_width * 0.04 })
-              .attr("cy", (d, i) => { return that.lc_height * 0.15 * i + 20})
-              .attr("r", 2)
-              .style('fill', (d, i) => {return that.lc_linecolor[i]})
-              .style('opacity', 0)
-              .transition()
-              .duration(1500)
-              .style('opacity', 1)
-
-
-          this.lc_legend_text = legend.append('text')
-              .attr('x', function(d, i) { return that.lc_width * 0.04 + 10 })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 3 + 20})
-              .text((d,i) => {return d})
-              .style('opacity', 0)
-              .attr('class', 'legend_text')
-              .transition()
-              .duration(1500)
-              .style('opacity', 1)
+          //this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
+          
         }
         // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
 
@@ -682,7 +710,8 @@
 
           //use D3 to select line, change stroke
           let line_num = d3.select(this).attr('linenum'),
-             unit = d3.select(this).attr('unit')
+             unit = d3.select(this).attr('unit'),
+             type = d3.select(this).attr('type')
 
           for(var i=0; i<that.lc_pathcount; i++){
             let lineclass = 'line-' + i,
@@ -742,7 +771,8 @@
                   yfunc = that.lc_yScaleText_arr[i]
 
               // Specify where to put label of text
-              d3.select('#line_chart_g').append("text")
+              if(type != 'legend'){
+                d3.select('#line_chart_g').append("text")
                 .attr('id', "lt_label")
                 .attr('x', () => {
                   return +that.lc_line_generator[unit].xScaleLine(d.x) - 10
@@ -769,6 +799,8 @@
                       return tex;
                     }
                   });
+              }
+              
             } else {
               d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
@@ -798,6 +830,21 @@
               d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 1)
             }
           }
+
+        }
+
+        function legend_circle_handleMouseOver(d,i){
+          // Use D3 to select element, change size
+          d3.select(this)
+          .transition()
+          .duration(300)
+          .attr('r', 6)
+
+          let line_num = d3.select(this).attr('linenum'),
+             unit = d3.select(this).attr('unit')
+        }
+
+        function legend_circle_handleMouseOut(d,i){
 
         }
         //end of function draw_linechart
@@ -837,7 +884,6 @@
           })
 
           that.his_feature_config = JSON.parse(JSON.stringify(that.feature_change_state))
-
           if(that.last_axis_type == 'All'){
             if(obj.config.add.length != 0){
               // request data
@@ -947,7 +993,7 @@
                   return that.lc_width * 1.10 + 10
                 }
                 })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 30})
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 15})
               .attr('width', 10)
               .attr('height', 10)
               .style('opacity', 0)
@@ -974,7 +1020,7 @@
                   return that.lc_width * 1.10 + 40
                 }
                 })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 39})
+              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 24})
               .text((d,i) => {
                 if(config.type == 0){
                   //weather

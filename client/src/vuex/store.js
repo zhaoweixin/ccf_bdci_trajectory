@@ -9,17 +9,19 @@ Vue.use(Vuex);
 const store = new Vuex.Store({
   // 定义状态
   state: {
-    date_state: {}, //当前日期
+    // date_state: {},//当前日期
     geohash_state: {
-      geohash: "w7w3y9"
+      geohash: ""
     }, //当前geohash
     map_state: {}, //地图图层操作
+
+    buses_routes_state: {}, //公交路线
 
     operater_state: {
       checkedNames: [],
       picked: ""
     },
-    weather_change_state: {
+    feature_change_state: {
       status: "3",
       config: {
         add: [],

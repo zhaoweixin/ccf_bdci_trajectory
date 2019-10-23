@@ -3,30 +3,31 @@
 </template>
 
 <script>
+
     import mapboxgl from 'mapbox-gl'
     import * as d3 from 'd3'
     import coordtrans from 'coordtransform'
     import ngeohash from 'ngeohash'
 
-    String.prototype.toCSletray = function(){
-        let data = [];
-        let relArr = this.split("\n");
-        if(relArr.length > 1) {
-            let title = relArr[0].split(',');
-            let title_arr = title.keys();
-            for(let key = 1, len = relArr.length-1; key < len; key++) {
-                let values = relArr[key];
-                let objArr = values.split(",");
-                let obj = {};
-                for(let i=0;i<title.length;i++){
-                    obj[title[title_arr.next().value]] = objArr[i];
-                }
-                data.push(obj);
-                title_arr = title.keys();
-            }
-        }
-        return data;
-    };
+    /*String.prototype.toCSV = function(){
+         let data = [];
+         let relArr = this.split("\n");
+         if(relArr.length > 1) {
+             let title = relArr[0].split(',');
+             let title_arr = title.keys();
+             for(let key = 1, len = relArr.length-1; key < len; key++) {
+                 let values = relArr[key];
+                 let objArr = values.split(",");
+                 let obj = {};
+                 for(let i=0;i<title.length;i++){
+                     obj[title[title_arr.next().value]] = objArr[i];
+                 }
+                 data.push(obj);
+                 title_arr = title.keys();
+             }
+         }
+         return data;
+     };*/
 
     export default {
         name: "AppMap",
@@ -194,7 +195,7 @@
             district_draw(data){
                 //console.log(data);
                 let feature_lines = [];
-                //let feature_polygons = [];
+                let feature_polygons = [];
                 let district_color = ['#ff722c','#ff4f6a','#48b6ff','#3dffaf'];
 
                 data.forEach((d,i)=>{
@@ -504,6 +505,7 @@
             geohash_init(){
 
                 let default_bbox = ngeohash.decode_bbox('w7w3y9');
+
                 this.map.on('load',  () =>{
 
                     this.map.addSource('click_polygon_source',{
@@ -613,6 +615,12 @@
 
                 this.map.on('click',(e)=> {
                     let curr_geohash = ngeohash.encode(e.lngLat.lat, e.lngLat.lng, 6);
+
+                    // new mapboxgl.Popup()
+                    //     .setLngLat([e.lngLat.lng, e.lngLat.lat])
+                    //     .setHTML('<APP_POI></APP_POI>')
+                    //     .addTo(this.map);
+
                     let bbox = ngeohash.decode_bbox(curr_geohash);
                     let features_polygon = [{
                         'type': 'Feature',
@@ -681,7 +689,7 @@
 
                     let linear = d3.scaleLinear()
                         .domain([0, d3.max(data,(d)=>d.count)])
-                        .range([0, .5]);
+                        .range([0.1, .5]);
 
                     data.forEach(d =>{
 
@@ -691,7 +699,7 @@
                             'type': 'Feature',
                             "properties": {
                                 'color': '#04759D',//"#16B2D8",//"#ee2d3e",
-                                'value': linear(d.count) +0.1
+                                'value': linear(d.count)
                             },
                             'geometry': {
                                 'type': 'Polygon',
@@ -731,7 +739,11 @@
                 });
             },
             draw_geo_buses(curr_geohash='w7w3y9'){
-                let routes = this.geo_routes[curr_geohash]?this.geo_routes[curr_geohash]:[];
+                let routes = this.geo_routes[curr_geohash]?this.geo_routes[curr_geohash]:[]
+
+                //公交路线
+                this.$store.commit('buses_routes_state',{routes:routes.map(d=>parseInt(d)+'路')});
+
                 //console.log(routes);
                 let data = this.buses_data.filter(d=>{
                     return routes.includes(d.name);
@@ -782,15 +794,15 @@
                 });
 
                 //this.map.on('load',  ()=>{
-                    this.map.getSource('geo_stations_source').setData({
-                        "type": "FeatureCollection",
-                        "features": feature_buspoints
-                    });
+                this.map.getSource('geo_stations_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buspoints
+                });
 
-                    this.map.getSource('geo_routes_source').setData({
-                        "type": "FeatureCollection",
-                        "features": feature_buslines
-                    });
+                this.map.getSource('geo_routes_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buslines
+                });
                 //});
 
             },
