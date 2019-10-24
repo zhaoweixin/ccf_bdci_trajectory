@@ -70,23 +70,35 @@ const calendar = {
         "transform",
         "translate(" + margin.left / 0.8 + "," + margin.top / 2 + ")"
       );
-    // 定义每个年份对应的group旁边的标签
-    // svg
-    //   .append("text")
-    //   //定义标签文字(年份)的位置以及文字的旋转角度、文字内容
-    //   .attr("transform", "translate(5," + cellSize + ")rotate(-90)")
-    //   .style("font-family", "sans-serif")
-    //   .style("font-size", 12)
-    //   .style("text-anchor", "middle")
-    //   .style("fill", "rgb(170,170,170)")
-    //   .text(function(d) {
-    //     return d;
-    //   });
+    //定义每个月份对应的group旁边的标签;
+    var months = 0;
+    svg
+      .append("g")
+      .selectAll("text")
+      .data(d3.range(5, 10))
+      .enter()
+      .append("text")
+      .attr("transform", function(d) {
+        return (
+          "translate(" +
+          (cellSize * 4 * months++ + cellSize * 4.1) +
+          "," +
+          cellSize / 2.2 +
+          ")"
+        );
+      })
+      .style("font-family", "sans-serif")
+      .style("font-size", 7)
+      .style("text-anchor", "middle")
+      .style("fill", "rgb(170,170,170)")
+      .text(function(d) {
+        return d + "月";
+      });
     svg
       .append("text")
       .attr(
         "transform",
-        "translate(" + cellSize * 12 + "," + cellSize / 4 + ")"
+        "translate(" + cellSize * 12 + "," + cellSize / 6 + ")"
       )
       .style("font-family", "sans-serif")
       .style("font-size", 12)
@@ -114,7 +126,7 @@ const calendar = {
       .style("fill", "rgb(170,170,170)")
       .attr("transform", function(d, i) {
         if (i <= 6) {
-          return "translate(25," + (cellSize * 3.5 + cellSize / 2) + ")";
+          return "translate(25," + (cellSize * 3.5 + cellSize / 1.5) + ")";
         }
       })
 
@@ -155,7 +167,7 @@ const calendar = {
       .append("path")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
       )
       .attr("d", pathMonth);
     this.drawday();
@@ -291,7 +303,7 @@ const calendar = {
       .attr("stroke", "#ccc")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
       )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
@@ -360,7 +372,7 @@ const calendar = {
       .attr("stroke", "#ccc")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 2 + ")"
+        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
       )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
