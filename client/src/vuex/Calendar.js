@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import DataManager from "../data/DataManager";
 import store from "../vuex/store";
+var dayvecoters = null;
+var hourvecoters = null;
 var calendardata = null;
 var nowday = new Array(); //存储日历图日期数据
 var THIS = null;
@@ -442,11 +444,17 @@ function inithourdata() {
         });
       });
       calendardata = data;
+      hourvecoters = data;
       // console.log(calendardata);
       calendar.houradddata(data);
     })();
   };
-  heatmapChart("http://localhost:3000/query?table=vector");
+  if (hourvecoters == null)
+    heatmapChart("http://localhost:3000/query?table=vector");
+  else {
+    calendardata = hourvecoters;
+    calendar.houradddata(hourvecoters);
+  }
 }
 
 function initdaydata() {
@@ -462,11 +470,17 @@ function initdaydata() {
         });
       });
       calendardata = data;
+      dayvecoters = data;
       // console.log(calendardata);
       calendar.dayadddata(data);
     })();
   };
-  heatmapChart("http://localhost:3000/query?table=vector_day");
+  if (dayvecoters == null)
+    heatmapChart("http://localhost:3000/query?table=vector_day");
+  else {
+    calendardata = dayvecoters;
+    calendar.dayadddata(dayvecoters);
+  }
 }
 
 function addLegend(num) {
@@ -524,8 +538,8 @@ function addLegend(num) {
           }
         });
     })
-    .on('click', function(d){
-      store.commit('calendar_legend_click', d)
+    .on("click", function(d) {
+      store.commit("calendar_legend_click", d);
       //store.commit('calendar_click_state', d)
     })
     .append("title")

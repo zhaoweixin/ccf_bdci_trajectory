@@ -230,7 +230,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
             for (var j = 0; j < trtypes.length; j++) {
               counts = counts + parseInt(trtypes[j].count);
             }
-            console.log(counts);
+
             trafficdatas[index++] = {
               name: parseInt(trmap.get(keys[i]).key),
               value: counts
@@ -245,7 +245,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
         }
 
         // calendardata = data;
-        // console.log(calendardata);
+        console.log(response.data);
       })();
     };
     getdatas(path);
