@@ -12,19 +12,18 @@
     <div id="od_matrix"></div>
     <div id="barchart"></div>
     <div id="location_info">
-      <Tabs size="small"  @on-click="tabs_func">
+      <Tabs size="small" @on-click="tabs_func">
         <TabPane label="区域方向">
           <div id="angle_ring"></div>
         </TabPane>
         <!-- <TabPane label="区域POI">
           <div id="poi_ring"></div>
-        </TabPane> -->
+        </TabPane>-->
         <TabPane label="公交信息">
           <div id="buses_info"></div>
         </TabPane>
       </Tabs>
     </div>
-
   </div>
 </template>
 <script>
@@ -608,28 +607,12 @@
                                 text="选中位置"+date+" 0时-6时信息";
                             }
                             else{
-                                //console.log(witchhour)
-                                switch (parseInt(witchhour)) {
-                                    case 0:
-                                        text="选中位置"+date+" 0时-6时信息";
-                                        break;
-                                    case 1:
-                                        text="选中位置"+date+" 6时-10时信息";
-                                        break;
-                                    case 2:
-                                        text="选中位置"+date+" 10时-16时信息";
-                                        break;
-                                    case 3:
-                                        text="选中位置"+date+" 16时-20时信息";
-                                        break;
-                                    case 4:
-                                        text="选中位置"+date+" 20时-14时信息";
-                                        break;
-                                    default:
-                                        break;
+                               
+                                text="选中位置"+date+" "+witchhour;
+                                
                                 }
                             }
-                        }
+                        
                         break;
                     default:
                         break;
@@ -641,6 +624,8 @@
                 var geoh = this.$store.state.geohash_state.geohash;
                 if (geoh == null) return;
                 var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+                 let format = d3.timeFormat("%Y-%m-%d");
+               date = format(new Date(date)).toString();
                 var witchhour = this.$store.state.calendar_state[1];
                 //console.log(date);
                 var selectrange = this.$store.state.AllDayHour_state;
@@ -679,16 +664,35 @@
                                 geoh
                             );
                         } else {
-                            POIbar.getdata(
+                           var h=0;
+                            switch (witchhour) {
+                                    case "0-6时":
+                                    h=0;
+                                         
+                           
+                                        break;
+                                    case "6-10时":
+                                       h=1;
+                                        break;
+                                    case "10-16时":
+                                      h=2;
+                                        break;
+                                    case "16-20时":
+                                        h=3;
+                                        break;
+                                    case "20-14时":
+                                       h=4;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                             POIbar.getdata(
                                 "table=traffictype_hour where start_geo='" +
                                 geoh +
-                                "' and date='" +
-                                date +
-                                "' and timeSeparete='" +
-                                witchhour +
-                                "'",
+                                "' and date='"+date+"' and timeSeparete='"+h+"'",
                                 geoh
                             );
+                           
                         }
                         break;
                     default:
@@ -754,7 +758,8 @@
                 else if(this.view_type === 2){
                     //console.log(time);
                     this.time_separate = separate[newdata[1].replace('时','')];
-
+                    console.log(newdata[1])
+                    console.log(this.time_separate)
                     this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '${this.time_separate}'`;
                 }
@@ -807,98 +812,100 @@
     };
 </script>
 <style>
-  .funcbar_warp_bar2 {
-    position: absolute;
-    z-index: 1;
-    width: 12.5%;
-    max-height: 90%;
-    /*transform: translate(1660px, 60px);*/
-    right: 1%;
-    top: 6%;
-    height: 70%;
-    /*overflow:hidden;*/
-    border-radius: 0.3em;
-    box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
+.funcbar_warp_bar2 {
+  position: absolute;
+  z-index: 1;
+  width: 12.5%;
+  max-height: 90%;
+  /*transform: translate(1660px, 60px);*/
+  right: 1%;
+  top: 6%;
+  height: 70%;
+  /*overflow:hidden;*/
+  border-radius: 0.3em;
+  box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
     0 0.5em 1em rgba(0, 0, 0, 0.6);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    font-size: 14px;
-  }
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+}
 
-  .funcbar_warp_header {
-    padding-top: 10px;
-    color: grey !important;
-  }
-  #od_matrix {
-    height: 30%;
-    /*background-color: #71ff70;*/
-  }
-  #od_matrix h5{
-    position: absolute;
-    left: 40%;
-    z-index: 10;
-    font: 15px sans-serif;
-    color: grey !important;
-  }
+.funcbar_warp_header {
+  padding-top: 10px;
+  color: grey !important;
+}
+#od_matrix {
+  height: 30%;
+  /*background-color: #71ff70;*/
+}
+#od_matrix h5 {
+  position: absolute;
+  left: 40%;
+  z-index: 10;
+  font: 15px sans-serif;
+  color: grey !important;
+}
 
-  #od_matrix .od_card {
-    stroke: #e6e6e6;
-    stroke-width: 1px;
-  }
+#od_matrix .od_card {
+  stroke: #e6e6e6;
+  stroke-width: 1px;
+}
 
-  #od_matrix text {
-    fill: rgb(170, 170, 170);
-    font-size: 12px;
-  }
+#od_matrix text {
+  fill: rgb(170, 170, 170);
+  font-size: 12px;
+}
 
-  #barchart {
-    height: 30%;
-  }
-  #location_info {
-    height: 28%;
-    z-index: 1;
-  }
-  #poi_ring,#angle_ring,#buses_info{
-    width:100%;
-    height: 100%;
-  }
+#barchart {
+  height: 30%;
+}
+#location_info {
+  height: 28%;
+  z-index: 1;
+}
+#poi_ring,
+#angle_ring,
+#buses_info {
+  width: 100%;
+  height: 100%;
+}
 
-  .ivu-tabs-bar {
-    margin-bottom: 0;
-  }
+.ivu-tabs-bar {
+  margin-bottom: 0;
+}
 
-  .inner_div {
-    position: absolute;
-    z-index: 999;
-    background-color: #fff;
-  }
-  .bar--positive {
-    fill: steelblue;
-  }
+.inner_div {
+  position: absolute;
+  z-index: 999;
+  background-color: #fff;
+}
+.bar--positive {
+  fill: steelblue;
+}
 
-  .bar--negative {
-    fill: #1A6840;
-  }
-  #barchart .axis text {
-    font: 10px sans-serif;
-  }
+.bar--negative {
+  fill: #1a6840;
+}
+#barchart .axis text {
+  font: 10px sans-serif;
+}
 
-  #barchart .axis path,
-  #barchart .axis line {
-    fill: none;
-    stroke: white;
-    shape-rendering: crispEdges;
-  }
-  #barchart h2{
-    font: 1rem sans-serif;
-    color: grey !important;
-  }
-  #barchart h5{
-    font: 15px sans-serif !important;
-    color: grey !important;
-  }
-  #barchart .bars text {
-    font: 10px sans-serif;
-    fill: rgb(170, 170, 170);
-  }
+#barchart .axis path,
+#barchart .axis line {
+  fill: none;
+  stroke: white;
+  shape-rendering: crispEdges;
+}
+#barchart h2 {
+  font: 1rem sans-serif;
+  color: grey !important;
+}
+#barchart h5 {
+  font: 15px sans-serif !important;
+  color: grey !important;
+}
+#barchart .bars text {
+  font: 10px sans-serif;
+  fill: rgb(170, 170, 170);
+}
 </style>>

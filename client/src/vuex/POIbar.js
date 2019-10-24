@@ -200,6 +200,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
     console.log(pois);
   },
   getdata(path, geohash) {
+    console.log(path);
     var getdatas = function(tsvFile) {
       (async function() {
         const response = await DataManager.getTableData(
