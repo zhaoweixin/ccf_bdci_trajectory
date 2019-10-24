@@ -74,7 +74,7 @@
         return this.$store.state.AllDayHour_state
       },
       highlight_paraline_state(){
-        return this.$store.state.calendar_state
+        return this.$store.state.calendar_legend_state
       }
     },
     watch:{
@@ -413,8 +413,6 @@
           //else type == other scaleLinear
 
           for(var i=0; i<opt.data.length; i++){
-              xScaleMin = 0,
-              xScaleMax = 1
 
             if(opt.data[i].xLabel == 'date'){
               let len = opt['data'][i].xScale.length
@@ -457,7 +455,7 @@
           } else if(opt.config.unit == 'All'){
             this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
             this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
-            this.lc_xScaleAxis = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width]);
+            this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
             this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
           }
 
@@ -1206,7 +1204,7 @@
           var highlight = function(d){
             let selected_specie = d.cluster
             // first every group turns grey
-            d3.selectAll(".line")
+            d3.selectAll(".paraline")
               .transition().duration(200)
               .style("stroke", "lightgrey")
               .style("opacity", "0")
@@ -1219,7 +1217,7 @@
 
           // Unhighlight
           var doNotHighlight = function(d){
-            d3.selectAll(".line")
+            d3.selectAll(".paraline")
               .transition().duration(200).delay(1000)
               .style("stroke", function(d){ return( color(d.cluster))} )
               .style("opacity", "1")
@@ -1236,7 +1234,7 @@
             .data(config.data)
             .enter()
             .append("path")
-              .attr("class", function (d) {return "line paraline-" + d.cluster } ) // 2 class for each line: 'line' and the group name
+              .attr("class", function (d) {return "paraline paraline-" + d.cluster } ) // 2 class for each line: 'line' and the group name
               .attr("d",  path)
               .style("fill", "none" )
               .style("stroke", function(d){ return( color(d.cluster))} )
@@ -1276,7 +1274,7 @@
         var highlight = function(num){
             let selected_specie = num
             // first every group turns grey
-            d3.selectAll(".line")
+            d3.selectAll(".paraline")
               .transition().duration(200)
               .style("stroke", "lightgrey")
               .style("opacity", "0")
@@ -1288,7 +1286,7 @@
           }
 
         var doNotHighlight = function(num){
-            d3.selectAll(".line")
+            d3.selectAll(".paraline")
               .transition().duration(200).delay(2000)
               .style("stroke", function(d){ return( that.para_color(d.cluster))} )
               .style("opacity", "1")

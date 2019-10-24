@@ -39,6 +39,9 @@ const mutation = {
   calendar_click_state(state, payload) {
     state.calendar_state = payload;
   },
+  calendar_legend_click(state, payload){
+    state.calendar_legend_state = payload;
+  },
   change_calendar_cluster(state, payload) {
     state.calendar_cluster = JSON.parse(JSON.stringify(payload));
   },

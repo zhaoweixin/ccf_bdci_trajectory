@@ -34,6 +34,7 @@ const store = new Vuex.Store({
     DATA_STORE: {},
     calendar_state: 0,
     calendar_cluster: {}, //日历图点击所属聚类类别
+    calendar_legend_state: 0,
     OD_state: {} //OD选择 0 为O 1为D
   },
   mutations: mutation,

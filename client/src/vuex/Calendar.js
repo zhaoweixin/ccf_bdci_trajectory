@@ -525,8 +525,8 @@ function addLegend(num) {
         });
     })
     .on('click', function(d){
-      store.commit('calendar_click_state', d)
-      console.log('click ', "第" + (d + 1) + "类")
+      store.commit('calendar_legend_click', d)
+      //store.commit('calendar_click_state', d)
     })
     .append("title")
     .text(function(d) {

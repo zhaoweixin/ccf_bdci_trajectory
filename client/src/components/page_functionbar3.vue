@@ -16,9 +16,9 @@
         <TabPane label="区域方向">
           <div id="angle_ring"></div>
         </TabPane>
-        <TabPane label="区域POI">
+        <!-- <TabPane label="区域POI">
           <div id="poi_ring"></div>
-        </TabPane>
+        </TabPane> -->
         <TabPane label="公交信息">
           <div id="buses_info"></div>
         </TabPane>
@@ -55,9 +55,10 @@
                 if(name === 0)
                     this.draw_location_ring(this.geohash);
                 else if(name === 1)
-                    this.draw_poi_ring(this.geohash);
-                else
                     this.draw_buses_info(this.buses_data);
+                    //this.draw_poi_ring(this.geohash);
+                //else
+                    //this.draw_buses_info(this.buses_data);
             },
             draw_od_matrix() {
                 //console.log('draw_od_matrix');
@@ -725,7 +726,7 @@
                     this.draw_location_ring();
                     //***********************************************************************************************//
 
-                    this.draw_poi_ring(this.geohash);
+                    //this.draw_poi_ring(this.geohash);
                     //this.draw_buses_info(this.buses_data);
                     this.drawbarchart();
                     this.changehead();
