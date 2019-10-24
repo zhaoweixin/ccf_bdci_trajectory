@@ -11,7 +11,7 @@ const store = new Vuex.Store({
   state: {
     // date_state: {},//当前日期
     geohash_state: {
-      geohash: ""
+      geohash: "w7w3y9"
     }, //当前geohash
     map_state: {}, //地图图层操作
 

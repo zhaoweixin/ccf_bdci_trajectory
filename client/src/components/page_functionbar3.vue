@@ -36,6 +36,7 @@
             return {
                 geohash: "w7w3y9",
                 date:'2017-05-01',
+                time_separate:'0',
                 buses_data:[],
                 sql_od_matrix:"od_all where start_geo = 'w7w3y9'",
                 sql_location:"angle_all_list where start_geo = 'w7w3y9'",
@@ -59,6 +60,7 @@
                     this.draw_buses_info(this.buses_data);
             },
             draw_od_matrix() {
+                //console.log('draw_od_matrix');
                 this.$http.get('query',{
                     params:{
                         table: this.sql_od_matrix
@@ -191,7 +193,10 @@
                     })
                     .then(res => {
                         //console.log(res.body);
-                        draw(eval(res.body[0].count));
+                        if(res.body[0])
+                            draw(eval(res.body[0].count));
+                        else
+                            d3.select("#angle_ring").html('');
                     });
 
                 let draw = dataset => {
@@ -348,7 +353,9 @@
                         });
 
 
-                   let texts =  pie_svg.selectAll('.chart')
+                    let texts =  pie_svg.selectAll('.chart')
+                        .data(['180','150','120','90','60','30','0','330','300','270','240','210'])
+                        //.exit()
                         .append('text')
                         //.attr('transform',(d)=>{
                         //   //console.log(d);
@@ -360,10 +367,8 @@
                         .attr("font-size", "80%")//文字大小
                         .attr("text-anchor", "middle") //文字居中
                         .attr("fill","#FFF")
-                        .text((d,i)=>{
-                            if(i<12)
-                            return i*30
-                        })
+                        .text((d,i)=>d)
+                        .attr("transform","translate("+0+","+3+")")
 
 
                     //////////////////////
@@ -509,6 +514,8 @@
                 }
             },
             draw_buses_info(data){
+
+                console.log(data);
 
                 let myChart = this.$echarts.init(document.getElementById("buses_info"));
 
@@ -694,6 +701,8 @@
             "$store.state.geohash_state": {
                 handler(state) {
 
+                    console.log('geohash_state');
+
                     //************************更新geohash**********************
                     //console.log(state.geohash);
                     this.geohash = state.geohash;
@@ -708,41 +717,45 @@
                         this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                         this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                     }
-                    //else{
-                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
-                    //}
+                    else if(this.view_type === 2){
+                        this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                        this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '${this.time_separate}'`;
+                    }
                     this.draw_od_matrix();
                     this.draw_location_ring();
                     //***********************************************************************************************//
 
-                    this.draw_poi_ring(state.geohash);
+                    this.draw_poi_ring(this.geohash);
+                    //this.draw_buses_info(this.buses_data);
                     this.drawbarchart();
                     this.changehead();
                 },
                 deep: true
             },
             "$store.state.calendar_state": function(newdata, olddata) {
+                console.log('calendar_state');
                 let format = d3.timeFormat("%Y-%m-%d");
-                let separate = {
-                    '0-6':0,
-                    '6-10':1,
-                    '10-16':2,
-                    '16-20':3,
-                    '20-24':4
-                };
-
                 this.date = format(new Date(newdata[0])).toString();
 
+                let separate = {
+                    '0-6':'0',
+                    '6-10':'1',
+                    '10-16':'2',
+                    '16-20':'3',
+                    '20-24':'4'
+                };
+
                 // 需要执行的代码
-                if(this.view_type === 1){
+                if(this.view_type !== 2){
                     this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                 }
                 else if(this.view_type === 2){
-                    let time = separate[newdata[1].replace('时','')];
-                    console.log(time);
+                    //console.log(time);
+                    this.time_separate = separate[newdata[1].replace('时','')];
+
                     this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
-                    //this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparete = ${'时间段'}`;
+                    this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '${this.time_separate}'`;
                 }
 
                 this.draw_od_matrix();
@@ -752,6 +765,7 @@
                 this.changehead();
             },
             "$store.state.AllDayHour_state": function(newdata, olddata) {
+                console.log('all day hour -- state');
                 this.view_type = newdata;
                 this.changehead();
                 // 需要执行的代码
@@ -759,7 +773,7 @@
                     this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
                     this.draw_od_matrix(this.geohash);
                     this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
-                    this.draw_location_ring();
+                    //this.draw_location_ring();
                 }
                 else if(newdata === 1){
                     ////////////////////
@@ -767,7 +781,7 @@
                     this.draw_od_matrix();
                     ////////////////////
                     this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
-                    this.draw_location_ring();
+                    //this.draw_location_ring();
                     //////////////////////
                 }
                 else if(newdata === 2){
@@ -775,10 +789,18 @@
                     //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     //this.draw_od_matrix();
                     ////////////////////
-                    this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = ${this.date} and timeSeparate = '0'`;
+                    this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '0'`;
                     this.draw_location_ring();
                     //////////////////////
                 }
+            },
+            '$store.state.buses_routes_state':{
+                handler(state){
+                    //console.log(state.routes);
+                    this.buses_data = state.routes;
+                    //this.draw_buses_info(this.buses_data)
+                },
+                deep:true
             }
         }
     };
@@ -871,7 +893,7 @@
     color: grey !important;
   }
   #barchart h5{
-      font: 15px sans-serif !important; 
+    font: 15px sans-serif !important;
     color: grey !important;
   }
   #barchart .bars text {

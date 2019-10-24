@@ -433,7 +433,7 @@
               xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
             }
           }
-          
+
 
 
           if(opt.config.unit == 'Hour' || opt.config.unit == 'Day'){
@@ -1295,7 +1295,7 @@
           }
         highlight(linenum)
         doNotHighlight(linenum)
-        
+
       }
 
     },

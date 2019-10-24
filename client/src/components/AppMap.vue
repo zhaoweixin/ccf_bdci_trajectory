@@ -723,7 +723,7 @@
                         else
                             color = '#d8363a';
 
-                        console.log(color);
+                        //console.log(color);
 
                         //console.log(linear(d.count));
 
@@ -907,7 +907,8 @@
                 }
             },
             "$store.state.calendar_state": function(date) {
-                this.date = date[0];
+                let format = d3.timeFormat("%Y-%m-%d");
+                this.date = format(new Date(date[0])).toString();
                 //OD
                 if(this.od_type === 'od'){
                     this.sql_table = 'od_'+this.date.replace(/-/g,'');
