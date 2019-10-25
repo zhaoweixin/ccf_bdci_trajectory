@@ -1061,7 +1061,7 @@
                   //weather
                   return that.lc_width * 1.02 + 10
                 } else {
-                  return that.lc_width * 1.10 + 10
+                  return that.lc_width * 1.13 + 10
                 }
                 })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 15})
@@ -1088,7 +1088,7 @@
                   //weather
                   return that.lc_width * 1.03 + 40
                 } else {
-                  return that.lc_width * 1.10 + 40
+                  return that.lc_width * 1.13 + 40
                 }
                 })
               .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 24})
@@ -1420,7 +1420,7 @@ text.axis-worktime {
 
 .legend_feature_weather_rect1{
   stroke: rgb(22,52,72);
-  fill: grey;
+  fill: rgb(22,52,72);
   stroke-width: 1px;
 }
 

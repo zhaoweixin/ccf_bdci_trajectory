@@ -55,7 +55,7 @@
     </div>
 
     <div class="funcbar_warp_header">
-      <h5>LINE</h5>
+      <h5>折线图</h5>
       <div class="line-separator-2"></div>
     </div>
 
