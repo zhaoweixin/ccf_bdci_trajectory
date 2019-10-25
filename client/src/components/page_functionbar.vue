@@ -361,7 +361,7 @@ export default {
 
 .chiller_cb {
   position: relative;
-  height: 2rem !important;
+  height: 2.3rem !important;
   display: flex;
   align-items: center;
 }

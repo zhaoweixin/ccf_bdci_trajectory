@@ -94,7 +94,7 @@
             'status': 3,
             'table': 'vector'
           })
-        } else if(val == 1){
+        } else if(val == 1 || val == 0){
           this.handle_paraline({
             'status': 3,
             'table': 'vector_day'
@@ -1086,7 +1086,7 @@
               .attr('x', function(d, i) {
                 if(config.type == 0){
                   //weather
-                  return that.lc_width * 1.02 + 40
+                  return that.lc_width * 1.03 + 40
                 } else {
                   return that.lc_width * 1.10 + 40
                 }
@@ -1172,7 +1172,7 @@
           dimensions = config.dimensions,
           color = d3.scaleOrdinal()
             .domain(config.species)
-            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#74A686'])
+            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#AC4C1E'])
 
         this.para_color = color
 
@@ -1291,8 +1291,9 @@
               .style("stroke", function(d){ return( that.para_color(d.cluster))} )
               .style("opacity", "1")
           }
-        highlight(linenum)
         doNotHighlight(linenum)
+        highlight(linenum)
+        
 
       }
 
@@ -1313,7 +1314,7 @@
       })
       this.handle_paraline({
         'status':3,
-        'table': 'vector'
+        'table': 'vector_day'
       })
     }
   }
@@ -1412,13 +1413,13 @@ text.axis-worktime {
 }
 
 .legend_feature_weather_rect0{
-  stroke: grey;
+  stroke: rgb(22,52,72);
   fill: none;
   stroke-width: 1px;
 }
 
 .legend_feature_weather_rect1{
-  stroke: grey;
+  stroke: rgb(22,52,72);
   fill: grey;
   stroke-width: 1px;
 }

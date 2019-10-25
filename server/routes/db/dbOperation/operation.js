@@ -113,7 +113,7 @@ module.exports = {
                         'xLabel': 'Day'
                     },
                     '3': {
-                        'name': '起运时间',
+                        'name': '运行时间',
                         'halftable': 'time',
                         'yLabel': 'Time', // 'Time / Day' or 'Time / Week'
                         'xLabel': 'Day'
