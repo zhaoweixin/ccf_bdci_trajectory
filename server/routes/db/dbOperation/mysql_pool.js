@@ -14,8 +14,8 @@ class MysqlPool {
             //connectionLimit: 100,
             host:'119.23.31.186',
             //host:'localhost',
-            user:'root',
-            password:'123456',
+            user:'mysqld',
+            password:'my1768',
             database:'db_traffic',
             port:3306,
             multipleStatements: true

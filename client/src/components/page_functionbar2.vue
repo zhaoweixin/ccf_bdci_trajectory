@@ -19,8 +19,22 @@
   import DataManager from '../data/DataManager'
   import var_config from '../assets/var_config.js'
   import calendar from "@/vuex/Calendar.js"
-
   import $ from 'jquery'
+
+  Date.prototype.yyyymmdd = function() {
+  var mm = this.getMonth() + 1; // getMonth() is zero-based
+  var dd = this.getDate();
+
+  return [this.getFullYear(),
+          (mm>9 ? '' : '0') + mm,
+          (dd>9 ? '' : '0') + dd
+         ].join('-');
+  };
+
+  //var date = new Date();
+  //date.yyyymmdd();
+
+
   export default{
     name: 'page_functionbar2',
     data(){
@@ -566,6 +580,7 @@
               .style('stroke-width', '1.5px')
               .on('mouseover', circle_handleMouseOver)
               .on('mouseout', circle_handleMouseOut)
+              .on('click', circle_handleClick)
               .style('opacity', 0)
               .transition()
               .duration(1500)
@@ -731,6 +746,7 @@
                 .style('stroke-width', '1.5px')
                 .on('mouseover', circle_handleMouseOver)
                 .on('mouseout', circle_handleMouseOut)
+                .on('click', circle_handleClick)
                 .style('opacity', 0)
                 .transition()
                 .duration(2000)
@@ -863,7 +879,8 @@
                     } else {
                       let tex = ''
                       if(typeof(d.x) == 'object'){
-                        tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
+                        tex = "X: " + d.x.yyyymmdd() + " Y: " + yfunc(d.y).toFixed(2)
+                        //tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
                       } else {
                         tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
                       }
@@ -902,6 +919,16 @@
             }
           }
 
+        }
+
+        function circle_handleClick(d){
+          //update map rect
+          try{
+            let date = d.x.yyyymmdd()
+            that.$store.commit("Calendar_change_state", [date])
+          }catch(err){
+            console.log(err)
+          }
         }
 
         function legend_circle_handleMouseOver(d,i){

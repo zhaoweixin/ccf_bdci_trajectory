@@ -25,11 +25,14 @@ module.exports = {
     },
     query: function (req, res, next) {
         pool.getConnection(function(err, connection) {
-            console.log('111')
-            console.log(req.query);
+            
             let sql = $sql.queryAll+req.query.table
+            
             connection.query(sql, function(err, result) {
                 if(err){
+                    console.log('111')
+                    console.log(req.query);
+                    console.log('query->', sql)
                     console.log(err);
                     res.send(err)
                 };
@@ -143,7 +146,6 @@ module.exports = {
                     dataType.forEach((d,i) => {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
-    
                     connection.query(sql, function(err, result){
                         if(err){
                             res.send(err);
@@ -195,7 +197,8 @@ module.exports = {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
                     //sql = 'select * from allTrafficCount'
-                    
+
+                    console.log('basic_line ->', sql)
                     connection.query(sql, (err, result) => {
                         if(err){
                             res.send(err);
@@ -242,7 +245,10 @@ module.exports = {
     poi_haikou:function (req, res, next) {
         pool.getConnection(function (err, connection) {
             connection.query(`select * from poi_haikou ${req.query.sql}`, function (err, result) {
-                if (err) res.send(err);
+                if (err){
+                    console.log('poi_haikou ->' + req.query.sql)
+                    res.send(err);
+                } 
                 //console.log(result);
                 
                 res.send(result);
@@ -251,7 +257,7 @@ module.exports = {
         });
     },
     feature_line:function(req, res, next){
-        console.log('select time, * from feature_line')
+        
         pool.getConnection(function(err, connection) {
             /*
                 req.body = {val: '1'}
@@ -261,10 +267,12 @@ module.exports = {
                 '1': 'holiday'
             }
             let sql_key = sql_dict[req.body.val]
-            
             connection.query(`select time,${sql_key} from feature_line`, function(err, result){
                 result = JSON.parse(JSON.stringify(result))
-                if (err) res.send(err);
+                if (err){
+                    console.log('select time, * from feature_line')
+                    res.send(err);
+                } 
                 res.setHeader("Access-Control-Allow-Origin", "*");
                 res.send(result)
                 //res.send(resData)
@@ -272,19 +280,18 @@ module.exports = {
         })
     },
     para_line: function(req, res, next){
-        console.log('select para_line from vector')
         pool.getConnection(function(err, connection){
             /*
                 req.body = {'table', 'vector'}
             */
-
             let sql_key = req.body.table
-
+            console.log('para_line ->', sql_key)
             connection.query(`select * from ${sql_key}`, function(err, result){
                 result = JSON.parse(JSON.stringify(result))
-                if(err) res.send(err)
-                
-                
+                if(err){
+                    console.log('select para_line from ->', sql_key)
+                    res.send(err)
+                } 
                 let species = []
                 result.forEach((d,i) => {
                     if(species.indexOf(d.cluster) == -1){

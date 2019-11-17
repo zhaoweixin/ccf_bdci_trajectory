@@ -31,7 +31,6 @@ const POIData = {
         document.getElementById("barchart").clientHeight -
         margin.top -
         margin.bottom);
-    console.log(width);
     x = d3.scaleLinear().range([0, width]);
 
     y = d3.scaleBand().rangeRound([0, height], 0.1);
@@ -51,7 +50,6 @@ const POIData = {
       .append("svg")
       .attr("width", width + margin.left)
       .attr("height", height + margin.top);
-    console.log(d3.select("#barchart").select("svg"));
   },
   /*
 =================
@@ -197,10 +195,8 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
-    console.log(pois);
   },
   getdata(path, geohash) {
-    console.log(path);
     var getdatas = function(tsvFile) {
       (async function() {
         const response = await DataManager.getTableData(
@@ -241,12 +237,10 @@ name为所点击方块的geohash值,OrderType为订单类型数据
             name: geohash,
             trafficdata: trafficdatas
           };
-          console.log(retdata);
           POIData.addData(retdata);
         }
 
         // calendardata = data;
-        console.log(response.data);
       })();
     };
     getdatas(path);
