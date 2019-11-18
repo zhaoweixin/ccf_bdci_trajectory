@@ -8,8 +8,8 @@
       <h5 style="font-size: 1rem"></h5>
       <div class="line-separator-2"></div>
     </div>
-
-    <div id="od_matrix"></div>
+    <!--    <div id="od_matrix"></div>-->
+    <div id="geo_bar_chart"></div>
     <div id="barchart"></div>
     <div id="location_info">
       <Tabs size="small" @on-click="tabs_func">
@@ -45,6 +45,7 @@
         mounted() {
             POIbar.initchart();
             POIbar.initdata();
+            this.block_bar_chart('1');
         },
         updated(){
         },
@@ -55,9 +56,9 @@
                     this.draw_location_ring(this.geohash);
                 else if(name === 1)
                     this.draw_buses_info(this.buses_data);
-                    //this.draw_poi_ring(this.geohash);
+                //this.draw_poi_ring(this.geohash);
                 //else
-                    //this.draw_buses_info(this.buses_data);
+                //this.draw_buses_info(this.buses_data);
             },
             draw_od_matrix() {
                 //console.log('draw_od_matrix');
@@ -515,7 +516,7 @@
             },
             draw_buses_info(data){
 
-                console.log(data);
+                //console.log(data);
 
                 let myChart = this.$echarts.init(document.getElementById("buses_info"));
 
@@ -581,10 +582,10 @@
             changehead() {
                 let that=this;
 
-                var selectrange = that.$store.state.AllDayHour_state;
-                var date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
-                var witchhour = that.$store.state.calendar_state[1];
-                var text = null;
+                let selectrange = that.$store.state.AllDayHour_state;
+                let date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
+                let witchhour = that.$store.state.calendar_state[1];
+                let text = null;
                 switch (selectrange) {
                     case 0:
                         text = "选中位置整个时间跨度内信息";
@@ -607,12 +608,12 @@
                                 text="选中位置"+date+" 0时-6时信息";
                             }
                             else{
-                               
+
                                 text="选中位置"+date+" "+witchhour;
-                                
-                                }
+
                             }
-                        
+                        }
+
                         break;
                     default:
                         break;
@@ -621,14 +622,14 @@
 
             },
             drawbarchart() {
-                var geoh = this.$store.state.geohash_state.geohash;
+                let geoh = this.$store.state.geohash_state.geohash;
                 if (geoh == null) return;
-                var date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
-                 let format = d3.timeFormat("%Y-%m-%d");
-               date = format(new Date(date)).toString();
-                var witchhour = this.$store.state.calendar_state[1];
+                let date = this.$store.state.calendar_state[0]; //获取当前的时间和时间段
+                let format = d3.timeFormat("%Y-%m-%d");
+                date = format(new Date(date)).toString();
+                let witchhour = this.$store.state.calendar_state[1];
                 //console.log(date);
-                var selectrange = this.$store.state.AllDayHour_state;
+                let selectrange = this.$store.state.AllDayHour_state;
                 switch (selectrange) {
                     case 0:
                         POIbar.getdata(
@@ -664,41 +665,135 @@
                                 geoh
                             );
                         } else {
-                           var h=0;
+                            let h=0;
                             switch (witchhour) {
-                                    case "0-6时":
+                                case "0-6时":
                                     h=0;
-                                         
-                           
-                                        break;
-                                    case "6-10时":
-                                       h=1;
-                                        break;
-                                    case "10-16时":
-                                      h=2;
-                                        break;
-                                    case "16-20时":
-                                        h=3;
-                                        break;
-                                    case "20-14时":
-                                       h=4;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                             POIbar.getdata(
+
+
+                                    break;
+                                case "6-10时":
+                                    h=1;
+                                    break;
+                                case "10-16时":
+                                    h=2;
+                                    break;
+                                case "16-20时":
+                                    h=3;
+                                    break;
+                                case "20-14时":
+                                    h=4;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            POIbar.getdata(
                                 "table=traffictype_hour where start_geo='" +
                                 geoh +
                                 "' and date='"+date+"' and timeSeparete='"+h+"'",
                                 geoh
                             );
-                           
+
                         }
                         break;
                     default:
                         break;
                 }
+            },
+
+            ///////////////////////////////
+            //////2019-11-18///////////////
+            ///////////////////////////////
+            create_cluster_legend(){
+
+            },
+            //add block_flow
+            block_bar_chart(cluster_type){
+
+                let that = this;
+
+                let myChart = this.$echarts.init(document.getElementById("geo_bar_chart"));
+
+                this.$http.get('query',{
+                    params:{
+                        table:`cluster_d_1 where d_cluster=${cluster_type}`
+                    }}).then(res=>{
+                    //console.log(res.body);
+                    draw_charts(res.body.sort((a,b)=>{
+                        return parseInt(b.ordercount)- parseInt(a.ordercount);
+                    }).slice(0,20));
+                });
+                function draw_charts(data){
+                    let xAxisData = [];
+                    let data1 = [];
+                    for (let i = 0; i < data.length; i++) {
+                        xAxisData.push(data[i].dest_geo);
+                        data1.push(data[i].ordercount);
+                    }
+
+                    let option = {
+                        title: {
+                            show:false,
+                            text: '柱状图动画延迟'
+                        },
+                        legend: {
+                            show:true,
+                            data: ['bar', 'bar2'],
+                            align: 'left',
+                            textStyle: {
+                                //文字颜色
+                                color: "#f4fdff"
+                            }
+                        },
+                        toolbox: {
+                            // y: 'bottom',
+                            show:false,
+                            feature: {
+                                magicType: {
+                                    type: ['stack', 'tiled']
+                                },
+                                dataView: {},
+                                saveAsImage: {
+                                    pixelRatio: 2
+                                }
+                            }
+                        },
+                        tooltip: {},
+                        xAxis: {
+                            data: xAxisData,
+                            //silent: true,
+                            splitLine: {
+                                show: true
+                            }
+                        },
+                        yAxis: {
+                            splitLine: {
+                                show: true
+                            }
+                        },
+                        series: [{
+                            //name: 'bar',
+                            type: 'bar',
+                            data: data1,
+                            animationDelay: function (idx) {
+                                return idx * 10;
+                            }
+                        }],
+                        animationEasing: 'elasticOut',
+                        animationDelayUpdate: function (idx) {
+                            return idx * 5;
+                        }
+                    };
+
+                    myChart.on('click', (params)=> {
+                        console.log(params.name);
+                        that.$store.commit('bar_geohash_state',params.name);
+                    });
+
+                    myChart.setOption(option);
+                }
             }
+
         },
         components: {},
         computed: {},
@@ -715,18 +810,18 @@
 
                     //////////////////////////////////////////////////////////////////////////////////////////////////
                     if(this.view_type === 0){
-                        this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
+                        //this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
                         this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
                     }
                     else if(this.view_type === 1){
-                        this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                        //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                         this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                     }
                     else if(this.view_type === 2){
-                        this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                        //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                         this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '${this.time_separate}'`;
                     }
-                    this.draw_od_matrix();
+                    //this.draw_od_matrix();
                     this.draw_location_ring();
                     //***********************************************************************************************//
 
@@ -752,7 +847,7 @@
 
                 // 需要执行的代码
                 if(this.view_type !== 2){
-                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                 }
                 else if(this.view_type === 2){
@@ -760,11 +855,11 @@
                     this.time_separate = separate[newdata[1].replace('时','')];
                     console.log(newdata[1])
                     console.log(this.time_separate)
-                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '${this.time_separate}'`;
                 }
 
-                this.draw_od_matrix();
+                //this.draw_od_matrix();
                 this.draw_location_ring();
 
                 this.drawbarchart();
@@ -776,15 +871,15 @@
                 this.changehead();
                 // 需要执行的代码
                 if(newdata === 0){
-                    this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
-                    this.draw_od_matrix(this.geohash);
+                    //this.sql_od_matrix = `od_all where start_geo = '${this.geohash}'`;
+                    //this.draw_od_matrix(this.geohash);
                     this.sql_location = `angle_all_list where start_geo = '${this.geohash}'`;
                     //this.draw_location_ring();
                 }
                 else if(newdata === 1){
                     ////////////////////
-                    this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
-                    this.draw_od_matrix();
+                    //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    //this.draw_od_matrix();
                     ////////////////////
                     this.sql_location = `angle_day_list where start_geo = '${this.geohash}' and date = '${this.date}'`;
                     //this.draw_location_ring();
@@ -792,7 +887,7 @@
                 }
                 else if(newdata === 2){
                     ////////////////////
-                    //this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
+                    ////this.sql_od_matrix = `od_day where start_geo = '${this.geohash}' and day = '${this.date}'`;
                     //this.draw_od_matrix();
                     ////////////////////
                     this.sql_location = `angle_hour_list where start_geo = '${this.geohash}' and date = '${this.date}' and timeSeparate = '0'`;
@@ -812,100 +907,87 @@
     };
 </script>
 <style>
-.funcbar_warp_bar2 {
-  position: absolute;
-  z-index: 1;
-  width: 12.5%;
-  max-height: 90%;
-  /*transform: translate(1660px, 60px);*/
-  right: 1%;
-  top: 6%;
-  height: 70%;
-  /*overflow:hidden;*/
-  border-radius: 0.3em;
-  box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
+  .funcbar_warp_bar2 {
+    position: absolute;
+    z-index: 1;
+    width: 12.5%;
+    max-height: 90%;
+    /*transform: translate(1660px, 60px);*/
+    right: 1%;
+    top: 6%;
+    height: 70%;
+    /*overflow:hidden;*/
+    border-radius: 0.3em;
+    box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
     0 0.5em 1em rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  font-size: 14px;
-}
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    font-size: 14px;
+  }
 
-.funcbar_warp_header {
-  padding-top: 10px;
-  color: grey !important;
-}
-#od_matrix {
-  height: 30%;
-  /*background-color: #71ff70;*/
-}
-#od_matrix h5 {
-  position: absolute;
-  left: 40%;
-  z-index: 10;
-  font: 15px sans-serif;
-  color: grey !important;
-}
+  .funcbar_warp_header {
+    padding-top: 10px;
+    color: grey !important;
+  }
+  #geo_bar_chart {
+    height: 30%;
+    /*background-color: #71ff70;*/
+  }
+  #select_cluster{
+    position: absolute;
+    left: 25px;
+    z-index: 25;
+  }
+  #barchart {
+    height: 30%;
+  }
+  #location_info {
+    height: 28%;
+    z-index: 1;
+  }
+  #poi_ring,
+  #angle_ring,
+  #buses_info {
+    width: 100%;
+    height: 100%;
+  }
 
-#od_matrix .od_card {
-  stroke: #e6e6e6;
-  stroke-width: 1px;
-}
+  .ivu-tabs-bar {
+    margin-bottom: 0;
+  }
 
-#od_matrix text {
-  fill: rgb(170, 170, 170);
-  font-size: 12px;
-}
+  .inner_div {
+    position: absolute;
+    z-index: 999;
+    background-color: #fff;
+  }
+  .bar--positive {
+    fill: steelblue;
+  }
 
-#barchart {
-  height: 30%;
-}
-#location_info {
-  height: 28%;
-  z-index: 1;
-}
-#poi_ring,
-#angle_ring,
-#buses_info {
-  width: 100%;
-  height: 100%;
-}
+  .bar--negative {
+    fill: #1a6840;
+  }
+  #barchart .axis text {
+    font: 10px sans-serif;
+  }
 
-.ivu-tabs-bar {
-  margin-bottom: 0;
-}
-
-.inner_div {
-  position: absolute;
-  z-index: 999;
-  background-color: #fff;
-}
-.bar--positive {
-  fill: steelblue;
-}
-
-.bar--negative {
-  fill: #1a6840;
-}
-#barchart .axis text {
-  font: 10px sans-serif;
-}
-
-#barchart .axis path,
-#barchart .axis line {
-  fill: none;
-  stroke: white;
-  shape-rendering: crispEdges;
-}
-#barchart h2 {
-  font: 1rem sans-serif;
-  color: grey !important;
-}
-#barchart h5 {
-  font: 15px sans-serif !important;
-  color: grey !important;
-}
-#barchart .bars text {
-  font: 10px sans-serif;
-  fill: rgb(170, 170, 170);
-}
+  #barchart .axis path,
+  #barchart .axis line {
+    fill: none;
+    stroke: white;
+    shape-rendering: crispEdges;
+  }
+  #barchart h2 {
+    font: 1rem sans-serif;
+    color: grey !important;
+  }
+  #barchart h5 {
+    font: 15px sans-serif !important;
+    color: grey !important;
+  }
+  #barchart .bars text {
+    font: 10px sans-serif;
+    fill: rgb(170, 170, 170);
+  }
 </style>>

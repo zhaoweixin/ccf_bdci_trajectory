@@ -13,6 +13,7 @@ const store = new Vuex.Store({
     geohash_state: {
       geohash: "w7w3y9"
     }, //当前geohash
+    bar_geohash_state:{},
     map_state: {}, //地图图层操作
 
     buses_routes_state: {}, //公交路线
