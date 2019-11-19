@@ -9,21 +9,54 @@
       <div class="line-separator-2"></div>
     </div>
     <!--    <div id="od_matrix"></div>-->
-    <div id="geo_bar_chart"></div>
-    <div id="barchart"></div>
-    <div id="location_info">
-      <Tabs size="small" @on-click="tabs_func">
-        <TabPane label="区域方向">
-          <div id="angle_ring"></div>
-        </TabPane>
-        <!-- <TabPane label="区域POI">
-          <div id="poi_ring"></div>
-        </TabPane>-->
-        <TabPane label="公交信息">
-          <div id="buses_info"></div>
-        </TabPane>
-      </Tabs>
-    </div>
+
+    <Carousel class="carousel" v-model="value1" arrow="never" loop>
+      <CarouselItem>
+        <div class="demo-carousel" id="geo_start"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-carousel" id="geo_dest"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-carousel" id="geo_time"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-carousel" id="geo_distance"></div>
+      </CarouselItem>
+    </Carousel>
+
+    <h5 style="font-size: 1rem">TEST</h5>
+    <div class="line-separator-2"></div>
+
+    <Carousel class="carousel" v-model="value2" arrow="never" loop>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="geo_h_start"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="geo_h_dest"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="geo_h_distance"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="geo_h_time"></div>
+      </CarouselItem>
+    </Carousel>
+
+    <h5 style="font-size: 1rem">TEST</h5>
+    <div class="line-separator-2"></div>
+
+    <Carousel class="carousel" v-model="value3" arrow="never" loop>
+      <CarouselItem>
+        <div id="angle_ring"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div id="barchart"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div id="buses_info"></div>
+      </CarouselItem>
+    </Carousel>
   </div>
 </template>
 <script>
@@ -39,22 +72,32 @@
                 buses_data:[],
                 sql_od_matrix:"od_all where start_geo = 'w7w3y9'",
                 sql_location:"angle_all_list where start_geo = 'w7w3y9'",
-                view_type:0
+                view_type:0,
+                value1: 0,
+                value2:0,
+                value3:0
             };
         },
         mounted() {
             POIbar.initchart();
             POIbar.initdata();
-            this.block_bar_chart('1');
+            this.block_bar_chart('2','1','出发区域',"geo_start");
+            this.block_bar_chart('1','1','到达区域',"geo_dest");
+            this.block_bar_chart('3','1','出行时间',"geo_time");
+            this.block_bar_chart2('1','1',"geo_h_start");
+            //this.block_line_chart('4','1','出行距离',"geo_distance");
+            document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=`区块流量统计排名`;
+            document.querySelectorAll("h5")[3].innerHTML=`TEST`;
+            document.querySelectorAll("h5")[4].innerHTML=`TEST`;
         },
         updated(){
         },
         methods: {
-            tabs_func(name){
+            tabs_func(name) {
                 //console.log(name);
-                if(name === 0)
+                if (name === 0)
                     this.draw_location_ring(this.geohash);
-                else if(name === 1)
+                else if (name === 1)
                     this.draw_buses_info(this.buses_data);
                 //this.draw_poi_ring(this.geohash);
                 //else
@@ -62,16 +105,16 @@
             },
             draw_od_matrix() {
                 //console.log('draw_od_matrix');
-                this.$http.get('query',{
-                    params:{
+                this.$http.get('query', {
+                    params: {
                         table: this.sql_od_matrix
                     }
-                }).then(res=>{
+                }).then(res => {
                     //console.log(res.body[0]);
                     draw(res.body[0]);
                 });
 
-                let draw = (geo_data)=>{
+                let draw = (geo_data) => {
 
                     //重绘
                     d3.select("#od_matrix").html("");
@@ -101,20 +144,20 @@
 
                     for (let i = 0; i < matrix_len; i++) {
                         for (let j = 0; j < matrix_len; j++) {
-                            data.push({ row: i, col: j,value:geo_data.matrix[i][j] });
+                            data.push({row: i, col: j, value: geo_data.matrix[i][j]});
                         }
                     }
 
-                    let a = d3.rgb(0,0,0,0);	//无色
-                    let b = d3.rgb(0,185,0);	//绿色
+                    let a = d3.rgb(0, 0, 0, 0);	//无色
+                    let b = d3.rgb(0, 185, 0);	//绿色
 
-                    let compute = d3.interpolate(a,b);
+                    let compute = d3.interpolate(a, b);
 
                     let linear = d3.scaleLinear()
-                        .domain([0,d3.max(geo_data.matrix,(d)=>{
-                            return d3.max(d,s=>s);
+                        .domain([0, d3.max(geo_data.matrix, (d) => {
+                            return d3.max(d, s => s);
                         })])
-                        .range([0,1]);
+                        .range([0, 1]);
 
                     let label_row_g = svg
                         .append("g")
@@ -172,17 +215,17 @@
                         .attr("y", d => d.col * gird_size)
                         .attr("width", gird_size)
                         .attr("height", gird_size)
-                        .attr("fill", (d)=>compute(linear(d.value)))
-                        .on('mouseover',function () {
+                        .attr("fill", (d) => compute(linear(d.value)))
+                        .on('mouseover', function () {
                         })
-                        .on('mouseout',function () {
+                        .on('mouseout', function () {
                         })
                         .style("opacity", 0)
                         .transition()
                         .duration(300)
                         .style("opacity", .8);
 
-                    cards_g.selectAll('rect').append('title').text(d=>d.value)
+                    cards_g.selectAll('rect').append('title').text(d => d.value)
                 }
             },
             draw_location_ring() {
@@ -194,7 +237,7 @@
                     })
                     .then(res => {
                         //console.log(res.body);
-                        if(res.body[0])
+                        if (res.body[0])
                             draw(eval(res.body[0].count));
                         else
                             d3.select("#angle_ring").html('');
@@ -202,8 +245,8 @@
 
                 let draw = dataset => {
                     //console.log(dataset);
-                    let pie_width = document.getElementById("location_info").clientWidth;
-                    let pie_height = document.getElementById("location_info").clientHeight - 40;
+                    let pie_width = 256;
+                    let pie_height = 180;
                     //pie_width = pie_height < pie_width ? pie_height : pie_width;
                     //let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
                     let rdata = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -245,7 +288,7 @@
                     let color = d3.interpolate(KOUSHAOLV, HEYELV);
                     let linear = d3
                         .scaleLinear()
-                        .domain([0, d3.max(dataset,d=>d)])
+                        .domain([0, d3.max(dataset, d => d)])
                         .range([0, 1]);
                     let arc = d3
                         .arc() //弧生成器
@@ -263,11 +306,11 @@
                         );
                     arcs
                         .append("path")
-                        .attr("fill", function(d, i) {
+                        .attr("fill", function (d, i) {
                             //console.log(color(linear(dataset[i])));
                             return color(linear(dataset[i]));
                         })
-                        .attr("d", function(d) {
+                        .attr("d", function (d) {
                             return arc(d);
                         });
                     let marker = d3
@@ -276,7 +319,7 @@
                         .type(d3.symbolTriangle);
                     pie_svg
                         .append("g")
-                        .attr("transform", function() {
+                        .attr("transform", function () {
                             let widthT =
                                 Math.sin(
                                     (piedata[max_index].startAngle + piedata[max_index].endAngle) /
@@ -300,13 +343,13 @@
                         .append("path")
                         .attr("d", marker)
                         .attr("fill", color(linear(dataset[max_index])))
-                        .attr("transform", function() {
+                        .attr("transform", function () {
                             let ang = ((max_index - 0.5) * (2 * Math.PI)) / 12;
                             return "rotate(" + ((ang - Math.PI / 2) / Math.PI) * 180 + ")";
                         });
                     pie_svg
                         .append("g")
-                        .attr("transform", function() {
+                        .attr("transform", function () {
                             let widthT =
                                 Math.sin(
                                     (piedata[min_index].startAngle + piedata[min_index].endAngle) /
@@ -330,7 +373,7 @@
                         .append("path")
                         .attr("d", marker)
                         .attr("fill", color(linear(dataset[min_index])))
-                        .attr("transform", function() {
+                        .attr("transform", function () {
                             let ang = ((min_index - 0.5) * (2 * Math.PI)) / 12;
                             return "rotate(" + ((ang - Math.PI / 2) / Math.PI) * 180 + ")";
                         });
@@ -346,30 +389,30 @@
                         );
                     updataMark
                         .append("path")
-                        .attr("d", function(d) {
+                        .attr("d", function (d) {
                             return marker(d);
                         })
-                        .attr("fill", function(d, i) {
+                        .attr("fill", function (d, i) {
                             return color(linear(dataset[i]));
                         });
 
 
-                    let texts =  pie_svg.selectAll('.chart')
-                        .data(['180','150','120','90','60','30','0','330','300','270','240','210'])
+                    let texts = pie_svg.selectAll('.chart')
+                        .data(['180', '150', '120', '90', '60', '30', '0', '330', '300', '270', '240', '210'])
                         //.exit()
                         .append('text')
                         //.attr('transform',(d)=>{
                         //   //console.log(d);
                         //   return "translate("+arc.centroid(d)+")";
                         // })
-                        .attr('x', (d,i) => Math.sin(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
-                        .attr('y', (d,i) => Math.cos(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
+                        .attr('x', (d, i) => Math.sin(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
+                        .attr('y', (d, i) => Math.cos(i * Math.PI * 2 / rdata.length) * (outerRadius + 10))
                         .attr("text-anchor", "middle") //文字居中
                         .attr("font-size", "80%")//文字大小
                         .attr("text-anchor", "middle") //文字居中
-                        .attr("fill","#FFF")
-                        .text((d,i)=>d)
-                        .attr("transform","translate("+0+","+3+")")
+                        .attr("fill", "#FFF")
+                        .text((d, i) => d)
+                        .attr("transform", "translate(" + 0 + "," + 3 + ")")
 
 
                     //////////////////////
@@ -440,7 +483,7 @@
                     // 基于准备好的dom，初始化echarts实例
                     data = data
                         .map(d => {
-                            return { name: d.key, value: d.values.length };
+                            return {name: d.key, value: d.values.length};
                         })
                         .filter(d => d.value > 1)
                         .filter(d => d.name !== "地名地址信息")
@@ -469,7 +512,7 @@
                                 //字体大小
                                 fontSize: 18
                             },
-                            show:false
+                            show: false
                         },
                         tooltip: {
                             confine: true,
@@ -481,14 +524,14 @@
                             orient: "vertical",
                             x: "center",
                             data: legend_data,
-                            textStyle: { color: "white" }
+                            textStyle: {color: "white"}
                         },
                         series: [
                             {
                                 name: "POI类型",
                                 type: "pie",
                                 radius: ["45%", "80%"],
-                                center : [ '50%', '50%' ],
+                                center: ['50%', '50%'],
                                 avoidLabelOverlap: false,
                                 label: {
                                     normal: {
@@ -514,7 +557,7 @@
                     });
                 }
             },
-            draw_buses_info(data){
+            draw_buses_info(data) {
 
                 //console.log(data);
 
@@ -523,9 +566,9 @@
                 let option = null;
 
                 option = {
-                    title:{
-                        show:false,
-                        text:'公交路线数: '+data.length,
+                    title: {
+                        show: false,
+                        text: '公交路线数: ' + data.length,
                         //x: "", //水平安放位置，默认为'left'，可选为：'center' | 'left' | 'right' | {number}（x坐标，单位px）
                         y: "0", //垂直安放位置，默认为top，可选为：'top' | 'bottom' | 'center' | {number}（y坐标，单位px）
                         textStyle: {
@@ -547,27 +590,27 @@
                         roam: true,
                         label: {
                             normal: {
-                                show:true,
-                                color:'#FFF',
+                                show: true,
+                                color: '#FFF',
                                 position: 'right'
                             }
                         },
-                        symbolSize:20,
+                        symbolSize: 20,
                         itemStyle: {
                             normal: {
                                 color: "#c96b2b",
                             }
                         },
-                        data: data.map((d,i)=>{
-                            return {id:i,name:d,category:i}
+                        data: data.map((d, i) => {
+                            return {id: i, name: d, category: i}
                         }),
-                        categories:data.map((d,i)=>{
-                            return {name:i}
+                        categories: data.map((d, i) => {
+                            return {name: i}
                         }),
                         force: {
                             initLayout: 'gird',
                             // gravity: 0
-                            layoutAnimation:true,
+                            layoutAnimation: true,
                             repulsion: 40,
                         }
                     }
@@ -576,11 +619,10 @@
                 if (option && typeof option === "object") {
                     myChart.setOption(option, true);
                 }
-
             },
 
             changehead() {
-                let that=this;
+                let that = this;
 
                 let selectrange = that.$store.state.AllDayHour_state;
                 let date = that.$store.state.calendar_state[0]; //获取当前的时间和时间段
@@ -593,23 +635,19 @@
                     case 1:
                         if (date == null) {
                             text = "选中位置2017-05-01信息";
-                        }
-                        else{
-                            text="选中位置"+date+"信息";
+                        } else {
+                            text = "选中位置" + date + "信息";
                         }
                         break;
                     case 2:
-                        if(date==null)
-                        {
-                            text="选中位置2017-05-01 0时-6时信息";
-                        }
-                        else{
-                            if(witchhour==null){
-                                text="选中位置"+date+" 0时-6时信息";
-                            }
-                            else{
+                        if (date == null) {
+                            text = "选中位置2017-05-01 0时-6时信息";
+                        } else {
+                            if (witchhour == null) {
+                                text = "选中位置" + date + " 0时-6时信息";
+                            } else {
 
-                                text="选中位置"+date+" "+witchhour;
+                                text = "选中位置" + date + " " + witchhour;
 
                             }
                         }
@@ -618,7 +656,7 @@
                     default:
                         break;
                 }
-                document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
+                //document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
 
             },
             drawbarchart() {
@@ -665,24 +703,24 @@
                                 geoh
                             );
                         } else {
-                            let h=0;
+                            let h = 0;
                             switch (witchhour) {
                                 case "0-6时":
-                                    h=0;
+                                    h = 0;
 
 
                                     break;
                                 case "6-10时":
-                                    h=1;
+                                    h = 1;
                                     break;
                                 case "10-16时":
-                                    h=2;
+                                    h = 2;
                                     break;
                                 case "16-20时":
-                                    h=3;
+                                    h = 3;
                                     break;
                                 case "20-14时":
-                                    h=4;
+                                    h = 4;
                                     break;
                                 default:
                                     break;
@@ -690,7 +728,7 @@
                             POIbar.getdata(
                                 "table=traffictype_hour where start_geo='" +
                                 geoh +
-                                "' and date='"+date+"' and timeSeparete='"+h+"'",
+                                "' and date='" + date + "' and timeSeparete='" + h + "'",
                                 geoh
                             );
 
@@ -704,99 +742,519 @@
             ///////////////////////////////
             //////2019-11-18///////////////
             ///////////////////////////////
-            create_cluster_legend(){
+            create_cluster_legend() {
 
             },
             //add block_flow
-            block_bar_chart(cluster_type){
+            block_bar_chart(type, cluster_type, title, container) {
 
                 let that = this;
 
-                let myChart = this.$echarts.init(document.getElementById("geo_bar_chart"));
+                let echarts = this.$echarts;
 
-                this.$http.get('query',{
-                    params:{
-                        table:`cluster_d_1 where d_cluster=${cluster_type}`
-                    }}).then(res=>{
+                document.getElementById(container).style.width = 256 + 'px';
+                document.getElementById(container).style.height = 190 + 'px';
+
+                let myChart = this.$echarts.init(document.getElementById(container));
+
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_d_${type} where d_cluster=${cluster_type}`
+                    }
+                }).then(res => {
                     //console.log(res.body);
-                    draw_charts(res.body.sort((a,b)=>{
-                        return parseInt(b.ordercount)- parseInt(a.ordercount);
-                    }).slice(0,20));
+                    if (type === '3') {
+                        draw_charts(res.body);
+                    } else {
+                        draw_charts(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort(() => 0.5 - Math.random()));
+                    }
+
                 });
-                function draw_charts(data){
+
+                function draw_charts(data) {
                     let xAxisData = [];
                     let data1 = [];
                     for (let i = 0; i < data.length; i++) {
-                        xAxisData.push(data[i].dest_geo);
+                        xAxisData.push(data[i][Object.keys(data[i])[1]]);
                         data1.push(data[i].ordercount);
                     }
 
+                    myChart.on('click', (params) => {
+                        //console.log(params.name);
+                        that.$store.commit('bar_geohash_state', params.name);
+                    });
+
                     let option = {
+                        //backgroundColor: '#0d235e',
                         title: {
-                            show:false,
-                            text: '柱状图动画延迟'
-                        },
-                        legend: {
-                            show:true,
-                            data: ['bar', 'bar2'],
-                            align: 'left',
+                            text: `${title}流量TOP20`,
+                            x: 'center',
                             textStyle: {
                                 //文字颜色
-                                color: "#f4fdff"
+                                color: "#ffffff",
+                                //字体风格,'normal','italic','oblique'
+                                fontStyle: "normal",
+                                //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                                fontWeight: "100",
+                                //字体系列
+                                fontFamily: "sans-serif",
+                                //字体大小
+                                fontSize: 12
+                            },
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
                             }
                         },
-                        toolbox: {
-                            // y: 'bottom',
-                            show:false,
-                            feature: {
-                                magicType: {
-                                    type: ['stack', 'tiled']
+                        grid: {
+                            top: '15%',
+                            right: '5%',
+                            left: '15%',
+                            bottom: '12%'
+                        },
+                        xAxis: [{
+                            type: 'category',
+                            data: xAxisData,
+                            axisLine: {
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
+                            },
+                            axisLabel: {
+                                show: false,
+                                margin: 10,
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 14
                                 },
-                                dataView: {},
-                                saveAsImage: {
-                                    pixelRatio: 2
+                            },
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
                                 }
                             }
-                        },
-                        tooltip: {},
-                        xAxis: {
-                            data: xAxisData,
-                            //silent: true,
+                        }],
+                        yAxis: [{
+                            axisLabel: {
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 10
+                                },
+                                formatter: function (d) {
+                                    return d / 1000 + 'k';
+                                },
+                            },
+                            axisLine: {},
                             splitLine: {
-                                show: true
-                            }
-                        },
-                        yAxis: {
-                            splitLine: {
-                                show: true
-                            }
-                        },
-                        series: [{
-                            //name: 'bar',
-                            type: 'bar',
-                            data: data1,
-                            animationDelay: function (idx) {
-                                return idx * 10;
+                                show: true,
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
                             }
                         }],
-                        animationEasing: 'elasticOut',
-                        animationDelayUpdate: function (idx) {
-                            return idx * 5;
-                        }
+                        series: [{
+                            type: 'bar',
+                            data: data1,
+                            itemStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(0,244,255,1)' // 0% 处的颜色
+                                    }, {
+                                        offset: 1,
+                                        color: 'rgba(0,77,167,1)' // 100% 处的颜色
+                                    }], false),
+                                    barBorderRadius: [30, 30, 30, 30],
+                                    shadowColor: 'rgba(0,160,221,1)',
+                                    shadowBlur: 4,
+                                }
+                            },
+                            label: {
+                                normal: {
+                                    show: false,
+                                    lineHeight: 30,
+                                    width: 80,
+                                    height: 30,
+                                    backgroundColor: 'rgba(0,160,221,0.1)',
+                                    borderRadius: 200,
+                                    position: ['-8', '-60'],
+                                    distance: 1,
+                                    formatter: [
+                                        '    {d|●}',
+                                        ' {a|{c}}   \n',
+                                        '    {b|}'
+                                    ].join(','),
+                                    rich: {
+                                        d: {
+                                            color: '#3CDDCF',
+                                        },
+                                        a: {
+                                            color: '#fff',
+                                            align: 'center',
+                                        },
+                                        b: {
+                                            width: 1,
+                                            height: 30,
+                                            borderWidth: 1,
+                                            borderColor: '#234e6c',
+                                            align: 'left'
+                                        },
+                                    }
+                                }
+                            }
+                        }]
                     };
-
-                    myChart.on('click', (params)=> {
-                        console.log(params.name);
-                        that.$store.commit('bar_geohash_state',params.name);
-                    });
 
                     myChart.setOption(option);
                 }
-            }
+            },
+            block_line_chart(type, cluster_type, title, container) {
+                let that = this;
+                let echarts = this.$echarts;
+                document.getElementById(container).style.width = 256 + 'px';
+                document.getElementById(container).style.height = 200 + 'px';
 
+                let myChart = this.$echarts.init(document.getElementById(container));
+
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_d_4`
+                    }
+                }).then(res => {
+                    //console.log(d3.nest().key(d => d.d_cluster).entries(res.body));
+                    draw(d3.nest().key(d => d.d_cluster).entries(res.body));
+                });
+
+                function draw(data) {
+
+                    let option = {
+                        //backgroundColor: '#394056',
+                        title: {
+                            show:false,
+                            text: '请求数',
+                            textStyle: {
+                                fontWeight: 'normal',
+                                fontSize: 16,
+                                color: '#F1F1F3'
+                            },
+                            left: '6%'
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            }
+                        },
+                        legend: {
+                            show:false,
+                            icon: 'rect',
+                            itemWidth: 14,
+                            itemHeight: 5,
+                            itemGap: 13,
+                            data: ['', '', ''],
+                            right: '4%',
+                            textStyle: {
+                                fontSize: 12,
+                                color: '#F1F1F3'
+                            }
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [{
+                            type: 'value',
+                            boundaryGap: false,
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            data: [0,10000]
+                        }, {
+                            axisPointer: {
+                                show: false
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            position: 'bottom',
+                            offset: 20,
+                            data: []
+                        }],
+                        yAxis: [{
+                            type: 'value',
+                            name: '单位（%）',
+                            axisTick: {
+                                show: false
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            axisLabel: {
+                                margin: 10,
+                                textStyle: {
+                                    fontSize: 14
+                                }
+                            }
+                        }],
+                        series: [{
+                            name: '移动',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(137, 189, 27, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(137, 189, 27, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+                                    color: 'rgb(137,189,27)',
+                                    borderColor: 'rgba(137,189,2,0.27)',
+                                    borderWidth: 12
+
+                                }
+                            },
+                            data: [220, 182, 191, 134, 150, 120, 110, 125, 145, 122, 165, 122]
+                        }, {
+                            name: '电信',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(0, 136, 212, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(0, 136, 212, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+                                    color: 'rgb(0,136,212)',
+                                    borderColor: 'rgba(0,136,212,0.2)',
+                                    borderWidth: 12
+
+                                }
+                            },
+                            data: [120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 150]
+                        }, {
+                            name: '联通',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(219, 50, 51, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(219, 50, 51, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+
+                                    color: 'rgb(219,50,51)',
+                                    borderColor: 'rgba(219,50,51,0.2)',
+                                    borderWidth: 12
+                                }
+                            },
+                            data: [220, 182, 125, 145, 122, 191, 134, 150, 120, 110, 165, 122]
+                        }, ]
+                    };
+
+                    myChart.setOption(option);
+                }
+            },
+
+            /////////////////////
+            block_bar_chart2(type,cluster_type,container){
+
+                document.getElementById(container).style.width = 256 + 'px';
+                document.getElementById(container).style.height = 190 + 'px';
+
+                let myChart = this.$echarts.init(document.getElementById(container));
+
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_h_${type} where h_cluster=${cluster_type}`
+                    }
+                }).then(res => {
+                    console.log(res.body);
+                    if (type === '3') {
+                        draw(res.body);
+                    } else {
+                        draw(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort(() => 0.5 - Math.random()));
+                    }
+                });
+
+                function draw(dataset) {
+                    let data = [60, 85, 110, 160, 90, 80, 190, 80, 110, 160, 70, 90, 140];
+                    let xdata = ['02', '03', '04', '05', '06', '07', '09', '10', '11', '12', '13', '14', '15'];
+                    let option = {
+                        //backgroundColor: "#ea5a25",
+                        tooltip: {
+                            trigger: "item",
+                            show: true
+                        },
+                        title: {
+                            show:false,
+                            text: "Time Power",
+                            subtext: "2014.12.25",
+                            textStyle: {
+                                color: "#fff",
+                                fontSize: 10
+                            },
+                            subtextStyle: {
+                                color: "#ff8b5d",
+                                fontSize: 14
+                            },
+                            left: 'center',
+                            top: "15%"
+                        },
+                        grid: {
+                            left: "5%",
+                            top: "10%",
+                            bottom: "15%",
+                            right: "5%",
+                            containLabel: true
+                        },
+                        xAxis: {
+                            data: xdata,
+                            formatter: "",
+                            type: 'category',
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: '#fff' ,
+                                    width:.1
+                                }
+                            },
+                            axisLine: {
+                                show: false
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            axisLabel: {
+                                show: false,
+                                margin: 10,
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 14
+                                },
+                            },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            splitNumber: 4,
+                            interval: 50,
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: '#fff' ,
+                                    width:.1
+                                },
+
+                            },
+                            axisLine: {
+                                show: false,
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            axisLabel: {
+                                color: '#fff',
+                                fontSize: 10
+                            }
+                        },
+                        series: [{
+                            type: 'bar',
+                            animation: false,
+                            barWidth: 4,
+                            data: data,
+                            tooltip: {
+                                show: false
+                            },
+                            itemStyle: {
+                                color: "#f2fec3"
+                            },
+                        },
+                            {
+                                type: 'scatter',
+                                data: data,
+                                symbolSize: 8,
+                                itemStyle: {
+                                    borderWidth: 0,
+                                    opacity: 1,
+                                    color: "#f2fec3"
+                                }
+                            }
+
+                        ]
+                    };
+                    myChart.setOption(option);
+                }
+            }
         },
-        components: {},
-        computed: {},
         watch: {
             "$store.state.geohash_state": {
                 handler(state) {
@@ -829,6 +1287,12 @@
                     //this.draw_buses_info(this.buses_data);
                     this.drawbarchart();
                     this.changehead();
+                },
+                deep: true
+            },
+            "$store.state.calendar_legend_state": {
+                handler(type) {
+                    this.block_bar_chart('d',type);
                 },
                 deep: true
             },
@@ -904,7 +1368,7 @@
                 deep:true
             }
         }
-    };
+    }
 </script>
 <style>
   .funcbar_warp_bar2 {
@@ -925,31 +1389,26 @@
     font-size: 14px;
   }
 
+  h5{
+    color: grey !important;
+  }
+
   .funcbar_warp_header {
     padding-top: 10px;
     color: grey !important;
   }
-  #geo_bar_chart {
-    height: 30%;
-    /*background-color: #71ff70;*/
+
+  .carousel{
+    width: 100%;
+    height: 27.7%;
   }
-  #select_cluster{
-    position: absolute;
-    left: 25px;
-    z-index: 25;
-  }
-  #barchart {
-    height: 30%;
-  }
-  #location_info {
-    height: 28%;
-    z-index: 1;
-  }
+
+  #barchart,
   #poi_ring,
   #angle_ring,
   #buses_info {
-    width: 100%;
-    height: 100%;
+    width: 256px;
+    height: 200px;
   }
 
   .ivu-tabs-bar {
