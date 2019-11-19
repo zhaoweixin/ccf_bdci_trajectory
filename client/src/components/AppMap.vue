@@ -9,26 +9,6 @@
     import coordtrans from 'coordtransform'
     import ngeohash from 'ngeohash'
 
-    /*String.prototype.toCSV = function(){
-         let data = [];
-         let relArr = this.split("\n");
-         if(relArr.length > 1) {
-             let title = relArr[0].split(',');
-             let title_arr = title.keys();
-             for(let key = 1, len = relArr.length-1; key < len; key++) {
-                 let values = relArr[key];
-                 let objArr = values.split(",");
-                 let obj = {};
-                 for(let i=0;i<title.length;i++){
-                     obj[title[title_arr.next().value]] = objArr[i];
-                 }
-                 data.push(obj);
-                 title_arr = title.keys();
-             }
-         }
-         return data;
-     };*/
-
     export default {
         name: "AppMap",
         data() {
@@ -39,6 +19,7 @@
 
                 //init config
                 map: null,
+                pop:null,
                 date:'2017-05-01',
                 sql_table:'od_all_count',
                 od_type:'od'
@@ -74,6 +55,7 @@
                     zoom: 12  // 设置地图比例
                     //pitch:50
                 });
+
                 // this.map.on('click',(e)=>{
                 //     console.log(e.lngLat);
                 // })
@@ -845,6 +827,25 @@
             },
         },
         watch:{
+            '$store.state.bar_geohash_state':{
+                handler(newValue){
+                    let ngeo = ngeohash.decode(newValue);
+                    this.map.flyTo({
+                        center: [ngeo.longitude,ngeo.latitude],
+                        zoom: 13,
+                        bearing: 0});
+
+                    if(this.pop)
+                    this.pop.remove();
+
+                    this.pop = new mapboxgl.Popup()
+                        .setLngLat([ngeo.longitude,ngeo.latitude])
+                        .setHTML(newValue)
+                        .addTo(this.map);
+
+                },
+                deep:true
+            },
             //监控控制面板图层按钮
             '$store.state.map_state':{
                 handler(){
@@ -880,7 +881,6 @@
             },
             "$store.state.AllDayHour_state":{
                 handler(type){
-
                     //All
                     if(type === 0){
                         //OD

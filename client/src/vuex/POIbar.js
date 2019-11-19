@@ -22,7 +22,7 @@ const POIData = {
     POI();
   },
   initchart() {
-    (margin = { top: 20, right: 30, bottom: 40, left: 30 }),
+    (margin = { top: 20, right: 30, bottom: 30, left: 30 }),
       (width =
         document.getElementById("barchart").clientWidth -
         margin.left -
@@ -41,10 +41,6 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
-    d3.select("#barchart")
-      .append("h5")
-      .attr("height", 20)
-      .text("订单类型与POI数据");
     svg = d3
       .select("#barchart")
       .append("svg")
