@@ -467,6 +467,7 @@
                 .range([that.lc_height, 0]); // output
 
           } else if(opt.config.unit == 'All'){
+            console.log('scaleTime', d3.extent(opt.data[0].values, (d) => {return d.x}))
             this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
             this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
             this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])

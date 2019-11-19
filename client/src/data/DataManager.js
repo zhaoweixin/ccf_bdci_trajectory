@@ -26,6 +26,14 @@ export default class DataManager {
       }
     );
   }
+  static getRectDetail(data){
+    /*
+    {
+      'geohash': 'w7w3y9'
+    }
+    */
+    return axios.post("http://localhost:3000/rect_detail",qs.stringify(data),{header:{"Content-Type": "application/x-www-form-urlencoded"}})
+  }
   static getTableData(path) {
     return axios.get(path);
   }

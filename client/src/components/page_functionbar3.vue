@@ -1,7 +1,7 @@
 <template>
   <div id="page_functionbar3.vue" class="funcbar_warp_bar2">
     <div class="funcbar_warp_header">
-      <h4>信息栏</h4>
+      <h4>聚类信息栏</h4>
       <div class="line-separator-1"></div>
     </div>
     <div class="funcbar_warp_header">

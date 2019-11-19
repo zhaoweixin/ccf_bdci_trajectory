@@ -85,4 +85,8 @@ router.post('/feature_line', function(req, res, next){
 router.post('/para_line', function(req, res, next){
   sql_operation.para_line(req, res, next)
 })
+
+router.post('/rect_detail', function(req, res, next){
+  sql_operation.rect_detail(req, res, next)
+})
 module.exports = router;

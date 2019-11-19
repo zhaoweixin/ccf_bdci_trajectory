@@ -7,6 +7,12 @@ var d3 = require('d3');
 var mysqlPool = new MysqlPool();
 var pool = mysqlPool.getPool();
 
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 module.exports = {
     add: function (req, res, next) {
         pool.getConnection(function(err, connection) {
@@ -146,6 +152,7 @@ module.exports = {
                     dataType.forEach((d,i) => {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
+                    console.log(sql)
                     connection.query(sql, function(err, result){
                         if(err){
                             res.send(err);
@@ -310,6 +317,93 @@ module.exports = {
                 res.send(obj)
             })
             
+        })
+    },
+    rect_detail: function(req, res, next){
+        pool.getConnection(function(err, connection){
+            //let sql_key = req.body.table
+            //block_daily_flowin -> select * from block_overview_flowin where target = 'xxxx' + '; ' sort↓
+            //block_overview_flowout -> select * from block_overview_flowout where source = 'xxxx' + '; ' sort↓
+            //block_overview_flowratio -> select * from block_overview_flowratio where geo = 'xxxx' + '; '
+                //ratio = 1 all flowin / ratio = -1 all flowout
+            //block_daily_flowin -> select * from block_daily_flowin where geo = 'xxxx' + '; '
+                //according startdate and enddate construct [[date, average, count], [date, average, count]]
+            //block_daily_flowout -> select * from block_daily_flowout where geo = 'xxxx' + '; '
+                //according startdate and enddate construct [[date, average, count], [date, average, count]]
+            
+            let geohash = req.body.geohash,
+                dailytable = ['block_daily_flowin', 'block_daily_flowout'],
+                overviewtable = ['block_overview_flowin', 'block_overview_flowout', 'block_overview_flowratio'],
+                sql = `select * from block_overview_flowin where source = '${geohash}'; 
+                select * from block_overview_flowout where source = '${geohash}';  
+                select * from block_overview_flowratio where geo = '${geohash}'; 
+                select * from block_daily_flowin where geo = '${geohash}'; 
+                select * from block_daily_flowout where geo = '${geohash}';` 
+                
+                connection.query(sql, function(err, data){
+                    if(err){ res.send(err);}
+                    else{
+                        data = JSON.parse(JSON.stringify(data))
+                        let block_overview_flowin = data[0],
+                            block_overview_flowout = data[1],
+                            block_overview_flowratio = data[2][0],
+                            block_daily_flowin = data[3][0],
+                            block_daily_flowout = data[4][0],
+                            start_date = data[3][0]['startdate'],
+                            end_date = data[3][0]['enddate'],
+                            resdata = {}
+                        
+                        //sort
+                        block_overview_flowin.sort((a,b) => (+a.count > +b.count) ? -1 : ((+b.count > +a.count) ? 1 : 0));
+                        block_overview_flowout.sort((a,b) => (+a.count > +b.count) ? -1 : ((+b.count > +a.count) ? 1 : 0));
+                        //cut length up to 20
+                        block_overview_flowin = block_overview_flowin.slice(0, 20)
+                        block_overview_flowout = block_overview_flowout.slice(0, 20)
+
+                        //construct date format
+                        block_daily_flowin['average'] = block_daily_flowin['average'].toString().substring(1, block_daily_flowin['average'].length-1)
+                        block_daily_flowin['average'] = block_daily_flowin['average'].split(',')
+                        block_daily_flowin['average'] = block_daily_flowin['average'].map(v => +v)
+
+                        block_daily_flowin['count'] = block_daily_flowin['count'].toString().substring(1, block_daily_flowin['count'].length-1)
+                        block_daily_flowin['count'] = block_daily_flowin['count'].split(',')
+                        block_daily_flowin['count'] = block_daily_flowin['count'].map(v => +v)
+
+                        block_daily_flowout['average'] = block_daily_flowout['average'].toString().substring(1, block_daily_flowout['average'].length-1)
+                        block_daily_flowout['average'] = block_daily_flowout['average'].split(',')
+                        block_daily_flowout['average'] = block_daily_flowout['average'].map(v => +v)
+
+                        block_daily_flowout['count'] = block_daily_flowout['count'].toString().substring(1, block_daily_flowout['count'].length-1)
+                        block_daily_flowout['count'] = block_daily_flowout['count'].split(',')
+                        block_daily_flowout['count'] = block_daily_flowout['count'].map(v => +v)
+                        
+                        block_daily_flowin['timerange'] = getDates(start_date, end_date)
+                        block_daily_flowout['timerange'] = getDates(start_date, end_date)
+
+                        resdata = {
+                            'block_overview_flowin': block_overview_flowin,
+                            'block_overview_flowout': block_overview_flowout,
+                            'block_overview_flowratio': block_overview_flowratio,
+                            'block_daily_flowin': block_daily_flowin,
+                            'block_daily_flowout': block_daily_flowout
+                        }
+
+                        res.setHeader("Access-Control-Allow-Origin", "*");
+                        res.send(resdata)
+                        
+                        function getDates(startDate, stopDate) {
+                            startDate = new Date(startDate)
+                            stopDate = new Date(stopDate)
+                            var dateArray = new Array();
+                            var currentDate = startDate;
+                            while (currentDate <= stopDate) {
+                                dateArray.push(new Date (currentDate).toISOString().split('T')[0]);
+                                currentDate = currentDate.addDays(1);
+                            }
+                            return dateArray;
+                        }
+                    }
+                })
         })
     }
 };
