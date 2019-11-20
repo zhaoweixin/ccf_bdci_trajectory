@@ -32,7 +32,17 @@ export default {
             geohash: "w7w3y9",
             date:'2017-05-01',
             time_separate:'0',
-            inited: 0
+            inited: 0,
+            color: {
+                'Flow In': {
+                    'selected': 'white',
+                    'disselected': 'rgb(0,236,251)'
+                },
+                'Flow Out': {
+                    'selected': 'white',
+                    'disselected': 'rgb(242,254,195)'
+                }
+            }
         };
     },
     mounted() {},
@@ -48,6 +58,7 @@ export default {
     },
     methods: {
         draw_ovflow_bar(mes){
+
             let that = this;
             let width = document.getElementById(mes.id).clientWidth,
                 height = document.getElementById(mes.id).clientHeight,
@@ -97,6 +108,9 @@ export default {
                 .attr("height", function (d) {
                     return height - ovflow_bar_yScale(0);
                 })
+                .attr('fill', ()=>{
+                    return that.color[mes.title].disselected
+                })
                 .on('mouseover', bar_handleMouseOver)
                 .on('mouseout', bar_handleMouseOut)
                 .on('click', bar_handleMouseClick)
@@ -116,7 +130,7 @@ export default {
                     .attr('class', 'bartitle')
             
             function bar_handleMouseOver(d, i){
-                d3.select(this).attr('class', 'blockbar_select')
+                d3.select(this).attr('fill', that.color[mes.title].selected)
 
                 ovflow_bar_con.append('text')
                     .attr('x', ovflow_bar_xScale(drawdata[i][0]))
@@ -126,7 +140,7 @@ export default {
             }
 
             function bar_handleMouseOut(d, i){
-                d3.select(this).attr('class', 'blockbar_disselect')
+                d3.select(this).attr('fill', that.color[mes.title].disselected)
                 d3.select('.bartips').remove()
             }
 
@@ -136,11 +150,10 @@ export default {
 
         },
         draw_daily_line(mes){
-            console.log(mes)
             let that = this;
             let width = document.getElementById(mes.id).clientWidth,
                 height = document.getElementById(mes.id).clientHeight,
-                margin = {top: height*0.1 , right: width*0.15, bottom: height*0.1, left: width*0.15},
+                margin = {top: height*0.1 , right: width*0.15, bottom: height*0.25, left: width*0.15},
                 flowin_axisMin = Math.min.apply(null, mes.block_daily_flowin.average.concat(mes.block_daily_flowout.count)),
                 flowin_axisMax = Math.max.apply(null, mes.block_daily_flowin.average.concat(mes.block_daily_flowout.count)),
                 flowout_axisMin = Math.min.apply(null, mes.block_daily_flowout.average.concat(mes.block_daily_flowout.count)),
@@ -151,99 +164,97 @@ export default {
             height = height - margin.top - margin.bottom
             let line_xAxis = d3.scaleTime().domain(d3.extent([new Date(mes.block_daily_flowin.startdate), new Date(mes.block_daily_flowin.enddate)])).range([0, width]),
             line_inout_xAxis = d3.scaleLinear().domain([0, mes.block_daily_flowin.average.length-1]).range([0, width]),
-            line_in_yAxis = d3.scaleLinear().domain([flowin_axisMin, flowin_axisMax]).range([height, 0]),
-            line_out_yAxis = d3.scaleLinear().domain([flowout_axisMin, flowout_axisMax]).range([height, 0]),
+            line_in_yAxis = d3.scaleLinear().domain([0, flowin_axisMax]).range([height, 0]),
+            line_out_yAxis = d3.scaleLinear().domain([0, flowout_axisMax]).range([height, 0]),
             svg = d3.select('#' + mes.id).append('svg').attr('width', width + margin.left + margin.right).attr('height', height + margin.top + margin.bottom),
             daily_line_con = svg.append('g').attr("transform", "translate(" + (margin.left) + "," + margin.top + ")")
+
+
+            let config = [{'text': 'flowin avg', 'data': mes.block_daily_flowin.average, 'color': 'rgb(0,236,251)', 'opacity': 0.3, 'class': '_fia', 'type': 'in'},
+                {'text': 'flowin', 'data': mes.block_daily_flowin.count, 'color': 'rgb(0,236,251)', 'opacity': 1, 'class': '_fi', 'type': 'in'},
+                {'text': 'flowout avg', 'data': mes.block_daily_flowout.average, 'color': 'rgb(242,254,195)', 'opacity': 0.3, 'class': '_foa', 'type': 'out'},
+                {'text': 'flowout', 'data': mes.block_daily_flowout.count, 'color': 'rgb(242,254,195)', 'opacity': 1, 'class': '_fo', 'type': 'out'}]
 
             daily_line_con.append('g').attr('class', 'xAxis')
                 .attr("transform", "translate(0," + height + ")")
                 .call(d3.axisBottom(line_xAxis).ticks(4))
 
-            daily_line_con.append('g').attr('class', 'yAxis')
+            daily_line_con.append('g').attr('class', 'left_yAxis')
                 .call(d3.axisLeft(line_in_yAxis))
 
-            daily_line_con.append('g').attr('class', 'yAxis')
+            daily_line_con.append('g').attr('class', 'right_yAxis')
                 .attr("transform", () => {
                     let x = +width
                     return "translate(" + x + ",0)"
                 })
                 .call(d3.axisRight(line_out_yAxis))
 
-            console.log(mes.block_daily_flowin.average)
-            let line = d3.line()
-                        .x(() => {console.log(d); return line_inout_xAxis(d[0])})
-                        .y(() => {console.log(d); return line_in_yAxis(d[1])})
 
-            daily_line_con.selectAll("xPath")
-                .data(mes.block_daily_flowin.average.map((d,i) => {return [i, d]}))
-                .enter()
-                .append("path")
+            var flowin_linegenerator = d3.line()
+                .x(function(d) {return line_inout_xAxis(d[0])})
+                .y(function(d) {return line_in_yAxis(d[1])})
+                .curve(d3.curveMonotoneX)
+
+            var flowout_linegenerator = d3.line()
+                .x(function(d) {return line_inout_xAxis(d[0])})
+                .y(function(d) {return line_out_yAxis(d[1])})
+                .curve(d3.curveMonotoneX)
+
+            config.forEach((v, j) => {
+                let linegenerator = v.type == 'in' ? flowin_linegenerator : flowout_linegenerator
+                
+                daily_line_con.append('path')
+                    .datum(v.data.map((d,i) => {return [i, d]}))
                     .attr("class", "flowline")
-                    .attr("d", line)
-                    .style("fill", "none")
-                    .style("opacity", 0.5)
-            
-            /*
-            daily_line_con.selectAll("xPath")
-                .data(mes.block_daily_flowin.count)
-                .enter()
-                .append("path")
-                    .attr("class", "flowline")
-                    .attr("d", () => {
-                        return d3.line()
-                            .x((d) => {return line_inout_xAxis(d[0])})
-                            .y((d) => {return line_in_yAxis(d[1])})
-                    })
-                    .style("fill", "none" )
-                    .style("opacity", 0.5)
-            
-            daily_line_con.selectAll("xPath")
-                .data(mes.block_daily_flowout.average)
-                .enter()
-                .append("path")
-                    .attr("class", "flowline")
-                    .attr("d", () => {
-                        return d3.line()
-                            .x((d) => {return line_inout_xAxis(d[0])})
-                            .y((d) => {return line_out_yAxis(d[1])})
-                    })
-                    .style("fill", "none" )
-                    .style("opacity", 0.5)
-            
-            daily_line_con.selectAll("xPath")
-                .data(mes.block_daily_flowout.count)
-                .enter()
-                .append("path")
-                    .attr("class", "flowline")
-                    .attr("d", () => {
-                        return d3.line()
-                            .x((d) => {return line_inout_xAxis(d[0])})
-                            .y((d) => {return line_out_yAxis(d[1])})
-                    })
-                    .style("fill", "none")
-                    .style("opacity", 0.5)
-            
-            */
-            
-            
-            function path(d) {
-              return d3.line().x((d) => {return d[0]}).y((d) => {return d[1]})
-            }
-            
+                    .attr('d', linegenerator)
+                    .style('stroke', v.color)
+                    .style('stroke-width', '2px')
+                    .style('fill', 'none')
+                    .style('opacity', v.opacity)
+
+
+                let legend_x =  width / 1.5 * (j%2),
+                    legend_y =  height + margin.bottom / 3 + (15 * (Math.floor(j/2) + 1)),
+                    x_offset = 10,
+                    y_offset = 5
+
+                daily_line_con.append('circle')
+                    .attr("class",  () => {return 'block_detail_legend'}) // Assign a class for styling
+                    .attr("cx", () => { return legend_x })
+                    .attr("cy", () => { return legend_y })
+                    .attr("r", 2)
+                    .style('fill', v.color)
+                    .style('opacity', 0)
+                    .transition()
+                    .duration(3000)
+                    .style('opacity',  v.opacity)
+
+                daily_line_con.append('text')
+                    .attr('x', () => { return legend_x + x_offset })
+                    .attr("y", () => { return legend_y + y_offset})
+                    .text(() => { return v.text})
+                    .style('opacity', 0)
+                    .attr('class', 'legend_text')
+                    .transition()
+                    .duration(3000)
+                    .style('opacity', 1)
+            })
+
         },
 
         update_ovflow_bar(mes){
             d3.select('#' + mes.id).selectAll("svg").remove()
             this.draw_ovflow_bar(mes)
         },
-        update_daily_bar(){},
+        update_daily_line(mes){
+            d3.select('#' + mes.id).selectAll("svg").remove()
+            this.draw_daily_line(mes)
+        },
 
         handle_geohash_state(){
             let that = this
 
             DataManager.getRectDetail(that.geohash_state).then((res) => {
-                console.log(res)
                 if(!this.inited){
                     this.inited = !this.inited
                     this.draw_ovflow_bar({
@@ -262,7 +273,6 @@ export default {
                         'block_daily_flowout': res.data.block_daily_flowout,
                         'title': 'Daily'
                     })
-
                 } else {
                     this.update_ovflow_bar({
                         'id': 'ovflowin_bar',
@@ -273,6 +283,12 @@ export default {
                         'id': 'ovflowout_bar',
                         'data': res.data.block_overview_flowout,
                         'title': 'Flow Out'
+                    })
+                    this.update_daily_line({
+                        'id': 'daily_line',
+                        'block_daily_flowin': res.data.block_daily_flowin,
+                        'block_daily_flowout': res.data.block_daily_flowout,
+                        'title': 'Daily'
                     })
                 }
             }).catch(err => {
@@ -316,16 +332,20 @@ export default {
 }
 
 #daily_line {
-    height: 200px;
+    height: 230px;
 }
 
-.blockbar_disselect {
-    fill: rgb(170, 170, 170);
-
+.left_yAxis{
+    color: rgb(0,236,251);
 }
+.right_yAxis{
+    color: rgb(242,254,195);
+}
+
 .yAxis{
     color: rgb(170, 170, 170);
 }
+
 .xAxis{
     color: rgb(170, 170, 170);
 }
@@ -333,10 +353,9 @@ export default {
     fill: white;
     text-anchor: middle;
 }
-.blockbar_select{
-    fill: steelblue
-}
+
 .bartitle{
     fill: rgb(170, 170, 170);
 }
+
 </style>
