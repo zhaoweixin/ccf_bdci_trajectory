@@ -46,17 +46,6 @@
     <h5 style="font-size: 1rem">TEST</h5>
     <div class="line-separator-2"></div>
 
-    <Carousel class="carousel" v-model="value3" arrow="never" loop>
-      <CarouselItem>
-        <div id="angle_ring"></div>
-      </CarouselItem>
-      <CarouselItem>
-        <div id="barchart"></div>
-      </CarouselItem>
-      <CarouselItem>
-        <div id="buses_info"></div>
-      </CarouselItem>
-    </Carousel>
   </div>
 </template>
 <script>
@@ -246,8 +235,13 @@
 
                 let draw = dataset => {
                     //console.log(dataset);
-                    let pie_width = 256;
-                    let pie_height = 180;
+                    let pie_width = document.getElementById('angle_ring').clientWidth,
+                        pie_height = document.getElementById('angle_ring').clientHeight,
+                        pie_margin = {top: pie_height*0.1 , right: pie_width*0.1, bottom: pie_height*0.15, left: pie_width*0.1};
+                    
+                    pie_width = pie_width - pie_margin.left - pie_margin.right;
+                    pie_height = pie_height - pie_margin.top - pie_margin.bottom;
+
                     //pie_width = pie_height < pie_width ? pie_height : pie_width;
                     //let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
                     let rdata = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -273,9 +267,15 @@
                     let pie_svg = d3
                         .select("#angle_ring")
                         .append("svg")
-                        .attr("width", pie_width)
-                        .attr("height", pie_height);
-
+                        .attr("width", pie_width + pie_margin.left + pie_margin.right)
+                        .attr("height", pie_height + pie_margin.top + pie_margin.bottom);
+                    
+                    pie_svg.append('text')
+                        .attr('x', () => {return pie_width / 2.5})
+                        .attr('y', () => {return  pie_margin.top / 1.3})
+                        .text('Angle count')
+                        .attr('class', 'bartitle')
+                    
                     let pie = d3.pie();
 
                     let piedata = pie(rdata);
@@ -303,7 +303,7 @@
                         .append("g")
                         .attr(
                             "transform",
-                            "translate(" + pie_width / 2 + "," + pie_height / 2 + ")"
+                            "translate(" + (pie_margin.left + pie_width / 2.1) + "," + (pie_margin.top + pie_height / 2) + ")"
                         );
                     arcs
                         .append("path")
@@ -335,9 +335,9 @@
                                 (innerRadius - 10);
                             return (
                                 "translate(" +
-                                (pie_width / 2 + widthT) +
+                                ((pie_margin.left + pie_width / 2.1) + widthT) +
                                 "," +
-                                (pie_height / 2 - heightT) +
+                                ((pie_margin.top + pie_height / 2.1) - heightT) +
                                 ")"
                             );
                         })
@@ -365,9 +365,9 @@
                                 (innerRadius - 10);
                             return (
                                 "translate(" +
-                                (pie_width / 2 + widthT) +
+                                ((pie_margin.left + pie_width / 2.1) + widthT) +
                                 "," +
-                                (pie_height / 2 - heightT) +
+                                ((pie_margin.top + pie_height / 2.1) - heightT) +
                                 ")"
                             );
                         })
@@ -1160,7 +1160,6 @@
                 });
 
                 function draw(dataset) {
-                    console.log(dataset);
                     let data = dataset.map(d=>d.ordercount);
                     let xdata = dataset.map(d=>d[Object.keys(d)[1]]);
                     let option = {

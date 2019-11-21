@@ -1,5 +1,5 @@
 <template>
-  <div id="page_functionbar4.vue" class="funcbar_warp_bar3">
+  <div id="page_functionbar4.vue" class="funcbar_warp_bar4">
 
     <div class="funcbar_warp_header">
       <h4>区块信息栏</h4>
@@ -11,15 +11,34 @@
       <div class="line-separator-2"></div>
     </div>
     
-    <div id="ovflowin_bar"></div>
-    <div id="ovflowout_bar"></div>
+    <Carousel class="car_blockoverview" v-model="blockoverview" arrow="never" loop>
+        <CarouselItem>
+            <div id="ovflowin_bar"></div>
+        </CarouselItem>
+        <CarouselItem>
+            <div id="ovflowout_bar"></div>
+        </CarouselItem>
+    </Carousel>
 
-    <div class="funcbar_warp_header">
       <h5 style="font-size: 1rem"> Block Detail </h5>
       <div class="line-separator-2"></div>
-    </div>
 
     <div id="daily_line"></div>
+
+    <div class="line-separator-2" style="transform: translate(50%, 10px)"></div>
+
+    <Carousel class="car_blockdetail" v-model="blockdetail" arrow="never" loop style="transform: translate(0, 10px)">
+      <CarouselItem>
+        <div id="angle_ring"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div id="barchart"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div id="buses_info"></div>
+      </CarouselItem>
+    </Carousel>
+
   </div>
 </template>
 <script>
@@ -33,6 +52,7 @@ export default {
             date:'2017-05-01',
             time_separate:'0',
             inited: 0,
+            blockoverview:0,
             color: {
                 'Flow In': {
                     'selected': 'white',
@@ -62,7 +82,7 @@ export default {
             let that = this;
             let width = document.getElementById(mes.id).clientWidth,
                 height = document.getElementById(mes.id).clientHeight,
-                margin = {top: height*0.1 , right: width*0.1, bottom: height*0.1, left: width*0.1},
+                margin = {top: height*0.1 , right: width*0.1, bottom: height*0.15, left: width*0.1},
                 drawdata = []
 
                 width = width - margin.left - margin.right,
@@ -189,6 +209,12 @@ export default {
                 })
                 .call(d3.axisRight(line_out_yAxis))
 
+            daily_line_con.append('text')
+                    .attr('x', () => {return width / 3.5})
+                    .attr('y', () => {return 0})
+                    .text('Flow Count')
+                    .attr('class', 'bartitle')
+
 
             var flowin_linegenerator = d3.line()
                 .x(function(d) {return line_inout_xAxis(d[0])})
@@ -299,7 +325,7 @@ export default {
 }
 </script>
 <style>
-.funcbar_warp_bar3 {
+.funcbar_warp_bar4 {
   position: absolute;
   z-index: 1;
   width: 12.5%;
@@ -321,15 +347,22 @@ export default {
   color: grey !important;
 }
 
+.car_blockoverview{
+    height: 209px;
+}
+
+.car_blockdetail{
+    height: 210px;
+}
+
 #ovflowin_bar {
-    height: 200px;
+    height: 175px;
 }
+
 #ovflowout_bar {
-    height: 200px;
+    height: 175px;
 }
-#daily_bar {
-    height: 200px;
-}
+
 
 #daily_line {
     height: 230px;
@@ -356,6 +389,7 @@ export default {
 
 .bartitle{
     fill: rgb(170, 170, 170);
+    font-weight: bold;
 }
 
 </style>
