@@ -36,10 +36,10 @@
         <div class="demo-h-carousel" id="geo_h_dest"></div>
       </CarouselItem>
       <CarouselItem>
-        <div class="demo-h-carousel" id="geo_h_distance"></div>
+        <div class="demo-h-carousel" id="geo_h_time"></div>
       </CarouselItem>
       <CarouselItem>
-        <div class="demo-h-carousel" id="geo_h_time"></div>
+        <div class="demo-h-carousel" id="geo_h_distance"></div>
       </CarouselItem>
     </Carousel>
 
@@ -81,28 +81,29 @@
         mounted() {
             POIbar.initchart();
             POIbar.initdata();
+
+            document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=`按天聚类信息`;
             this.block_bar_chart('2','1','出发区域',"geo_start");
             this.block_bar_chart('1','1','到达区域',"geo_dest");
-            this.block_bar_chart('3','1','出行时间',"geo_time");
-            this.block_bar_chart2('1','1',"geo_h_start");
+            this.block_bar_chart('3','1','出发时间',"geo_time");
+            this.block_bar_chart('4','1','出行距离',"geo_distance");
+
+            document.querySelectorAll("h5")[3].innerHTML=`按时段聚类信息`;
+
+
+            this.block_bar_chart2('2','1','出发区域',"geo_h_start");
+            this.block_bar_chart2('1','1','到达区域',"geo_h_dest");
+            this.block_bar_chart2('3','1','出发时间',"geo_h_time");
+            this.block_bar_chart2('4','1','出行距离',"geo_h_distance");
+
             //this.block_line_chart('4','1','出行距离',"geo_distance");
-            document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=`区块流量统计排名`;
-            document.querySelectorAll("h5")[3].innerHTML=`TEST`;
-            document.querySelectorAll("h5")[4].innerHTML=`TEST`;
+
+            document.querySelectorAll("h5")[4].innerHTML=`其他辅助信息`;
+            //this.draw_buses_info(this.buses_data);
         },
         updated(){
         },
         methods: {
-            tabs_func(name) {
-                //console.log(name);
-                if (name === 0)
-                    this.draw_location_ring(this.geohash);
-                else if (name === 1)
-                    this.draw_buses_info(this.buses_data);
-                //this.draw_poi_ring(this.geohash);
-                //else
-                //this.draw_buses_info(this.buses_data);
-            },
             draw_od_matrix() {
                 //console.log('draw_od_matrix');
                 this.$http.get('query', {
@@ -620,7 +621,6 @@
                     myChart.setOption(option, true);
                 }
             },
-
             changehead() {
                 let that = this;
 
@@ -765,7 +765,13 @@
                     //console.log(res.body);
                     if (type === '3') {
                         draw_charts(res.body);
-                    } else {
+                    }
+                    else if(type === '4'){
+                        draw_charts(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort((a,b) => a.dis_divide-b.dis_divide));
+                    }
+                    else {
                         draw_charts(res.body.sort((a, b) => {
                             return parseInt(b.ordercount) - parseInt(a.ordercount);
                         }).slice(0, 20).sort(() => 0.5 - Math.random()));
@@ -789,7 +795,7 @@
                     let option = {
                         //backgroundColor: '#0d235e',
                         title: {
-                            text: `${title}流量TOP20`,
+                            text: `类别 ${cluster_type + title}流量TOP20`,
                             x: 'center',
                             textStyle: {
                                 //文字颜色
@@ -1124,7 +1130,9 @@
             },
 
             /////////////////////
-            block_bar_chart2(type,cluster_type,container){
+            block_bar_chart2(type,cluster_type,title,container){
+
+                let that = this;
 
                 document.getElementById(container).style.width = 256 + 'px';
                 document.getElementById(container).style.height = 190 + 'px';
@@ -1136,10 +1144,15 @@
                         table: `cluster_h_${type} where h_cluster=${cluster_type}`
                     }
                 }).then(res => {
-                    console.log(res.body);
+                    //console.log(res.body);
                     if (type === '3') {
                         draw(res.body);
-                    } else {
+                    } else if(type === '4'){
+                        draw(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort((a,b) => a.dis_divide-b.dis_divide));
+                    }
+                    else {
                         draw(res.body.sort((a, b) => {
                             return parseInt(b.ordercount) - parseInt(a.ordercount);
                         }).slice(0, 20).sort(() => 0.5 - Math.random()));
@@ -1147,8 +1160,9 @@
                 });
 
                 function draw(dataset) {
-                    let data = [60, 85, 110, 160, 90, 80, 190, 80, 110, 160, 70, 90, 140];
-                    let xdata = ['02', '03', '04', '05', '06', '07', '09', '10', '11', '12', '13', '14', '15'];
+                    console.log(dataset);
+                    let data = dataset.map(d=>d.ordercount);
+                    let xdata = dataset.map(d=>d[Object.keys(d)[1]]);
                     let option = {
                         //backgroundColor: "#ea5a25",
                         tooltip: {
@@ -1156,23 +1170,24 @@
                             show: true
                         },
                         title: {
-                            show:false,
-                            text: "Time Power",
-                            subtext: "2014.12.25",
+                            text: `时段 ${cluster_type+title}流量TOP20`,
+                            x: 'center',
                             textStyle: {
-                                color: "#fff",
-                                fontSize: 10
+                                //文字颜色
+                                color: "#ffffff",
+                                //字体风格,'normal','italic','oblique'
+                                fontStyle: "normal",
+                                //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                                fontWeight: "100",
+                                //字体系列
+                                fontFamily: "sans-serif",
+                                //字体大小
+                                fontSize: 12
                             },
-                            subtextStyle: {
-                                color: "#ff8b5d",
-                                fontSize: 14
-                            },
-                            left: 'center',
-                            top: "15%"
                         },
                         grid: {
                             left: "5%",
-                            top: "10%",
+                            top: "15%",
                             bottom: "15%",
                             right: "5%",
                             containLabel: true
@@ -1205,8 +1220,8 @@
                         },
                         yAxis: {
                             type: 'value',
-                            splitNumber: 4,
-                            interval: 50,
+                            //splitNumber: 4,
+                            //interval: 50,
                             splitLine: {
                                 show: true,
                                 lineStyle: {
@@ -1228,7 +1243,7 @@
                         },
                         series: [{
                             type: 'bar',
-                            animation: false,
+                            animation: true,
                             barWidth: 4,
                             data: data,
                             tooltip: {
@@ -1251,7 +1266,13 @@
 
                         ]
                     };
+
                     myChart.setOption(option);
+
+                    myChart.on('click', (params) => {
+                        //console.log(params.name);
+                        that.$store.commit('bar_geohash_state', params.name);
+                    });
                 }
             }
         },
