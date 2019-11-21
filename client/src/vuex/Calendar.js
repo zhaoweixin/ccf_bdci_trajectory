@@ -81,7 +81,7 @@ const calendar = {
       .attr("transform", function(d) {
         return (
           "translate(" +
-          (cellSize * 4 * months++ + cellSize * 4.1) +
+          (cellSize * 3.5 * months++ + cellSize * 4.1) +
           "," +
           cellSize / 2.2 +
           ")"
@@ -98,7 +98,7 @@ const calendar = {
       .append("text")
       .attr(
         "transform",
-        "translate(" + cellSize * 12 + "," + cellSize / 6 + ")"
+        "translate(" + cellSize * 11 + "," + cellSize / 6 + ")"
       )
       .style("font-family", "sans-serif")
       .style("font-size", 12)
@@ -109,7 +109,7 @@ const calendar = {
       .append("text")
       .attr(
         "transform",
-        "translate(" + cellSize * 22.35 + "," + cellSize / 4 + ")"
+        "translate(" + cellSize * 20.1 + "," + cellSize / 4 + ")"
       )
       .style("font-family", "sans-serif")
       .style("font-size", 12)
@@ -126,7 +126,7 @@ const calendar = {
       .style("fill", "rgb(170,170,170)")
       .attr("transform", function(d, i) {
         if (i <= 6) {
-          return "translate(25," + (cellSize * 3.5 + cellSize / 1.5) + ")";
+          return "translate(-5," + (cellSize * 3.5 + cellSize / 1.5) + ")";
         }
       })
 
@@ -167,7 +167,7 @@ const calendar = {
       .append("path")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
+        "translate(" + cellSize * -13 + "," + cellSize / 1.5 + ")"
       )
       .attr("d", pathMonth);
     this.drawday();
@@ -303,7 +303,7 @@ const calendar = {
       .attr("stroke", "#ccc")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
+        "translate(" + cellSize * -13 + "," + cellSize / 1.5 + ")"
       )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
@@ -372,7 +372,7 @@ const calendar = {
       .attr("stroke", "#ccc")
       .attr(
         "transform",
-        "translate(" + cellSize * -11 + "," + cellSize / 1.5 + ")"
+        "translate(" + cellSize * -13 + "," + cellSize / 1.5 + ")"
       )
       .selectAll("rect")
       //计算一组小方格的数量，调用d3的timeDays方法，获取两个时间之间的天数，例如，计算从1999年的第一天到2000年的第一天,则参数为new Date(1999,0,1)到 new Date(2000,0,1)，timeDays返回天序列
@@ -515,7 +515,7 @@ function addLegend(num) {
     .attr("width", cellSize / 1.2)
     .attr("height", cellSize / 2)
     .attr("x", function(d) {
-      return d3.timeWeek.count(d3.timeYear(Dates), Dates) * cellSize * 0.58;
+      return d3.timeWeek.count(d3.timeYear(Dates), Dates) * cellSize * 0.52;
     })
     .attr("y", function(d) {
       return ((d - 1) * cellSize) / 2 + cellSize * 1.5 + 5 * index++;
