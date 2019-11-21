@@ -630,24 +630,24 @@
                 let text = null;
                 switch (selectrange) {
                     case 0:
-                        text = "选中位置整个时间跨度内信息";
+                        text = "整个时间跨度内信息";
                         break;
                     case 1:
                         if (date == null) {
-                            text = "选中位置2017-05-01信息";
+                            text = "2017-05-01信息";
                         } else {
-                            text = "选中位置" + date + "信息";
+                            text = "" + date + "信息";
                         }
                         break;
                     case 2:
                         if (date == null) {
-                            text = "选中位置2017-05-01 0时-6时信息";
+                            text = "2017-05-01 0时-6时信息";
                         } else {
                             if (witchhour == null) {
-                                text = "选中位置" + date + " 0时-6时信息";
+                                text = "" + date + " 0时-6时信息";
                             } else {
 
-                                text = "选中位置" + date + " " + witchhour;
+                                text = "" + date + " " + witchhour;
 
                             }
                         }
@@ -656,6 +656,7 @@
                     default:
                         break;
                 }
+                document.querySelector("#app > div.information > p").innerHTML=text;
                 //document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
 
             },
