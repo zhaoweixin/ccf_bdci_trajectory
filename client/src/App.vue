@@ -2,6 +2,7 @@
   <div id="app">
     <page_header></page_header>
     <page_functionbar></page_functionbar>
+    <page_information></page_information>
     <AppMap></AppMap>
     <page_functionbar2></page_functionbar2>
     <page_functionbar3></page_functionbar3>
@@ -16,6 +17,7 @@
     import page_functionbar2 from './components/page_functionbar2'
     import page_functionbar3 from './components/page_functionbar3'
     import page_functionbar4 from './components/page_functionbar4'
+    import page_information from './components/page_Information'
     export default {
         name: 'app',
         components: {
@@ -23,6 +25,7 @@
             page_header,
             page_functionbar,  // 下端
             page_functionbar2, // 左侧
+            page_information,
             page_functionbar3,  // 右侧1
             page_functionbar4   // 右侧2
         }

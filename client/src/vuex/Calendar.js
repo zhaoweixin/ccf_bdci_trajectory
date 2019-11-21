@@ -331,7 +331,7 @@ const calendar = {
     var now2 = -1;
     events = rect
       .selectAll("rect")
-      .data(function(d) {
+      .data(function(d ) {
         nowday[index++] = d;
         return d3.range(1, 6);
       })
