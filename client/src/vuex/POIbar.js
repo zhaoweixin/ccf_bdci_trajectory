@@ -31,9 +31,9 @@ const POIData = {
         document.getElementById("barchart").clientHeight -
         margin.top -
         margin.bottom);
-    x = d3.scaleLinear().range([0, width]);
+    x = d3.scaleLinear().range([0, width-margin.left/2]);
 
-    y = d3.scaleBand().rangeRound([0, height], 0.1);
+    y = d3.scaleBand().rangeRound([0, height-margin.bottom], 0.1);
 
     xAxis = d3.axisBottom().scale(x);
     yAxis = d3
@@ -41,11 +41,12 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
+    // d3.select("#barchart").select("svg").remove();
     svg = d3
       .select("#barchart")
       .append("svg")
       .attr("width", width + margin.left)
-      .attr("height", height + margin.top);
+      .attr("height", height + 2*margin.top);
   },
   /*
 =================
@@ -134,15 +135,20 @@ name为所点击方块的geohash值,OrderType为订单类型数据
       .select("svg")
       .select(".bars")
       .remove();
+    d3.select("#barchart")
+      .select("svg")
+      .select("text")
+      .remove();
     svg = d3
       .select("#barchart")
-      .select("svg")
-      .append("g")
+      .select("svg");
+    svg.append("text").attr("x",(width + margin.left)/4).attr("y",margin.bottom/2).text("POI")
+    svg=  svg.append("g")
       .attr("class", "bars")
       .attr(
         "transform",
-        "translate(" + margin.left / 2 + "," + margin.top / 5 + ")"
-      );
+        "translate(" + 0+ "," + margin.top / 5 + ")"
+      ).attr("heigth",height);
     svg
       .selectAll(".bar")
       .data(result)
@@ -155,7 +161,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
         return x(Math.min(0, d.value));
       })
       .attr("y", function(d) {
-        return y(d.name);
+        return y(d.name)+margin.bottom;
       })
       .attr("width", function(d) {
         return Math.abs(x(d.value) - x(0));
@@ -183,7 +189,7 @@ name为所点击方块的geohash值,OrderType为订单类型数据
         }
       })
       .attr("y", function(d) {
-        return y(d.name) + y.bandwidth() / 2;
+        return y(d.name) + y.bandwidth() / 2+margin.bottom;
       });
 
     svg

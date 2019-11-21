@@ -1466,6 +1466,7 @@
     font: 15px sans-serif !important;
     color: grey !important;
   }
+  #barchart text,
   #barchart .bars text {
     font: 10px sans-serif;
     fill: rgb(170, 170, 170);
