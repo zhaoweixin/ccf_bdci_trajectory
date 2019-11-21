@@ -246,7 +246,7 @@ export default {
             d3.select('#' + mes.id).selectAll("svg").remove()
             this.draw_ovflow_bar(mes)
         },
-        update_daily_line(mes){
+        update_daily_line(mes){ 
             d3.select('#' + mes.id).selectAll("svg").remove()
             this.draw_daily_line(mes)
         },
