@@ -72,20 +72,18 @@
             POIbar.initdata();
 
             document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=`按天聚类信息`;
-            //this.block_bar_chart('2','1','出发区域',"geo_start");
-            //this.block_bar_chart('1','1','到达区域',"geo_dest");
-            //this.block_bar_chart('3','1','出发时间',"geo_time");
-            //this.block_bar_chart('4','1','出行距离',"geo_distance");
+            this.block_bar_chart('2','1','出发区域',"geo_start");
+            this.block_bar_chart('1','1','到达区域',"geo_dest");
+            this.block_bar_chart('3','1','出发时间',"geo_time");
+            this.block_bar_chart('4','1','出行距离',"geo_distance");
 
             document.querySelectorAll("h5")[3].innerHTML=`按时段聚类信息`;
 
 
-            //this.block_bar_chart2('2','1','出发区域',"geo_h_start");
-            //this.block_bar_chart2('1','1','到达区域',"geo_h_dest");
-            //this.block_bar_chart2('3','1','出发时间',"geo_h_time");
-            //this.block_bar_chart2('4','1','出行距离',"geo_h_distance");
-
-            //this.block_line_chart('4','1','出行距离',"geo_distance");
+            this.block_bar_chart2('2','1','出发区域',"geo_h_start");
+            this.block_bar_chart2('1','1','到达区域',"geo_h_dest");
+            this.block_bar_chart2('3','1','出发时间',"geo_h_time");
+            this.block_bar_chart2('4','1','出行距离',"geo_h_distance");
 
             document.querySelectorAll("h5")[4].innerHTML=`其他辅助信息`;
             //this.draw_buses_info(this.buses_data);
