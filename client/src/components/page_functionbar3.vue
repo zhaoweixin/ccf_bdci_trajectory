@@ -46,17 +46,6 @@
     <h5 style="font-size: 1rem">TEST</h5>
     <div class="line-separator-2"></div>
 
-    <Carousel class="carousel" v-model="value3" arrow="never" loop>
-      <CarouselItem>
-        <div id="angle_ring"></div>
-      </CarouselItem>
-      <CarouselItem>
-        <div id="barchart"></div>
-      </CarouselItem>
-      <CarouselItem>
-        <div id="buses_info"></div>
-      </CarouselItem>
-    </Carousel>
   </div>
 </template>
 <script>
@@ -273,8 +262,14 @@
                     let pie_svg = d3
                         .select("#angle_ring")
                         .append("svg")
-                        .attr("width", pie_width)
-                        .attr("height", pie_height);
+                        .attr("width", pie_width + pie_margin.left + pie_margin.right)
+                        .attr("height", pie_height + pie_margin.top + pie_margin.bottom);
+
+                    pie_svg.append('text')
+                        .attr('x', () => {return pie_width / 2.5})
+                        .attr('y', () => {return  pie_margin.top / 1.3})
+                        .text('Angle count')
+                        .attr('class', 'bartitle')
 
                     let pie = d3.pie();
 
@@ -303,7 +298,7 @@
                         .append("g")
                         .attr(
                             "transform",
-                            "translate(" + pie_width / 2 + "," + pie_height / 2 + ")"
+                            "translate(" + (pie_margin.left + pie_width / 2.1) + "," + (pie_margin.top + pie_height / 2) + ")"
                         );
                     arcs
                         .append("path")
@@ -335,9 +330,9 @@
                                 (innerRadius - 10);
                             return (
                                 "translate(" +
-                                (pie_width / 2 + widthT) +
+                                ((pie_margin.left + pie_width / 2.1) + widthT) +
                                 "," +
-                                (pie_height / 2 - heightT) +
+                                ((pie_margin.top + pie_height / 2.1) - heightT) +
                                 ")"
                             );
                         })
@@ -365,9 +360,9 @@
                                 (innerRadius - 10);
                             return (
                                 "translate(" +
-                                (pie_width / 2 + widthT) +
+                                ((pie_margin.left + pie_width / 2.1) + widthT) +
                                 "," +
-                                (pie_height / 2 - heightT) +
+                                ((pie_margin.top + pie_height / 2.1) - heightT) +
                                 ")"
                             );
                         })
@@ -1161,7 +1156,7 @@
                 });
 
                 function draw(dataset) {
-                    //console.log(dataset);
+                    console.log(dataset);
                     let data = dataset.map(d=>d.ordercount);
                     let xdata = dataset.map(d=>d[Object.keys(d)[1]]);
                     let option = {
@@ -1467,6 +1462,7 @@
     font: 15px sans-serif !important;
     color: grey !important;
   }
+  #barchart text,
   #barchart .bars text {
     font: 10px sans-serif;
     fill: rgb(170, 170, 170);
