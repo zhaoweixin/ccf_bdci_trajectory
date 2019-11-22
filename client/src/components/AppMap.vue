@@ -21,8 +21,9 @@
                 map: null,
                 pop:null,
                 date:'2017-05-01',
-                sql_table:'od_all_count',
-                od_type:'od'
+                sql_table:'start_geohash',
+                od_type:'od',
+                all_day_hour:'all'
             }
         },
         created() {
@@ -37,6 +38,7 @@
             //地图处理
             this.map_config();
             this.grid_draw();
+
             this.geohash_init();
 
         },
@@ -597,7 +599,8 @@
                     });
 
                     //初始化OD
-                    this.geohash_update();
+                    //this.geohash_update();
+                    this.draw_all_od();
                 });
 
                 this.map.on('click',(e)=> {
@@ -633,7 +636,7 @@
                     this.geohash_update(curr_geohash);
                 });
             },
-            geohash_update(curr_geohash='w7w3y9'){
+            geohash_update(curr_geohash){
 
                 //初始化
                 this.map.getSource('od_polygon_source').setData({
@@ -659,21 +662,15 @@
                 this.draw_geo_buses(curr_geohash);
 
                 let attributes = ['start_geo','dest_geo'];
-                let attribute;
-
-                if(this.od_type === 'od')
-                    attribute = attributes[0];
-                else
-                    attribute = attributes[1];
-
+                let attribute = (this.od_type === 'od')?attributes[0]:attributes[1];
 
                 this.$http.get('query',{
                     params:{
-                        table: `${this.sql_table} where ${attribute} = '${curr_geohash}'`
+                        table: `${this.od_type}_${this.date.replace(/-/g,'')} where ${attribute} = '${curr_geohash}'`
 
                     }}).then((res) => {
                     update(res.body);
-                    //console.log(res.body)
+                    console.log(res.body)
                 });
 
                 //更新OD
@@ -682,21 +679,69 @@
                     let features_polygon = [];
 
                     let linear = d3.scaleLinear()
-                        .domain([0, d3.max(data,(d)=>d.count)+5])
-                        .range([0.1, .8]);
+                        .domain([1, d3.max(data,(d)=>parseInt(d.count))])
+                        .range([0.1, 1]);
 
-                    //console.log(d3.max(data,(d)=>d.count));
-                    let attributes = ['start_geo','dest_geo'];
-                    let attribute;
-
-                    if(this.od_type === 'od')
-                        attribute = attributes[1];
-                    else
-                        attribute = attributes[0];
+                    let attribute = (this.od_type === 'od')?attributes[1]:attributes[0];
 
                     data.forEach(d =>{
 
                         let bbox = ngeohash.decode_bbox(d[attribute]);
+
+                        let color = (this.od_type === 'od')?'#04759D':'#d8363a';
+
+                        features_polygon.push({
+                            'type': 'Feature',
+                            "properties": {
+                                'color': color,
+                                'value': linear(parseInt(d.count))
+                            },
+                            'geometry': {
+                                'type': 'Polygon',
+                                'coordinates': [[
+                                    [bbox[1],bbox[0]],
+                                    [bbox[3],bbox[0]],
+                                    [bbox[3],bbox[2]],
+                                    [bbox[1],bbox[2]]
+                                ]]
+                            }
+                        });
+                    });
+
+                    this.map.getSource('od_polygon_source').setData({
+                        "type": "FeatureCollection",
+                        "features": features_polygon
+                    });
+                }
+
+            },
+
+            ////////////////Draw init all-od
+            draw_all_od(){
+                //初始化
+                this.map.getSource('od_polygon_source').setData({
+                    "type": "FeatureCollection",
+                    "features": []
+                });
+
+                this.$http.get('query',{
+                    params:{
+                        table: this.sql_table
+
+                    }}).then((res) => {
+                    update(res.body);
+                });
+                let  update = data => {
+
+                    let features_polygon = [];
+
+                    let linear = d3.scaleLinear()
+                        .domain([1, d3.max(data,d=>parseInt(d.count))])
+                        .range([0.1, 1]);
+
+                    data.forEach(d =>{
+
+                        let bbox = this.all_day_hour === 'all'?ngeohash.decode_bbox(d.geohash_index):ngeohash.decode_bbox(d[Object.keys(d)[1]]);
 
                         let color = '';
 
@@ -704,10 +749,6 @@
                             color = '#04759D';
                         else
                             color = '#d8363a';
-
-                        //console.log(color);
-
-                        //console.log(linear(d.count));
 
                         features_polygon.push({
                             'type': 'Feature',
@@ -732,7 +773,6 @@
                         "features": features_polygon
                     });
                 }
-
             },
 
             /*----------------------------------------/
@@ -829,6 +869,7 @@
         watch:{
             '$store.state.bar_geohash_state':{
                 handler(newValue){
+                    console.log('Update --- $store.state.bar_geohash_state');
                     let ngeo = ngeohash.decode(newValue);
                     this.map.flyTo({
                         center: [ngeo.longitude,ngeo.latitude],
@@ -849,7 +890,7 @@
             //监控控制面板图层按钮
             '$store.state.map_state':{
                 handler(){
-                    //console.log(this.$store.state.map_state);
+                    console.log('Update --- $store.state.map_state');
                     let map_state = this.$store.state.map_state;
 
                     //地图网格
@@ -879,56 +920,79 @@
                 },
                 deep:true
             },
+
             "$store.state.AllDayHour_state":{
                 handler(type){
+                    console.log('Update --- $store.state.AllDayHour_state');
+                    this.all_day_hour = ['all','day','hour'][type];
                     //All
                     if(type === 0){
                         //OD
                         if(this.od_type === 'od'){
-                            this.sql_table = 'od_all_count'
+                            this.sql_table = 'start_geohash'
                         }
                         //DO
                         else{
-                            this.sql_table = 'do_all_count'
+                            this.sql_table = 'end_geohash'
                         }
-                        this.geohash_update();
+                        this.draw_all_od();
                     }
                     else if(type === 1){
                         //OD
                         if(this.od_type === 'od'){
-                            this.sql_table = 'od_'+this.date.replace(/-/g,'');
+                            this.sql_table = 'od_all'+this.date.replace(/-/g,'');
                         }
                         //DO
                         else{
-                            this.sql_table = 'do_'+this.date.replace(/-/g,'');
+                            this.sql_table = 'do_all'+this.date.replace(/-/g,'');
                         }
-                        this.geohash_update();
+                        this.draw_all_od();
                     }
                 }
             },
             "$store.state.calendar_state": function(date) {
+                console.log('Update --- $store.state.calendar_state');
                 let format = d3.timeFormat("%Y-%m-%d");
                 this.date = format(new Date(date[0])).toString();
                 //OD
                 if(this.od_type === 'od'){
-                    this.sql_table = 'od_'+this.date.replace(/-/g,'');
+                    this.sql_table = 'od_all'+this.date.replace(/-/g,'');
                 }
                 //DO
                 else{
-                    this.sql_table = 'do_'+this.date.replace(/-/g,'');
+                    this.sql_table = 'do_all'+this.date.replace(/-/g,'');
                 }
-                this.geohash_update();
+                this.draw_all_od();
             },
             "$store.state.OD_state":{
                 handler(od_type){
-                    console.log(od_type);
+                    console.log('Update --- $store.state.OD_state');
                     if(od_type === '0')
                         this.od_type = 'od';
                     else if(od_type === '1')
                         this.od_type = 'do';
-                    console.log(this.od_type);
-                    this.geohash_update();
-                    },
+
+                    if(this.all_day_hour === 'all'){
+                        if(this.od_type === 'od'){
+                            this.sql_table = 'start_geohash'
+                        }
+                        //DO
+                        else{
+                            this.sql_table = 'end_geohash'
+                        }
+                        this.draw_all_od();
+                    }
+                    else if(this.all_day_hour === 'day'){
+                        if(this.od_type === 'od'){
+                            this.sql_table = 'od_all'+this.date.replace(/-/g,'');
+                        }
+                        //DO
+                        else{
+                            this.sql_table = 'do_all'+this.date.replace(/-/g,'');
+                        }
+                        this.draw_all_od();
+                    }
+                },
                 deep:true
             }
         }
