@@ -10,7 +10,7 @@
       <h5 style="font-size: 1rem"> Block Overview </h5>
       <div class="line-separator-2"></div>
     </div>
-    
+
     <Carousel class="car_blockoverview" v-model="blockoverview" arrow="never" loop>
         <CarouselItem>
             <div id="ovflowin_bar"></div>
@@ -53,6 +53,7 @@ export default {
             time_separate:'0',
             inited: 0,
             blockoverview:0,
+            blockdetail:0,
             color: {
                 'Flow In': {
                     'selected': 'white',
@@ -89,12 +90,12 @@ export default {
                 height = height - margin.top - margin.bottom
 
             let svg = d3.select('#' + mes.id).append('svg').attr('width', width + margin.left + margin.right).attr('height', height + margin.top + margin.bottom)
-            
+
             //format draw data
             mes.data.forEach((d,i) => {
                 drawdata.push([i, d.count, d.source])
             })
-            
+
             let ovflow_bar_xScale = d3.scaleBand().rangeRound([0, width]).padding(0.1).domain(drawdata.map((d) => {return d[0]})),
                 ovflow_bar_yScale = d3.scaleLinear().rangeRound([height, 0]).domain([0, d3.max(drawdata, (d)=> {return d[1]})]),
                 ovflow_bar_con = svg.append('g')
@@ -103,7 +104,7 @@ export default {
             ovflow_bar_con.append('g').attr('class', 'xAxis')
                 .attr("transform", "translate(0," + height + ")")
                 .call(d3.axisBottom(ovflow_bar_xScale).tickValues(ovflow_bar_xScale.domain().filter(function(d,i){ return !(i%2)})))
-            
+
             ovflow_bar_con.append("g").attr('class', 'yAxis')
                 .call(d3.axisLeft(ovflow_bar_yScale))
                 .append("text")
@@ -134,7 +135,7 @@ export default {
                 .on('mouseover', bar_handleMouseOver)
                 .on('mouseout', bar_handleMouseOut)
                 .on('click', bar_handleMouseClick)
-            
+
             ovflow_bar_con.selectAll('rect')
                 .transition()
                 .duration(800)
@@ -148,7 +149,7 @@ export default {
                     .attr('y', () => {return margin.top})
                     .text(mes.title)
                     .attr('class', 'bartitle')
-            
+
             function bar_handleMouseOver(d, i){
                 d3.select(this).attr('fill', that.color[mes.title].selected)
 
@@ -228,7 +229,7 @@ export default {
 
             config.forEach((v, j) => {
                 let linegenerator = v.type == 'in' ? flowin_linegenerator : flowout_linegenerator
-                
+
                 daily_line_con.append('path')
                     .datum(v.data.map((d,i) => {return [i, d]}))
                     .attr("class", "flowline")
@@ -272,7 +273,7 @@ export default {
             d3.select('#' + mes.id).selectAll("svg").remove()
             this.draw_ovflow_bar(mes)
         },
-        update_daily_line(mes){ 
+        update_daily_line(mes){
             d3.select('#' + mes.id).selectAll("svg").remove()
             this.draw_daily_line(mes)
         },
