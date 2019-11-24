@@ -66,7 +66,8 @@ export default {
             },
             view_type:0,
             sql_location:"angle_all_list where start_geo = 'w7w3y9'",
-            POIInited: 0
+            POIInited: 0,
+            buses_data: []
         };
     },
     mounted() {
@@ -81,8 +82,10 @@ export default {
         },
         AllDayHour_state () {
             return this.$store.state.AllDayHour_state
+        },
+        buses_routes_state() {
+            return this.$store.state.buses_routes_state
         }
-        
     },
     watch:{
         geohash_state: function(val, oldVal){
@@ -104,6 +107,10 @@ export default {
             this.draw_location_ring();
             this.drawbarchart();
             this.changehead();
+            if(this.buses_data.length != 0){
+                this.draw_buses_info(this.buses_data.routes);
+            }
+            
         },
         calendar_state: function(val, oldVal){
                 let format = d3.timeFormat("%Y-%m-%d");
@@ -164,6 +171,13 @@ export default {
                     this.draw_location_ring();
                     //////////////////////
                 }
+        },
+        buses_routes_state(val, oldVal) {
+            //console.log(val)
+            if(val.length != 0){
+                this.draw_buses_info(val.routes)
+            }
+            this.buses_data = val
         }
     },
     methods: {
@@ -182,9 +196,8 @@ export default {
 
             //format draw data
             mes.data.forEach((d,i) => {
-                drawdata.push([i, d.count, d.source])
+                drawdata.push([i, d.count, d.target])
             })
-
             let ovflow_bar_xScale = d3.scaleBand().rangeRound([0, width]).padding(0.1).domain(drawdata.map((d) => {return d[0]})),
                 ovflow_bar_yScale = d3.scaleLinear().rangeRound([height, 0]).domain([0, d3.max(drawdata, (d)=> {return d[1]})]),
                 ovflow_bar_con = svg.append('g')
@@ -241,11 +254,11 @@ export default {
 
             function bar_handleMouseOver(d, i){
                 d3.select(this).attr('fill', that.color[mes.title].selected)
-
+                let overtext = d[2] + ': ' + drawdata[i][1]
                 ovflow_bar_con.append('text')
                     .attr('x', ovflow_bar_xScale(drawdata[i][0]))
                     .attr('y', () => {return ovflow_bar_yScale(drawdata[i][1]) - 10})
-                    .text(drawdata[i][1])
+                    .text(overtext)
                     .attr('class', 'bartips')
             }
 
@@ -255,7 +268,9 @@ export default {
             }
 
             function bar_handleMouseClick(d, i){
-                console.log('click -> ', d[i][2])
+                console.log(d)
+                console.log('click -> ', d[2])
+                that.$store.commit('bar_geohash_state', d[2])
             }
 
         },
@@ -500,7 +515,6 @@ export default {
                     let pie = d3.pie();
 
                     let piedata = pie(rdata);
-                    console.log('draw_location_ring', dataset);
 
                     let outerRadius = pie_width / 4; //外半径
                     let innerRadius = outerRadius / 2; //内半径
@@ -679,6 +693,68 @@ export default {
                         break;
                     default:
                         break;
+                }
+        },
+        draw_buses_info(data) {
+
+                //console.log(data);
+
+                let myChart = this.$echarts.init(document.getElementById("buses_info"));
+
+                let option = null;
+                option = {
+                    title: {
+                        show: false,
+                        text: '公交路线数: ' + data.length,
+                        //x: "", //水平安放位置，默认为'left'，可选为：'center' | 'left' | 'right' | {number}（x坐标，单位px）
+                        y: "0", //垂直安放位置，默认为top，可选为：'top' | 'bottom' | 'center' | {number}（y坐标，单位px）
+                        textStyle: {
+                            //文字颜色
+                            color: "#57ff22",
+                            fontStyle: "normal",
+                            //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                            fontWeight: "lighter",
+                            //字体系列
+                            fontFamily: "sans-serif",
+                            //字体大小
+                            fontSize: 14
+                        }
+                    },
+                    series: {
+                        type: 'graph',
+                        layout: 'force',
+                        animation: false,
+                        roam: true,
+                        label: {
+                            normal: {
+                                show: true,
+                                color: '#FFF',
+                                position: 'right'
+                            }
+                        },
+                        symbolSize: 20,
+                        itemStyle: {
+                            normal: {
+                                color: "#c96b2b",
+                            }
+                        },
+                        data: data.map((d, i) => {
+                            return {id: i, name: d, category: i}
+                        }),
+                        categories: data.map((d, i) => {
+                            return {name: i}
+                        }),
+                        force: {
+                            initLayout: 'gird',
+                            // gravity: 0
+                            layoutAnimation: true,
+                            repulsion: 40,
+                        }
+                    }
+                };
+
+                if (option && typeof option === "object") {
+                    myChart.setOption(option, true);
                 }
             },
     }

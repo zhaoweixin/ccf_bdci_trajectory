@@ -740,7 +740,6 @@
             //////2019-11-18///////////////
             ///////////////////////////////
             create_cluster_legend() {
-
             },
             //add block_flow
             block_bar_chart(type, cluster_type, title, container) {
@@ -1125,7 +1124,6 @@
                     myChart.setOption(option);
                 }
             },
-
             /////////////////////
             block_bar_chart2(type,cluster_type,title,container){
 

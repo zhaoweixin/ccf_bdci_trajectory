@@ -31,7 +31,6 @@ const mutation = {
   },
   bar_geohash_state(state, payload) {
     state.bar_geohash_state = JSON.parse(JSON.stringify(payload));
-    console.log(state.bar_geohash_state);
   },
   AllDayHour_state(state, payload) {
     state.AllDayHour_state = JSON.parse(JSON.stringify(payload));

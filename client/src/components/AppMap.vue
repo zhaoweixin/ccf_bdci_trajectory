@@ -868,7 +868,6 @@
         watch:{
             '$store.state.bar_geohash_state':{
                 handler(newValue){
-                    console.log('Update --- $store.state.bar_geohash_state');
                     let ngeo = ngeohash.decode(newValue);
                     this.map.flyTo({
                         center: [ngeo.longitude,ngeo.latitude],

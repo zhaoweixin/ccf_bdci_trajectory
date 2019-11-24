@@ -38,8 +38,6 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
-    // d3.select("#parabarchart").select("svg").remove();
-    console.log(width, height, margin)
     svg = d3
       .select("#parabarchart")
       .append("svg")

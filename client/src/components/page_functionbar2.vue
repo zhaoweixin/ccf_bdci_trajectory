@@ -93,6 +93,7 @@
                 para_width:0,
                 para_height:0,
                 value2:0,
+                calendar_color: ["#3E5948", "#66425A", "#495270","#706C49","#664C42","#57534A","#63A67C","#AC4C1E"],
             }
         },
         components: {
@@ -518,7 +519,6 @@
                             .range([that.lc_height, 0]); // output
 
                     } else if(opt.config.unit == 'All'){
-                        console.log('scaleTime', d3.extent(opt.data[0].values, (d) => {return d.x}))
                         this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
                         this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
                         this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
@@ -1409,6 +1409,7 @@
                 });
 
                 function draw_charts(data) {
+                    data.sort((a,b) => (+a.ordercount > +b.ordercount) ? -1 : ((+b.ordercount > +a.ordercount) ? 1 : 0));
                     let xAxisData = [];
                     let data1 = [];
                     for (let i = 0; i < data.length; i++) {
@@ -1417,23 +1418,24 @@
                     }
 
                     myChart.on('click', (params) => {
-                        //console.log(params.name);
                         that.$store.commit('bar_geohash_state', params.name);
                     });
+
+                    let barcolor = that.calendar_color[cluster_type]
 
                     let option = {
                         //backgroundColor: '#0d235e',
                         title: {
-                            text: `类别 ${cluster_type + title}流量TOP20`,
+                            text: `类别 ${ +cluster_type+1 + title} 流量TOP20`,
                             y:'10px',
                             x: 'center',
                             textStyle: {
                                 //文字颜色
-                                color: "#ffffff",
+                                color: "rgb(170, 170, 170)",
                                 //字体风格,'normal','italic','oblique'
                                 fontStyle: "normal",
                                 //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
-                                fontWeight: "100",
+                                fontWeight: "bold",
                                 //字体系列
                                 fontFamily: "sans-serif",
                                 //字体大小
@@ -1477,7 +1479,7 @@
                         }],
                         yAxis: [{
                             axisLabel: {
-                                color: '#e2e9ff',
+                                color: 'rgb(170, 170, 170)',
                                 textStyle: {
                                     fontSize: 10
                                 },
@@ -1498,16 +1500,10 @@
                             data: data1,
                             itemStyle: {
                                 normal: {
-                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                                        offset: 0,
-                                        color: 'rgba(0,244,255,1)' // 0% 处的颜色
-                                    }, {
-                                        offset: 1,
-                                        color: 'rgba(0,77,167,1)' // 100% 处的颜色
-                                    }], false),
+                                    color: barcolor
                                     //barBorderRadius: [30, 30, 30, 30],
-                                    shadowColor: 'rgba(0,160,221,1)',
-                                    shadowBlur: 4,
+                                    // shadowColor: 'rgba(0,160,221,1)',
+                                    // shadowBlur: 4,
                                 }
                             },
                             label: {
@@ -1715,7 +1711,6 @@
                                     color: 'rgb(0,136,212)',
                                     borderColor: 'rgba(0,136,212,0.2)',
                                     borderWidth: 12
-
                                 }
                             },
                             data: [120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 150]
@@ -1746,7 +1741,6 @@
                             },
                             itemStyle: {
                                 normal: {
-
                                     color: 'rgb(219,50,51)',
                                     borderColor: 'rgba(219,50,51,0.2)',
                                     borderWidth: 12
@@ -1755,7 +1749,6 @@
                             data: [220, 182, 125, 145, 122, 191, 134, 150, 120, 110, 165, 122]
                         }, ]
                     };
-
                     myChart.setOption(option);
                 }
             },
@@ -1794,6 +1787,7 @@
                 });
 
                 function draw(data) {
+                    data.sort((a,b) => (+a.ordercount > +b.ordercount) ? -1 : ((+b.ordercount > +a.ordercount) ? 1 : 0));
                     let xAxisData = [];
                     let data1 = [];
                     for (let i = 0; i < data.length; i++) {
@@ -1806,15 +1800,17 @@
                         that.$store.commit('bar_geohash_state', params.name);
                     });
 
+                    let barcolor = that.calendar_color[cluster_type]
+
                     let option = {
                         //backgroundColor: '#0d235e',
                         title: {
-                            text: `时段 ${cluster_type + title}流量TOP20`,
+                            text: `时段 ${ +cluster_type+1 + title}流量TOP20`,
                             y:'10px',
                             x: 'center',
                             textStyle: {
                                 //文字颜色
-                                color: "#ffffff",
+                                color: "rgb(170, 170, 170)",
                                 //字体风格,'normal','italic','oblique'
                                 fontStyle: "normal",
                                 //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
@@ -1862,7 +1858,7 @@
                         }],
                         yAxis: [{
                             axisLabel: {
-                                color: '#e2e9ff',
+                                color: 'rgb(170, 170, 170)',
                                 textStyle: {
                                     fontSize: 10
                                 },
@@ -1883,16 +1879,7 @@
                             data: data1,
                             itemStyle: {
                                 normal: {
-                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                                        offset: 0,
-                                        color: 'rgba(0,244,255,1)' // 0% 处的颜色
-                                    }, {
-                                        offset: 1,
-                                        color: 'rgba(0,77,167,1)' // 100% 处的颜色
-                                    }], false),
-                                    //barBorderRadius: [30, 30, 30, 30],
-                                    shadowColor: 'rgba(0,160,221,1)',
-                                    shadowBlur: 4,
+                                    color: barcolor
                                 }
                             },
                             label: {
