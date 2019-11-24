@@ -9,1474 +9,2070 @@
     <div id="heatmap" style="width:40%; height:100%; float:left">
       <div id="heatmap_chart"></div>
     </div>
-    <div id="parallel" style="width:19%; height:100%; float:left">
-      <div id="parallel_coordinates"></div>
-    </div>
+
+    <Carousel class="carousel_bottom" v-model="value2" arrow="never" loop>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="view1"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="view2"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="view3"></div>
+      </CarouselItem>
+      <CarouselItem>
+        <div class="demo-h-carousel" id="view4"></div>
+      </CarouselItem>
+    </Carousel>
+    <!--    <div id="parallel" style="width:19%; height:100%; float:left">-->
+    <!--      <div id="parallel_coordinates"></div>-->
+    <!--    </div>-->
   </div>
 </template>
 <script>
-  import * as d3 from 'd3'
-  import DataManager from '../data/DataManager'
-  import var_config from '../assets/var_config.js'
-  import calendar from "@/vuex/Calendar.js"
-  import $ from 'jquery'
+    import * as d3 from 'd3'
+    import DataManager from '../data/DataManager'
+    import var_config from '../assets/var_config.js'
+    import calendar from "@/vuex/Calendar.js"
+    import $ from 'jquery'
 
-  Date.prototype.yyyymmdd = function() {
-  var mm = this.getMonth() + 1; // getMonth() is zero-based
-  var dd = this.getDate();
+    Date.prototype.yyyymmdd = function() {
+        var mm = this.getMonth() + 1; // getMonth() is zero-based
+        var dd = this.getDate();
 
-  return [this.getFullYear(),
-          (mm>9 ? '' : '0') + mm,
-          (dd>9 ? '' : '0') + dd
-         ].join('-');
-  };
+        return [this.getFullYear(),
+            (mm>9 ? '' : '0') + mm,
+            (dd>9 ? '' : '0') + dd
+        ].join('-');
+    };
 
-  //var date = new Date();
-  //date.yyyymmdd();
+    //var date = new Date();
+    //date.yyyymmdd();
 
 
-  export default{
-    name: 'page_functionbar2',
-    data(){
-      return {
-        var_config: var_config,
-        lc_FullWidth : 0,
-        lc_FullHeight: 0,
-        lc_margin:{},
-        lc_width: 0,
-        lc_height: 0,
-        lc_xScale: undefined, //线图默认x轴比例尺 0-1 / 0-width
-        lc_yScale: undefined, //线图默认y轴比例尺 0-1 / height-0
-        lc_xScaleText_arr:[], //存储线图中不同线段的x对应真实数值的比例尺 0-1 / datamin-datamax
-        lc_yScaleText_arr: [], //存储线图中不同线段的y对应真实数值的比例尺 0-1 / datamin-datamax
-        lc_line_generator:{},
-        lc_line: undefined,  //初始线段生成器
-        lc_svg: undefined, //legend and svg container
-        lc_svg_g: undefined, // axis and path container
-        lc_legend: undefined, // legend container
-        lc_legend_circle: undefined, // legend circle
-        lc_legend_text: undefined, // legend text
-        lc_pathcount: 0, //line path count
-        lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
-        last_axis_type: null,
-        his_feature_config:{
-          checkedNames: [],
-          status: '3'
-        },
-        LINECHART_TITLE:{
-          'Hour': '每个小时平均值统计',
-          'Day': '每周平均值统计',
-          'All': '整体时间段统计'
-        },
-        para_margin:{},
-        para_FullWidth:0,
-        para_FullHeight:0,
-        para_width:0,
-        para_height:0
-      }
-    },
-    components: {
-    },
-    computed:{
-      operater_state () {
-        return this.$store.state.operater_state
-      },
-      feature_change_state () {
-        return this.$store.state.feature_change_state
-      },
-      AllDayHour_change_state() {
-        return this.$store.state.AllDayHour_state
-      },
-      highlight_paraline_state(){
-        return this.$store.state.calendar_legend_state
-      }
-    },
-    watch:{
-      operater_state: function(val, oldVal){
-        this.handle_operater_state()
-      },
-      feature_change_state (val, oldVal) {
-        this.handle_feature_change_state()
-      },
-      AllDayHour_change_state (val, oldVal){
-        //传入的值为0、1、2,0代表All，1代表day，2代表hour
-        if((val==1||val==0)&&oldVal==2) calendar.drawday();
-        if(val==2) calendar.drawhour();
-
-        if(val == 2){
-          this.handle_paraline({
-            'status': 3,
-            'table': 'vector'
-          })
-        } else if(val == 1 || val == 0){
-          this.handle_paraline({
-            'status': 3,
-            'table': 'vector_day'
-          })
-        }
-      },
-      highlight_paraline_state(val, oldVal){
-        this.handle_highlight(val)
-      }
-    },
-    methods:{
-      init_heatmap(){
-        var FullWidth = document.getElementById('heatmap').clientWidth,
-          FullHeight = document.getElementById('heatmap').clientHeight,
-          margin = { top: FullHeight*0.1, right: FullWidth*0.05, bottom: FullHeight*0.1, left: FullWidth*0.05 },
-          width = FullWidth - margin.left - margin.right,
-          height = FullHeight - margin.top - margin.bottom,
-          gridSize = Math.floor(height / 6.5),
-          legendElementWidth = gridSize,
-          buckets = 9,
-          colors = ["#0B234F", "#1D3E13", "#9C762B", "#88491D", "#4F100B", "#37204A"],
-          //colors = ["#99C779","#90BA72","#86AD6A","#688752","#37472C","#2D3B24"], // alternatively colorbrewer.YlGnBu[9]
-          days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-          times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"],
-          datasets = ["http://localhost:3000/test", "http://localhost:3000/test"];
-
-        var svg = d3.select("#heatmap_chart").append("svg")
-          .attr("width", FullWidth)
-          .attr("height", FullHeight)
-          .append("g")
-          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        var dayLabels = svg.selectAll(".dayLabel")
-          .data(days)
-          .enter().append("text")
-          .text(function (d) { return d; })
-          .attr("x", 0)
-          .attr("y", function (d, i) { return i * gridSize; })
-          .style("text-anchor", "end")
-          .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
-          .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
-
-        var timeLabels = svg.selectAll(".timeLabel")
-          .data(times)
-          .enter().append("text")
-          .text(function(d) { return d; })
-          .attr("x", function(d, i) { return i * gridSize; })
-          .attr("y", 0)
-          .style("text-anchor", "middle")
-          .attr("transform", "translate(" + gridSize / 2 + ", -6)")
-          .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
-
-        var heatmapChart = function(tsvFile) {
-          (async function(){
-            const response = await DataManager.getHeatmapData()
-            let data = []
-            response.data.forEach( (d,i) => {
-              data.push({
-                day: +d.day,
-                hour: +d.hour,
-                value: +d.value
-              })
-            })
-
-            var colorScale = d3.scaleQuantile()
-              .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
-              .range(colors);
-
-            var cards = svg.selectAll(".hour")
-              .data(data, function(d) {return d.day+':'+d.hour;});
-
-            cards.append("title");
-
-            cards.enter().append("rect")
-              .attr("x", function(d) { return (d.hour - 1) * gridSize; })
-              .attr("y", function(d) { return (d.day - 1) * gridSize; })
-              .attr("rx", 4)
-              .attr("ry", 4)
-              .attr("class", "hour bordered")
-              .attr("width", gridSize)
-              .attr("height", gridSize)
-              .style("fill", 'grey')
-              .transition().duration(1000)
-              .style("fill", function(d){return colorScale(d.value)});
-
-            /*
-            cards
-                .style("fill", function(d) { return colorScale(d.value); });
-            */
-
-            cards.select("title").text(function(d) { return d.value; });
-
-            cards.exit().remove();
-
-            var legend = svg.selectAll(".legend")
-              .data([0].concat(colorScale.quantiles()), function(d) { return d; });
-
-            legend.enter().append("g")
-              .attr("class", "legend");
-
-            legend.append("rect")
-              .attr("x", function(d, i) { return legendElementWidth * i; })
-              .attr("y", height)
-              .attr("width", legendElementWidth)
-              .attr("height", gridSize / 2)
-              .style("fill", function(d, i) { return colors[i]; });
-
-            legend.append("text")
-              .attr("class", "mono")
-              .text(function(d) { return "≥ " + Math.round(d); })
-              .attr("x", function(d, i) { return legendElementWidth * i; })
-              .attr("y", height + gridSize);
-
-            legend.exit().remove();
-          })()
-        };
-        heatmapChart(datasets[0]);
-
-        var datasetpicker = d3.select("#dataset-picker").selectAll(".dataset-button")
-          .data(datasets);
-
-        datasetpicker.enter()
-          .append("input")
-          .attr("value", function(d){ return "Dataset " + d })
-          .attr("type", "button")
-          .attr("class", "dataset-button")
-          .on("click", function(d) {
-            heatmapChart(d);
-          });
-      },
-      handle_operater_state(){
-        let that = this
-        let opt = {
-          'status': this.operater_state.status,
-          'config': {
-            'legend': [],
-            'legend_val': [],
-            'unit': this.operater_state.picked
-          }
-        },
-        except_angle_index = null,
-        t_operater_state = this.operater_state.checkedNames.filter(d => d != '2')
-        //划分出piechart 的数据 需要在handle_piechart内处理
-        opt.config.legend_val = t_operater_state
-
-        t_operater_state.forEach((d,i) => {
-          opt.config.legend.push(that.var_config.operater[d].legend)
-        })
-
-        this.handle_linechart(opt)
-
-        //this.handle_piechart(opt)
-      },
-      handle_linechart(opt){
-        let that = this
-
-        if(opt.status == '0'){
-          //init
-          let req = {
-            'legend': opt.config.legend,
-            'unit': opt.config.unit
-          },
-          info = {
-              'status': 0,
-              'data': [],
-              'config': {
-                'legend': [],
-                'legend_val': [],
-                'unit': opt.config.unit
-              }
-          },//draw
-          requestInfo = {
-            'config': {
-              'legend': [],
-              'legend_val':[],
-              'unit': opt.config.unit
-            },
-            'status': opt.status
-          }//request
-
-          opt.config.legend_val.forEach((d,i) => {
-            let dataName = opt.config.unit + d
-            if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-              info.data.push(that.$store.state.DATA_STORE[dataName])
-              info.config.legend.push(opt.config.legend[i])
-              info.config.legend_val.push(d)
-            } else {
-              requestInfo.config.legend.push(opt.config.legend[i])
-              requestInfo.config.legend_val.push(d)
+    export default{
+        name: 'page_functionbar2',
+        data(){
+            return {
+                all_day_hour:'all',
+                var_config: var_config,
+                lc_FullWidth : 0,
+                lc_FullHeight: 0,
+                lc_margin:{},
+                lc_width: 0,
+                lc_height: 0,
+                lc_xScale: undefined, //线图默认x轴比例尺 0-1 / 0-width
+                lc_yScale: undefined, //线图默认y轴比例尺 0-1 / height-0
+                lc_xScaleText_arr:[], //存储线图中不同线段的x对应真实数值的比例尺 0-1 / datamin-datamax
+                lc_yScaleText_arr: [], //存储线图中不同线段的y对应真实数值的比例尺 0-1 / datamin-datamax
+                lc_line_generator:{},
+                lc_line: undefined,  //初始线段生成器
+                lc_svg: undefined, //legend and svg container
+                lc_svg_g: undefined, // axis and path container
+                lc_legend: undefined, // legend container
+                lc_legend_circle: undefined, // legend circle
+                lc_legend_text: undefined, // legend text
+                lc_pathcount: 0, //line path count
+                lc_linecolor: ['#99C70A', '#FFFFFF','#FFF93B', '#2100FF', '#FF8C3B'],
+                last_axis_type: null,
+                his_feature_config:{
+                    checkedNames: [],
+                    status: '3'
+                },
+                LINECHART_TITLE:{
+                    'Hour': '每个小时平均值统计',
+                    'Day': '每周平均值统计',
+                    'All': '整体时间段统计'
+                },
+                para_margin:{},
+                para_FullWidth:0,
+                para_FullHeight:0,
+                para_width:0,
+                para_height:0,
+                value2:0,
             }
-          })
-
-          //forbidden reload error
-          if(requestInfo.config.legend_val.length != 0){
-            DataManager.getLineChartData(requestInfo).then((res) => {
-            requestInfo.config.legend_val.forEach((d,i) => {
-              let dataName = requestInfo.config.unit + d
-              if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-                that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
-              }
-            })
-            requestInfo.config.legend_val.forEach((v,j) => {
-              info.config.legend.push(requestInfo.config.legend[j])
-              info.config.legend_val.push(v)
-              info.data.push(res.data[j])
-            })
-            that.draw_linechart(info)
-            }).catch(err => {
-              if(err){
-                console.log(err)
-                return;
-              }
-            })
-          }
-
-        } else if(opt.status == '1'){
-          //add
-        } else if(opt.status == '2'){
-          //delete
-        } else if(opt.status == '3'){
-          //updates all
-          let req = {
-            'legend': opt.config.legend_val,
-            'unit': opt.config.unit
-          },
-          info = {
-              'status': opt.status,
-              'data': [],
-              'config': {
-                'legend': [],
-                'legend_val': [],
-                'unit': opt.config.unit
-              }
-          },//draw
-          requestInfo = {
-            'config': {
-              'legend': [],
-              'legend_val':[],
-              'unit': opt.config.unit
+        },
+        components: {
+        },
+        computed:{
+            operater_state () {
+                return this.$store.state.operater_state
             },
-            'status': opt.status
-          }//request
-
-          opt.config.legend_val.forEach((d,i) => {
-            let dataName = opt.config.unit + d
-            if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-              info.data.push(that.$store.state.DATA_STORE[dataName])
-              info.config.legend.push(opt.config.legend[i])
-              info.config.legend_val.push(d)
-            } else {
-              requestInfo.config.legend.push(opt.config.legend[i])
-              requestInfo.config.legend_val.push(d)
-            }
-          })
-
-
-          //forbidden reload error
-          if(requestInfo.config.legend.length != 0){
-            DataManager.getLineChartData(requestInfo).then((res) => {
-
-              requestInfo.config.legend_val.forEach((d,i) => {
-                let dataName = requestInfo.config.unit + d
-                if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-                  that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
+            feature_change_state () {
+                return this.$store.state.feature_change_state
+            },
+            AllDayHour_change_state() {
+                return this.$store.state.AllDayHour_state
+            },
+            // highlight_paraline_state(){
+            //   return this.$store.state.calendar_legend_state
+            // }
+        },
+        watch:{
+            operater_state: function(val, oldVal){
+                this.handle_operater_state()
+            },
+            feature_change_state (val, oldVal) {
+                this.handle_feature_change_state()
+            },
+            AllDayHour_change_state (val, oldVal){
+                //传入的值为0、1、2,0代表All，1代表day，2代表hour
+                this.all_day_hour = ['all','day','hour'][val];
+                if(this.all_day_hour === 'all'){
+                    this.block_bar_chart('2','0',"出发区域","view1");
+                    this.block_bar_chart('1','0',"到达区域","view2");
+                    this.block_bar_chart('3','0','出发时间',"view3");
+                    this.block_bar_chart('4','0','出行距离',"view4");
                 }
-              })
-
-              requestInfo.config.legend_val.forEach((v,j) => {
-                info.config.legend.push(requestInfo.config.legend[j])
-                info.config.legend_val.push(v)
-                info.data.push(res.data[j])
-              })
-              that.draw_linechart(info)
-            }).catch(err => {
-              if(err){
-                console.log(err)
-                return;
-              }
-            })
-          }else if(requestInfo.config.legend.length == 0){
-            that.draw_linechart(info)
-          }
-        }
-      },
-      draw_linechart(opt){
-        let that = this
-        this.last_axis_type = opt.config.unit
-
-        if(opt.status == 0){
-          let that = this
-          this.lc_FullWidth = document.getElementById('line').clientWidth,
-          this.lc_FullHeight = document.getElementById('line').clientHeight,
-          this.lc_margin = { top: this.lc_FullHeight*0.15, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
-          this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
-          this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
-          let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
-          yScaleMax = Math.max.apply(null, opt.data[0].yScale),
-          xScaleMin = 0,
-          xScaleMax = 1
-
-          //-----------------------------------------------------------
-          this.lc_bas_xScaleLine = d3.scaleLinear()
-              .domain([0, 1]) // input
-              .range([0, that.lc_width]); // output
-
-          // 6. Y scale will use the randomly generate number
-          this.lc_bas_yScaleLine = d3.scaleLinear()
-              .domain([0, 1]) // input
-              .range([that.lc_height, 0]); // output
-            //------------------------------------------------------------
-          // 5. X scale will use the index of our data
-          this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
-          this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
-
-          //if type == date timeScale
-          //else type == other scaleLinear
-
-          for(var i=0; i<opt.data.length; i++){
-
-            if(opt.data[i].xLabel == 'date'){
-              let len = opt['data'][i].xScale.length
-              xScaleMin = new Date(opt['data'][i].xScale[0])
-              xScaleMax = new Date(opt['data'][i].xScale[len-1])
-
-              for(let j=0; j<opt.data[i].values.length; j++){
-                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
-              }
-              for(let j=0; j<opt.data[i].xScale.length; j++){
-                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
-              }
-
-            } else {
-              xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
-              xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
-            }
-          }
-
-
-
-          if(opt.config.unit == 'Hour' || opt.config.unit == 'Day'){
-            this.lc_xScaleLine = d3.scaleLinear()
-              .domain([0, 1]) // input
-              .range([0, that.lc_width]); // output
-
-            // 6. Y scale will use the randomly generate number
-            this.lc_yScaleLine = d3.scaleLinear()
-                .domain([0, 1]) // input
-                .range([that.lc_height, 0]); // output
-
-            this.lc_xScaleAxis = d3.scaleLinear()
-              .domain([xScaleMin, xScaleMax]) // input
-              .range([0, that.lc_width]); // output
-
-            this.lc_yScaleAxis = d3.scaleLinear()
-                .domain([yScaleMin, yScaleMax]) // input
-                .range([that.lc_height, 0]); // output
-
-          } else if(opt.config.unit == 'All'){
-            console.log('scaleTime', d3.extent(opt.data[0].values, (d) => {return d.x}))
-            this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
-            this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
-            this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
-            this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
-          }
-
-          // 7. d3's line generator
-          this.lc_line = d3.line()
-              .x(function(d, i) { return that.lc_xScaleLine(d.x); }) // set the x values for the line generator
-              .y(function(d) { return that.lc_yScaleLine(d.y); }) // set the y values for the line generator
-              .curve(d3.curveMonotoneX) // apply smoothing to the line
-
-          if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
-            let unit = opt.config.unit
-            this.lc_line_generator[unit] = {}
-            this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
-            this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
-            this.lc_line_generator[unit]['xScaleAxis'] = this.lc_xScaleAxis
-            this.lc_line_generator[unit]['yScaleAxis'] = this.lc_yScaleAxis
-            this.lc_line_generator[unit]['generator'] = this.lc_line
-          }
-
-          // 1. Add the SVG to the page and employ #2
-          this.lc_svg = d3.select("#line_chart").append("svg")
-              .attr("width", that.lc_width + that.lc_margin.left + that.lc_margin.right)
-              .attr("height", that.lc_height + that.lc_margin.top + that.lc_margin.bottom)
-
-          // Add the g to contain legend
-          this.lc_legend = this.lc_svg.append('g')
-            .attr('id', 'line_chart_legend')
-            .attr('transform', () => {
-              let x = +that.lc_margin.left + +that.lc_width,
-                y = +that.lc_margin.top
-                return 'translate(' + x + ',' + y + ')'
-            })
-
-          this.lc_svg_g = this.lc_svg.append("g")
-              .attr('id', 'line_chart_g')
-              .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")");
-
-          // 3. Call the x axis in a group tag
-          this.lc_svg_g.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate( 0," + +that.lc_height + ")")
-              .transition()
-              .duration(3000)
-              .call(d3.axisBottom(that.lc_xScale)) // Create an axis component with d3.axisBottom
-
-          // 4. Call the y axis in a group tag
-          this.lc_svg_g.append("g")
-              .attr("class", "y axis")
-              .transition()
-              .duration(3000)
-              .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
-
-          //13. append chart title
-          this.lc_svg_g.append('text')
-            .attr('id', "lc_title")
-            .attr('x', that.lc_width/2)
-            .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
-            .attr('fill', 'rgb(170, 170, 170)')
-            .text(function() {
-              return that.LINECHART_TITLE[opt.config.unit]
-            });
-
-          // 9. Append the path, bind the data, and call the line generator
-
-          // 12. Appends a circle for each datapoint
-          this.lc_pathcount = opt.data.length
-          for(var i=0; i<opt.data.length; i++){
-            let draw_data = opt.data[i].values
-            let yScaleMin = opt.data[i].yScale[0],
-              yScaleMax = opt.data[i].yScale[1],
-              xScaleMin = opt.data[i].xScale[0],
-              xScaleMax = opt.data[i].xScale[1]
-
-            this.lc_xScaleText_arr = []
-            this.lc_yScaleText_arr = []
-
-            this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
-            this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
-
-            this.lc_svg_g.append("path")
-              .data(draw_data) // 10. Binds data to the line
-              .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
-              .attr('num', i)
-              .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-              .style('fill', 'none')
-              .style('stroke', that.lc_linecolor[i])
-              .style("stroke-width", '1px')
-              .style('opacity', 0)
-              .transition()
-              .duration(1500)
-              .style('opacity', 1)
-
-
-            this.lc_svg_g.selectAll(".ddot")
-              .data(draw_data)
-            .enter().append("circle")
-            // Uses the enter().append() method
-              .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-              .attr("cx", function(d, i) {return that.lc_line_generator[opt.config.unit]['xScaleLine'](d.x)})
-              .attr("cy", function(d, i) {return that.lc_line_generator[opt.config.unit]['yScaleLine'](d.y)})
-              .attr("r", 2)
-              .attr("linenum", i)
-              .attr('unit', opt.config.unit)
-              .style('fill', that.lc_linecolor[i])
-              .style('stroke', '#fff')
-              .style('stroke-width', '1.5px')
-              .on('mouseover', circle_handleMouseOver)
-              .on('mouseout', circle_handleMouseOut)
-              .on('click', circle_handleClick)
-              .style('opacity', 0)
-              .transition()
-              .duration(1500)
-              .style('opacity', 1)
-
-
-            this.lc_legend.append('circle')
-              .attr("class",  () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
-              .attr("cx", () => { return that.lc_width * 0.04 })
-              .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
-              .attr('num', i)
-              .attr("linenum", i)
-              .attr('unit', opt.config.unit)
-              .attr('type', 'legend')
-              .attr("r", 2)
-              .style('fill', () => { return that.lc_linecolor[i]})
-              .on('mouseover', circle_handleMouseOver)
-              .on('mouseout', circle_handleMouseOut)
-              .style('opacity', 0)
-              .transition()
-              .duration(3000)
-              .style('opacity', 1)
-
-
-            //title
-            this.lc_legend.append('text')
-                .attr('x', () => { return that.lc_width * 0.04 + 10 })
-                .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
-                .text(() => { return opt.config.legend[i]})
-                .style('opacity', 0)
-                .attr('class', 'legend_text')
-                .transition()
-                .duration(3000)
-                .style('opacity', 1)
-          }
-          //change color
-          this.lc_linecount = this.lc_linecount + 1
-        } else if(opt.status == 3){
-          d3.selectAll('.line').transition().duration(1000).style('opacity', 0).remove()
-          d3.selectAll('.dot').transition().duration(1000).style('opacity', 0).remove()
-          d3.selectAll('.legend_text').transition().duration(1500).style('opacity', 0).remove()
-          d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
-
-          this.lc_pathcount = opt.data.length
-          this.lc_xScaleText_arr = []
-          this.lc_yScaleText_arr = []
-
-          //redraw axis
-          // 3. Call the x axis in a group tag
-          d3.selectAll('.x.axis').transition()
-                  .duration(300).remove()
-
-          d3.selectAll('.y.axis').transition()
-                   .duration(300).remove()
-
-          d3.selectAll('#lc_title').transition()
-                    .duration(300).remove()
-
-
-
-          this.lc_svg_g.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate( 0," + +that.lc_height + ")")
-              .transition()
-              .duration(3000)
-              .call(d3.axisBottom(that.lc_bas_xScaleLine)) // Create an axis component with d3.axisBottom
-
-          // 4. Call the y axis in a group tag
-          this.lc_svg_g.append("g")
-              .attr("class", "y axis")
-              .transition()
-              .duration(3000)
-              .call(d3.axisLeft(that.lc_bas_yScaleLine)); // Create an axis component with d3.axisLeft
-
-          //13. append chart title
-          this.lc_svg_g.append('text')
-            .attr('id', "lc_title")
-            .attr('x', that.lc_width/2)
-            .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
-            .attr('fill', 'rgb(170, 170, 170)')
-            .text(function() {
-              return that.LINECHART_TITLE[opt.config.unit]
-              return 'TITLE'  // Value of the text
-            });
-
-          for(var i=0; i<opt.data.length; i++){
-            let draw_data = opt.data[i].values,
-              yScaleMin = Math.min.apply(null, opt.data[i].yScale),
-              yScaleMax = Math.max.apply(null, opt.data[i].yScale),
-              xScaleMin = 0,
-              xScaleMax = 1
-
-            if(opt.data[i].xLabel == 'date'){
-              let len = opt['data'][i].xScale.length
-              xScaleMin = new Date(opt['data'][i].xScale[0])
-              xScaleMax = new Date(opt['data'][i].xScale[len-1])
-
-              for(let j=0; j<opt.data[i].values.length; j++){
-                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
-              }
-              for(let j=0; j<opt.data[i].xScale.length; j++){
-                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
-              }
-
-            } else {
-              xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
-              xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
-            }
-
-            //calculate line generator
-            if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
-              let unit = opt.config.unit
-              if(unit == 'Hour' || unit == 'Day'){
-                this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScaleLine'] = this.lc_bas_xScaleLine
-                this.lc_line_generator[unit]['yScaleLine'] = this.lc_bas_yScaleLine
-                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
-                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
-                this.lc_line_generator[unit]['generator'] = d3.line()
-                                                                .x(function(d,i) {return that.lc_bas_xScaleLine(d.x)})
-                                                                .y(function(d) {return that.lc_bas_yScaleLine(d.y); })
-                                                                .curve(d3.curveMonotoneX)
-              } else if(unit == 'All'){
-                this.lc_line_generator[unit] = {}
-                this.lc_line_generator[unit]['xScaleLine'] = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
-                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
-                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
-                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
-                this.lc_line_generator[unit]['generator'] = d3.line()
-                                                              .x((d, i) => {return that.lc_line_generator[unit]['xScaleLine'](d.x)})
-                                                              .y((d) => { return that.lc_line_generator[unit]['yScaleLine'](d.y)})
-                                                              .curve(d3.curveMonotoneX)
-              }
-            }
-            // if x is not date
-              this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
-              this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
-
-            this.lc_svg_g.append("path")
-                .data(draw_data) // 10. Binds data to the line
-                .transition()
-                .duration(1500)
-                .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
-                .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-                .style('fill', 'none')
-                .style('stroke', that.lc_linecolor[i])
-                .style("stroke-width", '1px')
-
-            this.lc_svg_g.selectAll(".ddot")
-                .data(draw_data)
-              .enter().append("circle")
-              // Uses the enter().append() method
-                .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
-                .attr("cx", function(d, i) { return that.lc_line_generator[opt.config.unit].xScaleLine(d.x) })
-                .attr("cy", function(d, i) { return that.lc_line_generator[opt.config.unit].yScaleLine(d.y) })
-                .attr("r", 2)
-                .attr("linenum", i)
-                .attr('unit', opt.config.unit)
-                .style('fill', that.lc_linecolor[i])
-                .style('stroke', '#fff')
-                .style('stroke-width', '1.5px')
-                .on('mouseover', circle_handleMouseOver)
-                .on('mouseout', circle_handleMouseOut)
-                .on('click', circle_handleClick)
-                .style('opacity', 0)
-                .transition()
-                .duration(2000)
-                .style('opacity', 1)
-
-            this.lc_legend.append('circle')
-              .attr("class", () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
-              .attr("cx", () => { return that.lc_width * 0.04 })
-              .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
-              .attr('num', i)
-              .attr("linenum", i)
-              .attr('unit', opt.config.unit)
-              .attr('type', 'legend')
-              .attr("r", 2)
-              .style('fill', () => { return that.lc_linecolor[i]})
-              .on('mouseover', circle_handleMouseOver)
-              .on('mouseout', circle_handleMouseOut)
-              .style('opacity', 0)
-              .transition()
-              .duration(3000)
-              .style('opacity', 1)
-
-
-            //title
-            this.lc_legend.append('text')
-                .attr('x', () => { return that.lc_width * 0.04 + 10 })
-                .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
-                .text(() => { return opt.config.legend[i]})
-                .style('opacity', 0)
-                .attr('class', 'legend_text')
-                .transition()
-                .duration(3000)
-                .style('opacity', 1)
-
-          }
-
-          //this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
-
-        }
-        // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-
-        function circle_handleMouseOver(d, i){
-          // Use D3 to select element, change size
-          d3.select(this)
-          .transition()
-          .duration(300)
-          .attr('r', 6)
-
-          //use D3 to select line, change stroke
-          let line_num = d3.select(this).attr('linenum'),
-             unit = d3.select(this).attr('unit'),
-             type = d3.select(this).attr('type')
-
-          for(var i=0; i<that.lc_pathcount; i++){
-            let lineclass = 'line-' + i,
-              dotclass = 'dot-' + i
-            if(line_num == i){
-              //selected line get more wide
-              d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
-              //select scale
-              // 3. Call the x axis in a group tag
-
-              d3.selectAll('.x.axis').transition()
-                  .duration(300).remove()
-
-              d3.selectAll('.y.axis').transition()
-                  .duration(300).remove()
-
-              that.lc_svg_g.append("g")
-                  .attr("class", "x axis")
-                  .attr("transform", "translate( 0," + +that.lc_height + ")")
-                  .transition()
-                  .duration(1000)
-                  .call(d3.axisBottom(that.lc_line_generator[opt.config.unit]['xScaleAxis']).ticks(4))
-
-              that.lc_svg_g.append("g")
-                  .attr("class", "y axis")
-                  .transition()
-                  .duration(1000)
-                  .call(d3.axisLeft(that.lc_line_generator[opt.config.unit]['yScaleAxis']))
-                   // Create an axis component with d3.axisBottom
-
-              d3.selectAll('.yAxisLabel').transition()
-                  .duration(300).remove()
-              d3.selectAll('.xAxisLabel').transition()
-                  .duration(300).remove()
-
-              that.lc_svg.append('text')
-                .attr('x', function(d, i) { return that.lc_margin.left })
-                .attr("y", function(d, i) { return 15})
-                .text((d,j) => {return opt['data'][i].yLabel})
-                .style('opacity', 0)
-                .attr('class', 'legend_text yAxisLabel')
-                .transition()
-                .duration(1000)
-                .style('opacity', 1)
-
-              that.lc_svg.append('text')
-                .attr('x', function(d, i) { return that.lc_margin.left + that.lc_width + 10})
-                .attr("y", function(d, i) { return that.lc_margin.top + that.lc_height })
-                .text((d,j) => {return opt['data'][i].xLabel})
-                .style('opacity', 0)
-                .attr('class', 'legend_text xAxisLabel')
-                .transition()
-                .duration(1000)
-                .style('opacity', 1)
-
-              let xfunc = that.lc_xScaleText_arr[i],
-                  yfunc = that.lc_yScaleText_arr[i]
-
-              // Specify where to put label of text
-              if(type != 'legend'){
-                d3.select('#line_chart_g').append("text")
-                .attr('id', "lt_label")
-                .attr('x', () => {
-                  return +that.lc_line_generator[unit].xScaleLine(d.x) - 10
-                  if(typeof(d.x) == 'object'){
-                    return that.lc_line_generator[unit].xScaleLine(d.x)
-                  } else {
-
-                  }
+                else if(this.all_day_hour === 'day'){
+                    this.block_bar_chart2('2','0',"出发区域","view1");
+                    this.block_bar_chart2('1','0',"到达区域","view2");
+                    this.block_bar_chart2('3','0','出发时间',"view3");
+                    this.block_bar_chart2('4','0','出行距离',"view4");
+                }
+                if((val === 1||val=== 0)&&oldVal === 2) calendar.drawday();
+                if(val===2) calendar.drawhour();
+
+                // if(val == 2){
+                //   this.handle_paraline({
+                //     'status': 3,
+                //     'table': 'vector'
+                //   })
+                // } else if(val == 1 || val == 0){
+                //   this.handle_paraline({
+                //     'status': 3,
+                //     'table': 'vector_day'
+                //   })
+                // }
+            },
+            // highlight_paraline_state(val, oldVal){
+            //   this.handle_highlight(val)
+            // }
+            "$store.state.calendar_legend_state": {
+                handler(type) {
+                    if(this.all_day_hour === 'all'){
+                        this.block_bar_chart('2',type,"出发区域","view1");
+                        this.block_bar_chart('1',type,"到达区域","view2");
+                        this.block_bar_chart('3',type,'出发时间',"view3");
+                        this.block_bar_chart('4',type,'出行距离',"view4");
+                    }
+                    else{
+                        this.block_bar_chart2('2',type,"出发区域","view1");
+                        this.block_bar_chart2('1',type,"到达区域","view2");
+                        this.block_bar_chart2('3',type,'出发时间',"view3");
+                        this.block_bar_chart2('4',type,'出行距离',"view4");
+                    }
+
+                },
+                deep: true
+            },
+        },
+        methods:{
+            init_heatmap(){
+                var FullWidth = document.getElementById('heatmap').clientWidth,
+                    FullHeight = document.getElementById('heatmap').clientHeight,
+                    margin = { top: FullHeight*0.1, right: FullWidth*0.05, bottom: FullHeight*0.1, left: FullWidth*0.05 },
+                    width = FullWidth - margin.left - margin.right,
+                    height = FullHeight - margin.top - margin.bottom,
+                    gridSize = Math.floor(height / 6.5),
+                    legendElementWidth = gridSize,
+                    buckets = 9,
+                    colors = ["#0B234F", "#1D3E13", "#9C762B", "#88491D", "#4F100B", "#37204A"],
+                    //colors = ["#99C779","#90BA72","#86AD6A","#688752","#37472C","#2D3B24"], // alternatively colorbrewer.YlGnBu[9]
+                    days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+                    times = ["1a", "2a", "3a", "4a", "5a", "6a", "7a", "8a", "9a", "10a", "11a", "12a", "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p", "10p", "11p", "12p"],
+                    datasets = ["http://localhost:3000/test", "http://localhost:3000/test"];
+
+                var svg = d3.select("#heatmap_chart").append("svg")
+                    .attr("width", FullWidth)
+                    .attr("height", FullHeight)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                var dayLabels = svg.selectAll(".dayLabel")
+                    .data(days)
+                    .enter().append("text")
+                    .text(function (d) { return d; })
+                    .attr("x", 0)
+                    .attr("y", function (d, i) { return i * gridSize; })
+                    .style("text-anchor", "end")
+                    .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+                    .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
+
+                var timeLabels = svg.selectAll(".timeLabel")
+                    .data(times)
+                    .enter().append("text")
+                    .text(function(d) { return d; })
+                    .attr("x", function(d, i) { return i * gridSize; })
+                    .attr("y", 0)
+                    .style("text-anchor", "middle")
+                    .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+                    .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+
+                var heatmapChart = function(tsvFile) {
+                    (async function(){
+                        const response = await DataManager.getHeatmapData()
+                        let data = []
+                        response.data.forEach( (d,i) => {
+                            data.push({
+                                day: +d.day,
+                                hour: +d.hour,
+                                value: +d.value
+                            })
+                        })
+
+                        var colorScale = d3.scaleQuantile()
+                            .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+                            .range(colors);
+
+                        var cards = svg.selectAll(".hour")
+                            .data(data, function(d) {return d.day+':'+d.hour;});
+
+                        cards.append("title");
+
+                        cards.enter().append("rect")
+                            .attr("x", function(d) { return (d.hour - 1) * gridSize; })
+                            .attr("y", function(d) { return (d.day - 1) * gridSize; })
+                            .attr("rx", 4)
+                            .attr("ry", 4)
+                            .attr("class", "hour bordered")
+                            .attr("width", gridSize)
+                            .attr("height", gridSize)
+                            .style("fill", 'grey')
+                            .transition().duration(1000)
+                            .style("fill", function(d){return colorScale(d.value)});
+
+                        /*
+                        cards
+                            .style("fill", function(d) { return colorScale(d.value); });
+                        */
+
+                        cards.select("title").text(function(d) { return d.value; });
+
+                        cards.exit().remove();
+
+                        var legend = svg.selectAll(".legend")
+                            .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+                        legend.enter().append("g")
+                            .attr("class", "legend");
+
+                        legend.append("rect")
+                            .attr("x", function(d, i) { return legendElementWidth * i; })
+                            .attr("y", height)
+                            .attr("width", legendElementWidth)
+                            .attr("height", gridSize / 2)
+                            .style("fill", function(d, i) { return colors[i]; });
+
+                        legend.append("text")
+                            .attr("class", "mono")
+                            .text(function(d) { return "≥ " + Math.round(d); })
+                            .attr("x", function(d, i) { return legendElementWidth * i; })
+                            .attr("y", height + gridSize);
+
+                        legend.exit().remove();
+                    })()
+                };
+                heatmapChart(datasets[0]);
+
+                var datasetpicker = d3.select("#dataset-picker").selectAll(".dataset-button")
+                    .data(datasets);
+
+                datasetpicker.enter()
+                    .append("input")
+                    .attr("value", function(d){ return "Dataset " + d })
+                    .attr("type", "button")
+                    .attr("class", "dataset-button")
+                    .on("click", function(d) {
+                        heatmapChart(d);
+                    });
+            },
+            handle_operater_state(){
+                let that = this
+                let opt = {
+                        'status': this.operater_state.status,
+                        'config': {
+                            'legend': [],
+                            'legend_val': [],
+                            'unit': this.operater_state.picked
+                        }
+                    },
+                    except_angle_index = null,
+                    t_operater_state = this.operater_state.checkedNames.filter(d => d != '2')
+                //划分出piechart 的数据 需要在handle_piechart内处理
+                opt.config.legend_val = t_operater_state
+
+                t_operater_state.forEach((d,i) => {
+                    opt.config.legend.push(that.var_config.operater[d].legend)
                 })
-                .attr('y', () => {
-                  return +that.lc_line_generator[unit].yScaleLine(d.y) - 10
-                })
-                .attr('fill', 'white')
-                .text(function() {
-                    if(typeof(d) != 'object'){
-                      return;
+
+                this.handle_linechart(opt)
+
+                //this.handle_piechart(opt)
+            },
+            handle_linechart(opt){
+                let that = this
+
+                if(opt.status == '0'){
+                    //init
+                    let req = {
+                            'legend': opt.config.legend,
+                            'unit': opt.config.unit
+                        },
+                        info = {
+                            'status': 0,
+                            'data': [],
+                            'config': {
+                                'legend': [],
+                                'legend_val': [],
+                                'unit': opt.config.unit
+                            }
+                        },//draw
+                        requestInfo = {
+                            'config': {
+                                'legend': [],
+                                'legend_val':[],
+                                'unit': opt.config.unit
+                            },
+                            'status': opt.status
+                        }//request
+
+                    opt.config.legend_val.forEach((d,i) => {
+                        let dataName = opt.config.unit + d
+                        if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                            info.data.push(that.$store.state.DATA_STORE[dataName])
+                            info.config.legend.push(opt.config.legend[i])
+                            info.config.legend_val.push(d)
+                        } else {
+                            requestInfo.config.legend.push(opt.config.legend[i])
+                            requestInfo.config.legend_val.push(d)
+                        }
+                    })
+
+                    //forbidden reload error
+                    if(requestInfo.config.legend_val.length != 0){
+                        DataManager.getLineChartData(requestInfo).then((res) => {
+                            requestInfo.config.legend_val.forEach((d,i) => {
+                                let dataName = requestInfo.config.unit + d
+                                if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                                    that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
+                                }
+                            })
+                            requestInfo.config.legend_val.forEach((v,j) => {
+                                info.config.legend.push(requestInfo.config.legend[j])
+                                info.config.legend_val.push(v)
+                                info.data.push(res.data[j])
+                            })
+                            that.draw_linechart(info)
+                        }).catch(err => {
+                            if(err){
+                                console.log(err)
+                                return;
+                            }
+                        })
+                    }
+
+                } else if(opt.status == '1'){
+                    //add
+                } else if(opt.status == '2'){
+                    //delete
+                } else if(opt.status == '3'){
+                    //updates all
+                    let req = {
+                            'legend': opt.config.legend_val,
+                            'unit': opt.config.unit
+                        },
+                        info = {
+                            'status': opt.status,
+                            'data': [],
+                            'config': {
+                                'legend': [],
+                                'legend_val': [],
+                                'unit': opt.config.unit
+                            }
+                        },//draw
+                        requestInfo = {
+                            'config': {
+                                'legend': [],
+                                'legend_val':[],
+                                'unit': opt.config.unit
+                            },
+                            'status': opt.status
+                        }//request
+
+                    opt.config.legend_val.forEach((d,i) => {
+                        let dataName = opt.config.unit + d
+                        if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                            info.data.push(that.$store.state.DATA_STORE[dataName])
+                            info.config.legend.push(opt.config.legend[i])
+                            info.config.legend_val.push(d)
+                        } else {
+                            requestInfo.config.legend.push(opt.config.legend[i])
+                            requestInfo.config.legend_val.push(d)
+                        }
+                    })
+
+
+                    //forbidden reload error
+                    if(requestInfo.config.legend.length != 0){
+                        DataManager.getLineChartData(requestInfo).then((res) => {
+
+                            requestInfo.config.legend_val.forEach((d,i) => {
+                                let dataName = requestInfo.config.unit + d
+                                if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                                    that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
+                                }
+                            })
+
+                            requestInfo.config.legend_val.forEach((v,j) => {
+                                info.config.legend.push(requestInfo.config.legend[j])
+                                info.config.legend_val.push(v)
+                                info.data.push(res.data[j])
+                            })
+                            that.draw_linechart(info)
+                        }).catch(err => {
+                            if(err){
+                                console.log(err)
+                                return;
+                            }
+                        })
+                    }else if(requestInfo.config.legend.length == 0){
+                        that.draw_linechart(info)
+                    }
+                }
+            },
+            draw_linechart(opt){
+                let that = this
+                this.last_axis_type = opt.config.unit
+
+                if(opt.status == 0){
+                    let that = this
+                    this.lc_FullWidth = document.getElementById('line').clientWidth,
+                        this.lc_FullHeight = document.getElementById('line').clientHeight,
+                        this.lc_margin = { top: this.lc_FullHeight*0.15, right: this.lc_FullWidth*0.2, bottom: this.lc_FullHeight*0.1, left: this.lc_FullWidth*0.1 },
+                        this.lc_width = this.lc_FullWidth - this.lc_margin.left - this.lc_margin.right,
+                        this.lc_height = this.lc_FullHeight - this.lc_margin.top - this.lc_margin.bottom
+                    let yScaleMin = Math.min.apply(null, opt.data[0].yScale),
+                        yScaleMax = Math.max.apply(null, opt.data[0].yScale),
+                        xScaleMin = 0,
+                        xScaleMax = 1
+
+                    //-----------------------------------------------------------
+                    this.lc_bas_xScaleLine = d3.scaleLinear()
+                        .domain([0, 1]) // input
+                        .range([0, that.lc_width]); // output
+
+                    // 6. Y scale will use the randomly generate number
+                    this.lc_bas_yScaleLine = d3.scaleLinear()
+                        .domain([0, 1]) // input
+                        .range([that.lc_height, 0]); // output
+                    //------------------------------------------------------------
+                    // 5. X scale will use the index of our data
+                    this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
+                    this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
+
+                    //if type == date timeScale
+                    //else type == other scaleLinear
+
+                    for(var i=0; i<opt.data.length; i++){
+
+                        if(opt.data[i].xLabel == 'date'){
+                            let len = opt['data'][i].xScale.length
+                            xScaleMin = new Date(opt['data'][i].xScale[0])
+                            xScaleMax = new Date(opt['data'][i].xScale[len-1])
+
+                            for(let j=0; j<opt.data[i].values.length; j++){
+                                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
+                            }
+                            for(let j=0; j<opt.data[i].xScale.length; j++){
+                                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
+                            }
+
+                        } else {
+                            xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+                            xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
+                        }
+                    }
+
+
+
+                    if(opt.config.unit == 'Hour' || opt.config.unit == 'Day'){
+                        this.lc_xScaleLine = d3.scaleLinear()
+                            .domain([0, 1]) // input
+                            .range([0, that.lc_width]); // output
+
+                        // 6. Y scale will use the randomly generate number
+                        this.lc_yScaleLine = d3.scaleLinear()
+                            .domain([0, 1]) // input
+                            .range([that.lc_height, 0]); // output
+
+                        this.lc_xScaleAxis = d3.scaleLinear()
+                            .domain([xScaleMin, xScaleMax]) // input
+                            .range([0, that.lc_width]); // output
+
+                        this.lc_yScaleAxis = d3.scaleLinear()
+                            .domain([yScaleMin, yScaleMax]) // input
+                            .range([that.lc_height, 0]); // output
+
+                    } else if(opt.config.unit == 'All'){
+                        console.log('scaleTime', d3.extent(opt.data[0].values, (d) => {return d.x}))
+                        this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
+                        this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
+                        this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
+                        this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+                    }
+
+                    // 7. d3's line generator
+                    this.lc_line = d3.line()
+                        .x(function(d, i) { return that.lc_xScaleLine(d.x); }) // set the x values for the line generator
+                        .y(function(d) { return that.lc_yScaleLine(d.y); }) // set the y values for the line generator
+                        .curve(d3.curveMonotoneX) // apply smoothing to the line
+
+                    if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
+                        let unit = opt.config.unit
+                        this.lc_line_generator[unit] = {}
+                        this.lc_line_generator[unit]['xScaleLine'] = this.lc_xScaleLine
+                        this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                        this.lc_line_generator[unit]['xScaleAxis'] = this.lc_xScaleAxis
+                        this.lc_line_generator[unit]['yScaleAxis'] = this.lc_yScaleAxis
+                        this.lc_line_generator[unit]['generator'] = this.lc_line
+                    }
+
+                    // 1. Add the SVG to the page and employ #2
+                    this.lc_svg = d3.select("#line_chart").append("svg")
+                        .attr("width", that.lc_width + that.lc_margin.left + that.lc_margin.right)
+                        .attr("height", that.lc_height + that.lc_margin.top + that.lc_margin.bottom)
+
+                    // Add the g to contain legend
+                    this.lc_legend = this.lc_svg.append('g')
+                        .attr('id', 'line_chart_legend')
+                        .attr('transform', () => {
+                            let x = +that.lc_margin.left + +that.lc_width,
+                                y = +that.lc_margin.top
+                            return 'translate(' + x + ',' + y + ')'
+                        })
+
+                    this.lc_svg_g = this.lc_svg.append("g")
+                        .attr('id', 'line_chart_g')
+                        .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")");
+
+                    // 3. Call the x axis in a group tag
+                    this.lc_svg_g.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate( 0," + +that.lc_height + ")")
+                        .transition()
+                        .duration(3000)
+                        .call(d3.axisBottom(that.lc_xScale)) // Create an axis component with d3.axisBottom
+
+                    // 4. Call the y axis in a group tag
+                    this.lc_svg_g.append("g")
+                        .attr("class", "y axis")
+                        .transition()
+                        .duration(3000)
+                        .call(d3.axisLeft(that.lc_yScale)); // Create an axis component with d3.axisLeft
+
+                    //13. append chart title
+                    this.lc_svg_g.append('text')
+                        .attr('id', "lc_title")
+                        .attr('x', that.lc_width/2)
+                        .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
+                        .attr('font-size', '15px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', 'rgb(170, 170, 170)')
+                        .text(function() {
+                            return that.LINECHART_TITLE[opt.config.unit]
+                        });
+
+                    // 9. Append the path, bind the data, and call the line generator
+
+                    // 12. Appends a circle for each datapoint
+                    this.lc_pathcount = opt.data.length
+                    for(var i=0; i<opt.data.length; i++){
+                        let draw_data = opt.data[i].values
+                        let yScaleMin = opt.data[i].yScale[0],
+                            yScaleMax = opt.data[i].yScale[1],
+                            xScaleMin = opt.data[i].xScale[0],
+                            xScaleMax = opt.data[i].xScale[1]
+
+                        this.lc_xScaleText_arr = []
+                        this.lc_yScaleText_arr = []
+
+                        this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
+                        this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
+
+                        this.lc_svg_g.append("path")
+                            .data(draw_data) // 10. Binds data to the line
+                            .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
+                            .attr('num', i)
+                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                            .style('fill', 'none')
+                            .style('stroke', that.lc_linecolor[i])
+                            .style("stroke-width", '1px')
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(1500)
+                            .style('opacity', 1)
+
+
+                        this.lc_svg_g.selectAll(".ddot")
+                            .data(draw_data)
+                            .enter().append("circle")
+                        // Uses the enter().append() method
+                            .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+                            .attr("cx", function(d, i) {return that.lc_line_generator[opt.config.unit]['xScaleLine'](d.x)})
+                            .attr("cy", function(d, i) {return that.lc_line_generator[opt.config.unit]['yScaleLine'](d.y)})
+                            .attr("r", 2)
+                            .attr("linenum", i)
+                            .attr('unit', opt.config.unit)
+                            .style('fill', that.lc_linecolor[i])
+                            .style('stroke', '#fff')
+                            .style('stroke-width', '1.5px')
+                            .on('mouseover', circle_handleMouseOver)
+                            .on('mouseout', circle_handleMouseOut)
+                            .on('click', circle_handleClick)
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(1500)
+                            .style('opacity', 1)
+
+
+                        this.lc_legend.append('circle')
+                            .attr("class",  () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
+                            .attr("cx", () => { return that.lc_width * 0.04 })
+                            .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
+                            .attr('num', i)
+                            .attr("linenum", i)
+                            .attr('unit', opt.config.unit)
+                            .attr('type', 'legend')
+                            .attr("r", 2)
+                            .style('fill', () => { return that.lc_linecolor[i]})
+                            .on('mouseover', circle_handleMouseOver)
+                            .on('mouseout', circle_handleMouseOut)
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(3000)
+                            .style('opacity', 1)
+
+
+                        //title
+                        this.lc_legend.append('text')
+                            .attr('x', () => { return that.lc_width * 0.04 + 10 })
+                            .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
+                            .text(() => { return opt.config.legend[i]})
+                            .style('opacity', 0)
+                            .attr('class', 'legend_text')
+                            .transition()
+                            .duration(3000)
+                            .style('opacity', 1)
+                    }
+                    //change color
+                    this.lc_linecount = this.lc_linecount + 1
+                } else if(opt.status == 3){
+                    d3.selectAll('.line').transition().duration(1000).style('opacity', 0).remove()
+                    d3.selectAll('.dot').transition().duration(1000).style('opacity', 0).remove()
+                    d3.selectAll('.legend_text').transition().duration(1500).style('opacity', 0).remove()
+                    d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
+
+                    this.lc_pathcount = opt.data.length
+                    this.lc_xScaleText_arr = []
+                    this.lc_yScaleText_arr = []
+
+                    //redraw axis
+                    // 3. Call the x axis in a group tag
+                    d3.selectAll('.x.axis').transition()
+                        .duration(300).remove()
+
+                    d3.selectAll('.y.axis').transition()
+                        .duration(300).remove()
+
+                    d3.selectAll('#lc_title').transition()
+                        .duration(300).remove()
+
+
+
+                    this.lc_svg_g.append("g")
+                        .attr("class", "x axis")
+                        .attr("transform", "translate( 0," + +that.lc_height + ")")
+                        .transition()
+                        .duration(3000)
+                        .call(d3.axisBottom(that.lc_bas_xScaleLine)) // Create an axis component with d3.axisBottom
+
+                    // 4. Call the y axis in a group tag
+                    this.lc_svg_g.append("g")
+                        .attr("class", "y axis")
+                        .transition()
+                        .duration(3000)
+                        .call(d3.axisLeft(that.lc_bas_yScaleLine)); // Create an axis component with d3.axisLeft
+
+                    //13. append chart title
+                    this.lc_svg_g.append('text')
+                        .attr('id', "lc_title")
+                        .attr('x', that.lc_width/2)
+                        .attr('y', () => {return - (+that.lc_margin.top / 2.5)})
+                        .attr('font-size', '15px')
+                        .attr('font-weight', 'bold')
+                        .attr('fill', 'rgb(170, 170, 170)')
+                        .text(function() {
+                            return that.LINECHART_TITLE[opt.config.unit]
+                            return 'TITLE'  // Value of the text
+                        });
+
+                    for(var i=0; i<opt.data.length; i++){
+                        let draw_data = opt.data[i].values,
+                            yScaleMin = Math.min.apply(null, opt.data[i].yScale),
+                            yScaleMax = Math.max.apply(null, opt.data[i].yScale),
+                            xScaleMin = 0,
+                            xScaleMax = 1
+
+                        if(opt.data[i].xLabel == 'date'){
+                            let len = opt['data'][i].xScale.length
+                            xScaleMin = new Date(opt['data'][i].xScale[0])
+                            xScaleMax = new Date(opt['data'][i].xScale[len-1])
+
+                            for(let j=0; j<opt.data[i].values.length; j++){
+                                opt.data[i].values[j].x = new Date(opt.data[i].values[j].x)
+                            }
+                            for(let j=0; j<opt.data[i].xScale.length; j++){
+                                opt.data[i].xScale[j] = new Date(opt.data[i].xScale[j])
+                            }
+
+                        } else {
+                            xScaleMin = Math.min.apply(null, opt['data'][i].xScale)
+                            xScaleMax = Math.max.apply(null, opt['data'][i].xScale)
+                        }
+
+                        //calculate line generator
+                        if(!this.lc_line_generator.hasOwnProperty(opt.config.unit)){
+                            let unit = opt.config.unit
+                            if(unit == 'Hour' || unit == 'Day'){
+                                this.lc_line_generator[unit] = {}
+                                this.lc_line_generator[unit]['xScaleLine'] = this.lc_bas_xScaleLine
+                                this.lc_line_generator[unit]['yScaleLine'] = this.lc_bas_yScaleLine
+                                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleLinear().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
+                                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+                                this.lc_line_generator[unit]['generator'] = d3.line()
+                                    .x(function(d,i) {return that.lc_bas_xScaleLine(d.x)})
+                                    .y(function(d) {return that.lc_bas_yScaleLine(d.y); })
+                                    .curve(d3.curveMonotoneX)
+                            } else if(unit == 'All'){
+                                this.lc_line_generator[unit] = {}
+                                this.lc_line_generator[unit]['xScaleLine'] = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
+                                this.lc_line_generator[unit]['yScaleLine'] = this.lc_yScaleLine
+                                this.lc_line_generator[unit]['xScaleAxis'] = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
+                                this.lc_line_generator[unit]['yScaleAxis'] = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+                                this.lc_line_generator[unit]['generator'] = d3.line()
+                                    .x((d, i) => {return that.lc_line_generator[unit]['xScaleLine'](d.x)})
+                                    .y((d) => { return that.lc_line_generator[unit]['yScaleLine'](d.y)})
+                                    .curve(d3.curveMonotoneX)
+                            }
+                        }
+                        // if x is not date
+                        this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
+                        this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
+
+                        this.lc_svg_g.append("path")
+                            .data(draw_data) // 10. Binds data to the line
+                            .transition()
+                            .duration(1500)
+                            .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
+                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                            .style('fill', 'none')
+                            .style('stroke', that.lc_linecolor[i])
+                            .style("stroke-width", '1px')
+
+                        this.lc_svg_g.selectAll(".ddot")
+                            .data(draw_data)
+                            .enter().append("circle")
+                        // Uses the enter().append() method
+                            .attr("class", () => {return 'dot-' + i + ' dot'}) // Assign a class for styling
+                            .attr("cx", function(d, i) { return that.lc_line_generator[opt.config.unit].xScaleLine(d.x) })
+                            .attr("cy", function(d, i) { return that.lc_line_generator[opt.config.unit].yScaleLine(d.y) })
+                            .attr("r", 2)
+                            .attr("linenum", i)
+                            .attr('unit', opt.config.unit)
+                            .style('fill', that.lc_linecolor[i])
+                            .style('stroke', '#fff')
+                            .style('stroke-width', '1.5px')
+                            .on('mouseover', circle_handleMouseOver)
+                            .on('mouseout', circle_handleMouseOut)
+                            .on('click', circle_handleClick)
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(2000)
+                            .style('opacity', 1)
+
+                        this.lc_legend.append('circle')
+                            .attr("class", () => {return 'dot-' + i + ' dot' + ' legend_line'}) // Assign a class for styling
+                            .attr("cx", () => { return that.lc_width * 0.04 })
+                            .attr("cy", () => { return that.lc_height * 0.15 * i + 20})
+                            .attr('num', i)
+                            .attr("linenum", i)
+                            .attr('unit', opt.config.unit)
+                            .attr('type', 'legend')
+                            .attr("r", 2)
+                            .style('fill', () => { return that.lc_linecolor[i]})
+                            .on('mouseover', circle_handleMouseOver)
+                            .on('mouseout', circle_handleMouseOut)
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(3000)
+                            .style('opacity', 1)
+
+
+                        //title
+                        this.lc_legend.append('text')
+                            .attr('x', () => { return that.lc_width * 0.04 + 10 })
+                            .attr("y", () => { return that.lc_height * 0.15 * i  + 3 + 20})
+                            .text(() => { return opt.config.legend[i]})
+                            .style('opacity', 0)
+                            .attr('class', 'legend_text')
+                            .transition()
+                            .duration(3000)
+                            .style('opacity', 1)
+
+                    }
+
+                    //this.lc_legend.selectAll('.legend_line').data([]).exit().remove()
+
+                }
+                // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
+
+                function circle_handleMouseOver(d, i){
+                    // Use D3 to select element, change size
+                    d3.select(this)
+                        .transition()
+                        .duration(300)
+                        .attr('r', 6)
+
+                    //use D3 to select line, change stroke
+                    let line_num = d3.select(this).attr('linenum'),
+                        unit = d3.select(this).attr('unit'),
+                        type = d3.select(this).attr('type')
+
+                    for(var i=0; i<that.lc_pathcount; i++){
+                        let lineclass = 'line-' + i,
+                            dotclass = 'dot-' + i
+                        if(line_num == i){
+                            //selected line get more wide
+                            d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '3px')
+                            //select scale
+                            // 3. Call the x axis in a group tag
+
+                            d3.selectAll('.x.axis').transition()
+                                .duration(300).remove()
+
+                            d3.selectAll('.y.axis').transition()
+                                .duration(300).remove()
+
+                            that.lc_svg_g.append("g")
+                                .attr("class", "x axis")
+                                .attr("transform", "translate( 0," + +that.lc_height + ")")
+                                .transition()
+                                .duration(1000)
+                                .call(d3.axisBottom(that.lc_line_generator[opt.config.unit]['xScaleAxis']).ticks(4))
+
+                            that.lc_svg_g.append("g")
+                                .attr("class", "y axis")
+                                .transition()
+                                .duration(1000)
+                                .call(d3.axisLeft(that.lc_line_generator[opt.config.unit]['yScaleAxis']))
+                            // Create an axis component with d3.axisBottom
+
+                            d3.selectAll('.yAxisLabel').transition()
+                                .duration(300).remove()
+                            d3.selectAll('.xAxisLabel').transition()
+                                .duration(300).remove()
+
+                            that.lc_svg.append('text')
+                                .attr('x', function(d, i) { return that.lc_margin.left })
+                                .attr("y", function(d, i) { return 15})
+                                .text((d,j) => {return opt['data'][i].yLabel})
+                                .style('opacity', 0)
+                                .attr('class', 'legend_text yAxisLabel')
+                                .transition()
+                                .duration(1000)
+                                .style('opacity', 1)
+
+                            that.lc_svg.append('text')
+                                .attr('x', function(d, i) { return that.lc_margin.left + that.lc_width + 10})
+                                .attr("y", function(d, i) { return that.lc_margin.top + that.lc_height })
+                                .text((d,j) => {return opt['data'][i].xLabel})
+                                .style('opacity', 0)
+                                .attr('class', 'legend_text xAxisLabel')
+                                .transition()
+                                .duration(1000)
+                                .style('opacity', 1)
+
+                            let xfunc = that.lc_xScaleText_arr[i],
+                                yfunc = that.lc_yScaleText_arr[i]
+
+                            // Specify where to put label of text
+                            if(type != 'legend'){
+                                d3.select('#line_chart_g').append("text")
+                                    .attr('id', "lt_label")
+                                    .attr('x', () => {
+                                        return +that.lc_line_generator[unit].xScaleLine(d.x) - 10
+                                        if(typeof(d.x) == 'object'){
+                                            return that.lc_line_generator[unit].xScaleLine(d.x)
+                                        } else {
+
+                                        }
+                                    })
+                                    .attr('y', () => {
+                                        return +that.lc_line_generator[unit].yScaleLine(d.y) - 10
+                                    })
+                                    .attr('fill', 'white')
+                                    .text(function() {
+                                        if(typeof(d) != 'object'){
+                                            return;
+                                        } else {
+                                            let tex = ''
+                                            if(typeof(d.x) == 'object'){
+                                                tex = "X: " + d.x.yyyymmdd() + " Y: " + yfunc(d.y).toFixed(2)
+                                                //tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
+                                            } else {
+                                                tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
+                                            }
+                                            return tex;
+                                        }
+                                    });
+                            }
+
+                        } else {
+                            d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
+                            d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
+                        }
+                    }
+
+                }
+
+                function circle_handleMouseOut(d){
+                    d3.select(this)
+                        .transition()
+                        .duration(300)
+                        .attr('r', 2)
+                    // Select text by id and then remove
+                    d3.select("#lt_label").remove();  // Remove text location
+
+                    //cancel line opacity, change stroke
+                    let line_num = d3.select(this).attr('linenum')
+
+                    for(var i=0; i<that.lc_pathcount; i++){
+                        let lineclass = 'line-' + i,
+                            dotclass = 'dot-' + i
+                        if(line_num == i){
+                            d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '1px')
+                        } else {
+                            d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 1)
+                            d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 1)
+                        }
+                    }
+
+                }
+
+                function circle_handleClick(d){
+                    //update map rect
+                    try{
+                        let date = d.x.yyyymmdd()
+                        that.$store.commit("Calendar_change_state", [date])
+                    }catch(err){
+                        console.log(err)
+                    }
+                }
+
+                function legend_circle_handleMouseOver(d,i){
+                    // Use D3 to select element, change size
+                    d3.select(this)
+                        .transition()
+                        .duration(300)
+                        .attr('r', 6)
+
+                    let line_num = d3.select(this).attr('linenum'),
+                        unit = d3.select(this).attr('unit')
+                }
+
+                function legend_circle_handleMouseOut(d,i){
+
+                }
+                //end of function draw_linechart
+            },
+            handle_feature_change_state(){
+                // 前提：在有线图All的基础上进行添加色块
+                // 收集基本信息 存储参数的变量
+                // 获取已经绘制线图的类型
+                // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形
+                // 在线图添加提示
+                // 添加交互 鼠标mouseover矩形块时，矩形块边框高亮
+                //
+
+                let that = this
+                action_handle()
+                function action_handle(){
+                    //仅对坐标轴为All时绘制天气Rect
+                    //计算增加或者删除块
+                    let obj = {
+                        'status':3,
+                        'config': {
+                            'add': [],
+                            'remove': []
+                        }
+                    }
+
+                    that.feature_change_state.checkedNames.forEach((d,i) => {
+                        if(that.his_feature_config.checkedNames.indexOf(d) == -1){
+                            obj.config.add.push(d)
+                        }
+                    })
+
+                    that.his_feature_config.checkedNames.forEach((d,i) => {
+                        if(that.feature_change_state.checkedNames.indexOf(d) == -1){
+                            obj.config.remove.push(d)
+                        }
+                    })
+
+                    that.his_feature_config = JSON.parse(JSON.stringify(that.feature_change_state))
+                    if(that.last_axis_type == 'All'){
+                        if(obj.config.add.length != 0){
+                            // request data
+                            // draw data
+                            let dataName = 'getFeature' + obj.config.add[0]
+                            if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                                addFeatureRect(JSON.parse(JSON.stringify(that.$store.state.DATA_STORE[dataName])))
+                            } else {
+                                DataManager.getFeature({'val': obj.config.add[0]}).then((res) => {
+                                    let _data = {
+                                        'type': obj.config.add[0],
+                                        'data': res.data
+                                    }
+                                    that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': _data})
+                                    addFeatureRect(_data)
+                                }).catch(err => {
+                                    if(err){
+                                        console.log(err)
+                                        return ;
+                                    }
+                                })
+                            }
+                        } else if(obj.config.remove.length != 0){
+                            removeFeatureRect({'type': obj.config.remove[0]})
+                            //removeFeatureRect()
+                        }
+                    }
+
+                }
+                function removeFeatureRect(config){
+                    let _rectclass = '.rect-' + config.type
+                    if(config.type == 0){
+                        d3.selectAll('.weatherRect_disselect').data([]).exit().transition().duration(300).remove()
+                        d3.selectAll('.legendtext0').remove()
+                        d3.selectAll('.legendrect0').remove()
                     } else {
-                      let tex = ''
-                      if(typeof(d.x) == 'object'){
-                        tex = "X: " + d.x.yyyymmdd() + " Y: " + yfunc(d.y).toFixed(2)
-                        //tex = "X: " + (+d.x.getMonth() + 1) + "-" + d.x.getDate() + " Y: " + yfunc(d.y).toFixed(2)
-                      } else {
-                        tex = "X: " + xfunc(d.x) + " Y: " + yfunc(d.y).toFixed(2)
-                      }
-                      return tex;
+                        d3.selectAll('.legendtext1').remove()
+                        d3.selectAll('.legendrect1').remove()
                     }
-                  });
-              }
+                    d3.selectAll(_rectclass).remove()
+                }
+                function addFeatureRect(config){
 
-            } else {
-              d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 0.1)
-              d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 0.1)
-            }
-          }
+                    let xScaleAxis = that.lc_line_generator['All']['xScaleAxis'],
+                        yScaleAxis = that.lc_line_generator['All']['yScaleAxis'],
+                        feature = config.data
+                    // width = xScale / 2
+                    // height = lc_height
+                    let half_rect_interval = (xScaleAxis(new Date(feature[1].time)) - xScaleAxis(new Date(feature[0].time))) / 2,
+                        g = that.lc_svg.append('g')
+                            .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")")
+                            .attr('id', 'featureRect')
 
-        }
-
-        function circle_handleMouseOut(d){
-          d3.select(this)
-          .transition()
-          .duration(300)
-          .attr('r', 2)
-          // Select text by id and then remove
-          d3.select("#lt_label").remove();  // Remove text location
-
-          //cancel line opacity, change stroke
-          let line_num = d3.select(this).attr('linenum')
-
-          for(var i=0; i<that.lc_pathcount; i++){
-            let lineclass = 'line-' + i,
-              dotclass = 'dot-' + i
-            if(line_num == i){
-              d3.select('.' + lineclass).transition().duration(300).style('stroke-width', '1px')
-            } else {
-              d3.selectAll('.' + lineclass).transition().duration(300).style('opacity', 1)
-              d3.selectAll('.' + dotclass).transition().duration(300).style('opacity', 1)
-            }
-          }
-
-        }
-
-        function circle_handleClick(d){
-          //update map rect
-          try{
-            let date = d.x.yyyymmdd()
-            that.$store.commit("Calendar_change_state", [date])
-          }catch(err){
-            console.log(err)
-          }
-        }
-
-        function legend_circle_handleMouseOver(d,i){
-          // Use D3 to select element, change size
-          d3.select(this)
-          .transition()
-          .duration(300)
-          .attr('r', 6)
-
-          let line_num = d3.select(this).attr('linenum'),
-             unit = d3.select(this).attr('unit')
-        }
-
-        function legend_circle_handleMouseOut(d,i){
-
-        }
-        //end of function draw_linechart
-      },
-      handle_feature_change_state(){
-        // 前提：在有线图All的基础上进行添加色块
-        // 收集基本信息 存储参数的变量
-        // 获取已经绘制线图的类型
-        // 根据线图类型获取x比例尺，根据比例尺绘制天气矩形
-        // 在线图添加提示
-        // 添加交互 鼠标mouseover矩形块时，矩形块边框高亮
-        //
-
-        let that = this
-        action_handle()
-        function action_handle(){
-          //仅对坐标轴为All时绘制天气Rect
-          //计算增加或者删除块
-          let obj = {
-            'status':3,
-            'config': {
-              'add': [],
-              'remove': []
-            }
-          }
-
-          that.feature_change_state.checkedNames.forEach((d,i) => {
-            if(that.his_feature_config.checkedNames.indexOf(d) == -1){
-              obj.config.add.push(d)
-            }
-          })
-
-          that.his_feature_config.checkedNames.forEach((d,i) => {
-            if(that.feature_change_state.checkedNames.indexOf(d) == -1){
-              obj.config.remove.push(d)
-            }
-          })
-
-          that.his_feature_config = JSON.parse(JSON.stringify(that.feature_change_state))
-          if(that.last_axis_type == 'All'){
-            if(obj.config.add.length != 0){
-              // request data
-              // draw data
-              let dataName = 'getFeature' + obj.config.add[0]
-              if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-                addFeatureRect(JSON.parse(JSON.stringify(that.$store.state.DATA_STORE[dataName])))
-              } else {
-                  DataManager.getFeature({'val': obj.config.add[0]}).then((res) => {
-                    let _data = {
-                      'type': obj.config.add[0],
-                      'data': res.data
+                    for(let i=0;i<feature.length;i++){
+                        feature[i]['Time'] = new Date(feature[i].time)
+                        feature[i]['x'] = xScaleAxis(feature[i]['Time']) - half_rect_interval
+                        feature[i]['y'] = 0
+                        feature[i]['width'] = half_rect_interval * 2
+                        feature[i]['height'] = that.lc_height
                     }
-                    that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': _data})
-                    addFeatureRect(_data)
-                  }).catch(err => {
-                    if(err){
-                      console.log(err)
-                      return ;
+
+                    //construct data
+                    //draw bar
+                    g.selectAll('.xRect')
+                        .data(feature)
+                        .enter()
+                        .append('rect')
+                        .attr('x', (d,i) => {return d.x})
+                        .attr('y', (d,i) => {return d.y})
+                        .attr('width', (d,i) => {return d.width})
+                        .attr('height', (d,i) => {
+                            if(config.type == 0){
+                                //weather
+                                return d.height
+                            } else {
+                                return d.width
+                            }
+                        })
+                        .attr('date', (d,i) => {return d.time})
+                        .attr('class', (d,i) => {
+                            return config.type == 0 ? 'weatherRect_disselect' + ' rect-' + config.type :  ' rect-' + config.type
+                        })
+                        .style('opacity', (d,i) => {
+                            if(config.type == 0){
+                                return d.rain == 1 ? 0.4 : 0
+                            } else {
+                                if(d.holiday == '0'){
+                                    return 0
+                                } else {
+                                    return 1
+                                }
+                            }
+                        })
+                        .on('mouseover', rect_handleMouseOver)
+                        .on('mouseout', rect_handleMouseOut)
+
+                    //legend
+                    g.selectAll('.xRectLegend')
+                        .data([0,1])
+                        .enter()
+                        .append('rect')
+                        .attr('x', function(d, i) {
+                            if(config.type == 0){
+                                //weather
+                                return that.lc_width * 1.02 + 10
+                            } else {
+                                return that.lc_width * 1.13 + 10
+                            }
+                        })
+                        .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 15})
+                        .attr('width', 10)
+                        .attr('height', 10)
+                        .style('opacity', 0)
+                        .attr('class', (d,i) => {
+                            if(config.type == 0){
+                                return 'legend_feature_weather_rect' + i + ' legendrect0'
+                            } else {
+                                return 'legend_feature_holi_rect' + i + ' legendrect1'
+                            }
+                        })
+                        .transition()
+                        .duration(300)
+                        .style('opacity', 1)
+
+                    g.selectAll('.xRectLegend')
+                        .data([0,1])
+                        .enter()
+                        .append('text')
+                        .attr('x', function(d, i) {
+                            if(config.type == 0){
+                                //weather
+                                return that.lc_width * 1.03 + 40
+                            } else {
+                                return that.lc_width * 1.13 + 40
+                            }
+                        })
+                        .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 24})
+                        .text((d,i) => {
+                            if(config.type == 0){
+                                //weather
+                                return i == 0 ? '无雨' : '有雨'
+                            } else {
+                                return i == 0 ? '工作' : '周末'
+                            }
+                        })
+                        .style("text-anchor", "middle")
+                        .attr('class', (d,i) => {
+                            if(config.type == 0){
+                                return 'legend_feature_text_' + i + ' legendtext0'
+                            } else {
+                                return 'legend_feature_text_' + i + ' legendtext1'
+                            }
+                        })
+
+
+                    function rect_handleMouseOver(d, i){
+                        let date = d3.select(this).attr('date'),
+                            coordinates = d3.mouse(this),
+                            x = coordinates[0],
+                            y = coordinates[1]
+
+                        d3.select('#featureRect').append('text').attr('id', 'recttext')
+                            .attr('x', x)
+                            .attr('y', y)
+                            .attr('fill', 'white')
+                            .text(date)
+
+                        d3.select(this).attr('class', 'weatherRect_select')
                     }
-                  })
-              }
-            } else if(obj.config.remove.length != 0){
-              removeFeatureRect({'type': obj.config.remove[0]})
-              //removeFeatureRect()
+                    function rect_handleMouseOut(){
+                        d3.select(this).attr('class', 'weatherRect_disselect')
+                        d3.selectAll('#recttext').remove()
+
+                    }
+
+                }
+
+                function getFeatureRectStatus(){}
+            },
+            handle_paraline(status){
+                let that = this,
+                    req = {
+                        'table': status.table
+                    },
+                    dataName = status.table
+                if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
+                    let data = this.$store.state.DATA_STORE[dataName]
+                    that.init_paraline(data)
+                } else {
+                    DataManager.getParaData(req).then((data, err) => {
+                        if (err){
+                            console.log(err);
+                            return ;
+                        }else{
+                            that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': data.data})
+                            that.init_paraline(data.data)
+                        }
+                    })
+                }
+                function unique (arr) {
+                    return Array.from(new Set(arr))
+                }
+            },
+            init_paraline(config){
+                if(d3.select('#parallel_coordinates').attr('flag')){
+                    d3.select('#parallel_coordinates').select('svg').remove()
+                }
+                this.para_FullWidth = document.getElementById('parallel').clientWidth,
+                    this.para_FullHeight = document.getElementById('parallel').clientHeight,
+                    this.para_margin = { top: this.para_FullHeight*0.2, right: this.para_FullWidth*0.1, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
+                    this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
+                    this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
+                let that = this,
+                    cluster = [...new Set(config.data['cluster'])],
+                    dimensions = config.dimensions,
+                    color = d3.scaleOrdinal()
+                        .domain(config.species)
+                        .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#AC4C1E'])
+
+                this.para_color = color
+
+                let svg = d3.select('#parallel_coordinates')
+                    .attr('flag', 1)
+                    .append('svg')
+                    .attr('width', that.para_FullWidth)
+                    .attr('height', that.para_FullWidth)
+                    .append('g')
+                    .attr('transform',
+                        "translate(" + that.para_margin.left + "," + that.para_margin.top + ")");
+
+                // For each dimension, I build a linear scale. I store all in a y object
+                let y = {}
+                for (let i in dimensions) {
+                    name = dimensions[i]
+                    y[name] = d3.scaleLinear()
+                        .domain( [0,1] ) // --> Same axis range for each group
+                        // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
+                        .range([that.para_height, 0])
+                }
+
+                // Build the X scale -> it find the best position for each Y axis
+                let x = d3.scalePoint()
+                    .range([0, that.para_width])
+                    .domain(dimensions);
+
+                // Highlight the specie that is hovered
+                var highlight = function(d){
+                    let selected_specie = d.cluster
+                    // first every group turns grey
+                    d3.selectAll(".paraline")
+                        .transition().duration(200)
+                        .style("stroke", "lightgrey")
+                        .style("opacity", "0")
+                    // Second the hovered specie takes its color
+                    d3.selectAll(".paraline-" + selected_specie)
+                        .transition().duration(200)
+                        .style("stroke", color(selected_specie))
+                        .style("opacity", "1")
+                }
+
+                // Unhighlight
+                var doNotHighlight = function(d){
+                    d3.selectAll(".paraline")
+                        .transition().duration(200).delay(1000)
+                        .style("stroke", function(d){ return( color(d.cluster))} )
+                        .style("opacity", "1")
+                }
+
+                // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+                function path(d) {
+                    return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
+                }
+
+                // Draw the lines
+                svg
+                    .selectAll("myPath")
+                    .data(config.data)
+                    .enter()
+                    .append("path")
+                    .attr("class", function (d) {return "paraline paraline-" + d.cluster } ) // 2 class for each line: 'line' and the group name
+                    .attr("d",  path)
+                    .style("fill", "none" )
+                    .style("stroke", function(d){ return( color(d.cluster))} )
+                    .style("opacity", 0.5)
+                    .on("mouseover", highlight)
+                    .on("mouseleave", doNotHighlight )
+
+                // Draw the axis:
+                svg.selectAll("myAxis")
+                // For each dimension of the dataset I add a 'g' element:
+                    .data(dimensions).enter()
+                    .append("g")
+                    .attr("class", "axis")
+                    // I translate this element to its right position on the x axis
+                    .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
+                    // And I build the axis with the call function
+                    .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
+                    // Add axis title
+                    .append("text")
+                    .style("text-anchor", "middle")
+                    .attr("y", -9)
+                    .text(function(d) { return d; })
+                    .style("fill", "rgb(170, 170, 170)")
+
+
+                svg.append('text')
+                    .attr('id', 'para_title')
+                    .attr('x', () => {return (that.para_width / 2.5)})
+                    .attr('y', () => {return - (+that.para_height * 0.14)})
+                    .attr('font-size', '15px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', 'rgb(170, 170, 170)')
+                    .text('特征统计')
+            },
+            handle_highlight(linenum){
+                let that = this
+                var highlight = function(num){
+                    let selected_specie = num
+                    // first every group turns grey
+                    d3.selectAll(".paraline")
+                        .transition().duration(200)
+                        .style("stroke", "lightgrey")
+                        .style("opacity", "0")
+                    // Second the hovered specie takes its color
+                    d3.selectAll(".paraline-" + selected_specie)
+                        .transition().duration(200)
+                        .style("stroke", (d => {return that.para_color(d.cluster) }))
+                        .style("opacity", "1")
+                }
+
+                var doNotHighlight = function(num){
+                    d3.selectAll(".paraline")
+                        .transition().duration(200).delay(2000)
+                        .style("stroke", function(d){ return( that.para_color(d.cluster))} )
+                        .style("opacity", "1")
+                }
+                doNotHighlight(linenum)
+                highlight(linenum)
+
+
+            },
+            block_bar_chart(type, cluster_type, title, container) {
+
+                let that = this;
+
+                let echarts = this.$echarts;
+
+                document.getElementById(container).style.width = 400 + 'px';
+                document.getElementById(container).style.height = 220 + 'px';
+
+                let myChart = this.$echarts.init(document.getElementById(container));
+                myChart.clear();
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_d_${type} where d_cluster=${cluster_type}`
+                    }
+                }).then(res => {
+                    //console.log(res.body);
+                    if (type === '3') {
+                        draw_charts(res.body);
+                    }
+                    else if(type === '4'){
+                        draw_charts(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort((a,b) => a.dis_divide-b.dis_divide));
+                    }
+                    else {
+                        draw_charts(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort(() => 0.5 - Math.random()));
+                    }
+
+                });
+
+                function draw_charts(data) {
+                    let xAxisData = [];
+                    let data1 = [];
+                    for (let i = 0; i < data.length; i++) {
+                        xAxisData.push(data[i][Object.keys(data[i])[1]]);
+                        data1.push(data[i].ordercount);
+                    }
+
+                    myChart.on('click', (params) => {
+                        //console.log(params.name);
+                        that.$store.commit('bar_geohash_state', params.name);
+                    });
+
+                    let option = {
+                        //backgroundColor: '#0d235e',
+                        title: {
+                            text: `类别 ${cluster_type + title}流量TOP20`,
+                            y:'10px',
+                            x: 'center',
+                            textStyle: {
+                                //文字颜色
+                                color: "#ffffff",
+                                //字体风格,'normal','italic','oblique'
+                                fontStyle: "normal",
+                                //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                                fontWeight: "100",
+                                //字体系列
+                                fontFamily: "sans-serif",
+                                //字体大小
+                                fontSize: 12
+                            },
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
+                        },
+                        grid: {
+                            top: '15%',
+                            right: '5%',
+                            left: '15%',
+                            bottom: '12%'
+                        },
+                        xAxis: [{
+                            type: 'category',
+                            data: xAxisData,
+                            axisLine: {
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
+                            },
+                            axisLabel: {
+                                show: false,
+                                margin: 10,
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 14
+                                },
+                            },
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
+                            }
+                        }],
+                        yAxis: [{
+                            axisLabel: {
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 10
+                                },
+                                formatter: function (d) {
+                                    return d / 1000 + 'k';
+                                },
+                            },
+                            axisLine: {},
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
+                            }
+                        }],
+                        series: [{
+                            type: 'bar',
+                            data: data1,
+                            itemStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(0,244,255,1)' // 0% 处的颜色
+                                    }, {
+                                        offset: 1,
+                                        color: 'rgba(0,77,167,1)' // 100% 处的颜色
+                                    }], false),
+                                    barBorderRadius: [30, 30, 30, 30],
+                                    shadowColor: 'rgba(0,160,221,1)',
+                                    shadowBlur: 4,
+                                }
+                            },
+                            label: {
+                                normal: {
+                                    show: false,
+                                    lineHeight: 30,
+                                    width: 80,
+                                    height: 30,
+                                    backgroundColor: 'rgba(0,160,221,0.1)',
+                                    borderRadius: 200,
+                                    position: ['-8', '-60'],
+                                    distance: 1,
+                                    formatter: [
+                                        '    {d|●}',
+                                        ' {a|{c}}   \n',
+                                        '    {b|}'
+                                    ].join(','),
+                                    rich: {
+                                        d: {
+                                            color: '#3CDDCF',
+                                        },
+                                        a: {
+                                            color: '#fff',
+                                            align: 'center',
+                                        },
+                                        b: {
+                                            width: 1,
+                                            height: 30,
+                                            borderWidth: 1,
+                                            borderColor: '#234e6c',
+                                            align: 'left'
+                                        },
+                                    }
+                                }
+                            }
+                        }]
+                    };
+
+                    myChart.setOption(option);
+                }
+            },
+            block_line_chart(type, cluster_type, title, container) {
+                let that = this;
+                let echarts = this.$echarts;
+                document.getElementById(container).style.width = 256 + 'px';
+                document.getElementById(container).style.height = 200 + 'px';
+
+                let myChart = this.$echarts.init(document.getElementById(container));
+                myChart.clear();
+
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_d_4`
+                    }
+                }).then(res => {
+                    //console.log(d3.nest().key(d => d.d_cluster).entries(res.body));
+                    draw(d3.nest().key(d => d.d_cluster).entries(res.body));
+                });
+
+                function draw(data) {
+
+                    let option = {
+                        //backgroundColor: '#394056',
+                        title: {
+                            show:false,
+                            text: '请求数',
+                            textStyle: {
+                                fontWeight: 'normal',
+                                fontSize: 16,
+                                color: '#F1F1F3'
+                            },
+                            left: '6%'
+                        },
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            }
+                        },
+                        legend: {
+                            show:false,
+                            icon: 'rect',
+                            itemWidth: 14,
+                            itemHeight: 5,
+                            itemGap: 13,
+                            data: ['', '', ''],
+                            right: '4%',
+                            textStyle: {
+                                fontSize: 12,
+                                color: '#F1F1F3'
+                            }
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: [{
+                            type: 'value',
+                            boundaryGap: false,
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            data: [0,10000]
+                        }, {
+                            axisPointer: {
+                                show: false
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            position: 'bottom',
+                            offset: 20,
+                            data: []
+                        }],
+                        yAxis: [{
+                            type: 'value',
+                            name: '单位（%）',
+                            axisTick: {
+                                show: false
+                            },
+                            axisLine: {
+                                lineStyle: {
+                                    color: '#57617B'
+                                }
+                            },
+                            axisLabel: {
+                                margin: 10,
+                                textStyle: {
+                                    fontSize: 14
+                                }
+                            }
+                        }],
+                        series: [{
+                            name: '移动',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(137, 189, 27, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(137, 189, 27, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+                                    color: 'rgb(137,189,27)',
+                                    borderColor: 'rgba(137,189,2,0.27)',
+                                    borderWidth: 12
+
+                                }
+                            },
+                            data: [220, 182, 191, 134, 150, 120, 110, 125, 145, 122, 165, 122]
+                        }, {
+                            name: '电信',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(0, 136, 212, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(0, 136, 212, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+                                    color: 'rgb(0,136,212)',
+                                    borderColor: 'rgba(0,136,212,0.2)',
+                                    borderWidth: 12
+
+                                }
+                            },
+                            data: [120, 110, 125, 145, 122, 165, 122, 220, 182, 191, 150]
+                        }, {
+                            name: '联通',
+                            type: 'line',
+                            smooth: true,
+                            symbol: 'circle',
+                            symbolSize: 5,
+                            showSymbol: false,
+                            lineStyle: {
+                                normal: {
+                                    width: 1
+                                }
+                            },
+                            areaStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(219, 50, 51, 0.3)'
+                                    }, {
+                                        offset: 0.8,
+                                        color: 'rgba(219, 50, 51, 0)'
+                                    }], false),
+                                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                    shadowBlur: 10
+                                }
+                            },
+                            itemStyle: {
+                                normal: {
+
+                                    color: 'rgb(219,50,51)',
+                                    borderColor: 'rgba(219,50,51,0.2)',
+                                    borderWidth: 12
+                                }
+                            },
+                            data: [220, 182, 125, 145, 122, 191, 134, 150, 120, 110, 165, 122]
+                        }, ]
+                    };
+
+                    myChart.setOption(option);
+                }
+            },
+
+            /////////////////////
+            block_bar_chart2(type,cluster_type,title,container){
+
+                let that = this;
+
+                document.getElementById(container).style.width = 400 + 'px';
+                document.getElementById(container).style.height = 230 + 'px';
+
+                let myChart = this.$echarts.init(document.getElementById(container));
+                myChart.clear();
+
+                this.$http.get('query', {
+                    params: {
+                        table: `cluster_h_${type} where h_cluster=${cluster_type}`
+                    }
+                }).then(res => {
+                    //console.log(res.body);
+                    if (type === '3') {
+                        draw(res.body);
+                    } else if(type === '4'){
+                        draw(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort((a,b) => a.dis_divide-b.dis_divide));
+                    }
+                    else {
+                        draw(res.body.sort((a, b) => {
+                            return parseInt(b.ordercount) - parseInt(a.ordercount);
+                        }).slice(0, 20).sort(() => 0.5 - Math.random()));
+                    }
+                });
+
+                function draw(dataset) {
+                    //console.log(dataset);
+                    let data = dataset.map(d=>d.ordercount);
+                    let xdata = dataset.map(d=>d[Object.keys(d)[1]]);
+                    let option = {
+                        //backgroundColor: "#ea5a25",
+                        tooltip: {
+                            trigger: "item",
+                            show: true
+                        },
+                        title: {
+                            y:'10px',
+                            text: `时段 ${cluster_type+title}流量TOP20`,
+                            x: 'center',
+                            textStyle: {
+                                //文字颜色
+                                color: "#ffffff",
+                                //字体风格,'normal','italic','oblique'
+                                fontStyle: "normal",
+                                //字体粗细 'normal','bold','bolder','lighter',100 | 200 | 300 | 400...
+                                fontWeight: "100",
+                                //字体系列
+                                fontFamily: "sans-serif",
+                                //字体大小
+                                fontSize: 12
+                            },
+                        },
+                        grid: {
+                            left: "5%",
+                            top: "15%",
+                            bottom: "15%",
+                            right: "5%",
+                            containLabel: true
+                        },
+                        xAxis: {
+                            data: xdata,
+                            formatter: "",
+                            type: 'category',
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: '#fff' ,
+                                    width:.1
+                                }
+                            },
+                            axisLine: {
+                                show: false
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            axisLabel: {
+                                show: false,
+                                margin: 10,
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 14
+                                },
+                            },
+                        },
+                        yAxis: {
+                            type: 'value',
+                            //splitNumber: 4,
+                            //interval: 50,
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: '#fff' ,
+                                    width:.1
+                                },
+
+                            },
+                            axisLine: {
+                                show: false,
+                            },
+                            axisTick: {
+                                show: false
+                            },
+                            axisLabel: {
+                                color: '#fff',
+                                fontSize: 10
+                            }
+                        },
+                        series: [{
+                            type: 'bar',
+                            animation: true,
+                            barWidth: 4,
+                            data: data,
+                            tooltip: {
+                                show: false
+                            },
+                            itemStyle: {
+                                color: "#f2fec3"
+                            },
+                        },
+                            {
+                                type: 'scatter',
+                                data: data,
+                                symbolSize: 8,
+                                itemStyle: {
+                                    borderWidth: 0,
+                                    opacity: 1,
+                                    color: "#f2fec3"
+                                }
+                            }
+
+                        ]
+                    };
+
+                    myChart.setOption(option);
+
+                    myChart.on('click', (params) => {
+                        //console.log(params.name);
+                        that.$store.commit('bar_geohash_state', params.name);
+                    });
+                }
             }
-          }
-
-        }
-        function removeFeatureRect(config){
-          let _rectclass = '.rect-' + config.type
-          if(config.type == 0){
-            d3.selectAll('.weatherRect_disselect').data([]).exit().transition().duration(300).remove()
-            d3.selectAll('.legendtext0').remove()
-            d3.selectAll('.legendrect0').remove()
-          } else {
-            d3.selectAll('.legendtext1').remove()
-            d3.selectAll('.legendrect1').remove()
-          }
-          d3.selectAll(_rectclass).remove()
-        }
-        function addFeatureRect(config){
-
-          let xScaleAxis = that.lc_line_generator['All']['xScaleAxis'],
-            yScaleAxis = that.lc_line_generator['All']['yScaleAxis'],
-            feature = config.data
-            // width = xScale / 2
-            // height = lc_height
-            let half_rect_interval = (xScaleAxis(new Date(feature[1].time)) - xScaleAxis(new Date(feature[0].time))) / 2,
-              g = that.lc_svg.append('g')
-                  .attr("transform", "translate(" + that.lc_margin.left + "," + that.lc_margin.top + ")")
-                  .attr('id', 'featureRect')
-
-            for(let i=0;i<feature.length;i++){
-              feature[i]['Time'] = new Date(feature[i].time)
-              feature[i]['x'] = xScaleAxis(feature[i]['Time']) - half_rect_interval
-              feature[i]['y'] = 0
-              feature[i]['width'] = half_rect_interval * 2
-              feature[i]['height'] = that.lc_height
-            }
-
-            //construct data
-            //draw bar
-            g.selectAll('.xRect')
-              .data(feature)
-              .enter()
-              .append('rect')
-              .attr('x', (d,i) => {return d.x})
-              .attr('y', (d,i) => {return d.y})
-              .attr('width', (d,i) => {return d.width})
-              .attr('height', (d,i) => {
-                if(config.type == 0){
-                  //weather
-                  return d.height
-                } else {
-                  return d.width
+        },
+        mounted(){
+            // this.init_heatmap() //previous
+            calendar.init_heatmap()
+            //   calendar.adddata()
+            //   this.init_piechart()
+            this.handle_linechart({
+                'status': '0',
+                'config': {
+                    'legend': ['运输需求量'],
+                    'legend_val': [0],
+                    'unit': 'All'
                 }
-                })
-              .attr('date', (d,i) => {return d.time})
-              .attr('class', (d,i) => {
-                return config.type == 0 ? 'weatherRect_disselect' + ' rect-' + config.type :  ' rect-' + config.type
-                })
-              .style('opacity', (d,i) => {
-                if(config.type == 0){
-                  return d.rain == 1 ? 0.4 : 0
-                } else {
-                  if(d.holiday == '0'){
-                    return 0
-                  } else {
-                    return 1
-                  }
-                }
-                })
-              .on('mouseover', rect_handleMouseOver)
-              .on('mouseout', rect_handleMouseOut)
+                //'config': ''
+            })
+            // this.handle_paraline({
+            //   'status':3,
+            //   'table': 'vector_day'
+            // })
+            this.block_bar_chart('2','1','出发区域',"view1");
+            this.block_bar_chart('1','1','到达区域',"view2");
+            this.block_bar_chart('3','1','出发时间',"view3");
+            this.block_bar_chart('4','1','出行距离',"view4");
 
-            //legend
-            g.selectAll('.xRectLegend')
-              .data([0,1])
-              .enter()
-              .append('rect')
-              .attr('x', function(d, i) {
-                if(config.type == 0){
-                  //weather
-                  return that.lc_width * 1.02 + 10
-                } else {
-                  return that.lc_width * 1.13 + 10
-                }
-                })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 15})
-              .attr('width', 10)
-              .attr('height', 10)
-              .style('opacity', 0)
-              .attr('class', (d,i) => {
-                if(config.type == 0){
-                  return 'legend_feature_weather_rect' + i + ' legendrect0'
-                } else {
-                  return 'legend_feature_holi_rect' + i + ' legendrect1'
-                }
-              })
-              .transition()
-              .duration(300)
-              .style('opacity', 1)
-
-            g.selectAll('.xRectLegend')
-              .data([0,1])
-              .enter()
-              .append('text')
-              .attr('x', function(d, i) {
-                if(config.type == 0){
-                  //weather
-                  return that.lc_width * 1.03 + 40
-                } else {
-                  return that.lc_width * 1.13 + 40
-                }
-                })
-              .attr("y", function(d, i) { return that.lc_height * 0.15 * i  + 100 + 24})
-              .text((d,i) => {
-                if(config.type == 0){
-                  //weather
-                  return i == 0 ? '无雨' : '有雨'
-                } else {
-                  return i == 0 ? '工作' : '周末'
-                }
-                })
-              .style("text-anchor", "middle")
-              .attr('class', (d,i) => {
-                if(config.type == 0){
-                  return 'legend_feature_text_' + i + ' legendtext0'
-                } else {
-                  return 'legend_feature_text_' + i + ' legendtext1'
-                }
-              })
-
-
-          function rect_handleMouseOver(d, i){
-            let date = d3.select(this).attr('date'),
-              coordinates = d3.mouse(this),
-              x = coordinates[0],
-              y = coordinates[1]
-
-            d3.select('#featureRect').append('text').attr('id', 'recttext')
-              .attr('x', x)
-              .attr('y', y)
-              .attr('fill', 'white')
-              .text(date)
-
-            d3.select(this).attr('class', 'weatherRect_select')
-          }
-          function rect_handleMouseOut(){
-            d3.select(this).attr('class', 'weatherRect_disselect')
-            d3.selectAll('#recttext').remove()
-
-          }
-
+            // this.block_bar_chart2('2','1','出发区域',"view1");
+            // this.block_bar_chart2('1','1','到达区域',"view2");
+            // this.block_bar_chart2('3','1','出发时间',"view3");
+            // this.block_bar_chart2('4','1','出行距离',"view4");
         }
-
-        function getFeatureRectStatus(){}
-      },
-      handle_paraline(status){
-        let that = this,
-          req = {
-            'table': status.table
-          },
-          dataName = status.table
-        if(that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
-          let data = this.$store.state.DATA_STORE[dataName]
-          that.init_paraline(data)
-        } else {
-          DataManager.getParaData(req).then((data, err) => {
-            if (err){
-              console.log(err);
-              return ;
-            }else{
-              that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': data.data})
-              that.init_paraline(data.data)
-            }
-          })
-        }
-        function unique (arr) {
-          return Array.from(new Set(arr))
-        }
-      },
-      init_paraline(config){
-        if(d3.select('#parallel_coordinates').attr('flag')){
-          d3.select('#parallel_coordinates').select('svg').remove()
-        }
-        this.para_FullWidth = document.getElementById('parallel').clientWidth,
-        this.para_FullHeight = document.getElementById('parallel').clientHeight,
-        this.para_margin = { top: this.para_FullHeight*0.2, right: this.para_FullWidth*0.1, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
-        this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
-        this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
-        let that = this,
-          cluster = [...new Set(config.data['cluster'])],
-          dimensions = config.dimensions,
-          color = d3.scaleOrdinal()
-            .domain(config.species)
-            .range(['#3E5948', '#66425A', '#495270', '#706C49', '#664C42', '#57534A', '#63A67C', '#AC4C1E'])
-
-        this.para_color = color
-
-        let svg = d3.select('#parallel_coordinates')
-          .attr('flag', 1)
-          .append('svg')
-          .attr('width', that.para_FullWidth)
-          .attr('height', that.para_FullWidth)
-          .append('g')
-          .attr('transform',
-            "translate(" + that.para_margin.left + "," + that.para_margin.top + ")");
-
-          // For each dimension, I build a linear scale. I store all in a y object
-          let y = {}
-          for (let i in dimensions) {
-            name = dimensions[i]
-            y[name] = d3.scaleLinear()
-              .domain( [0,1] ) // --> Same axis range for each group
-              // --> different axis range for each group --> .domain( [d3.extent(data, function(d) { return +d[name]; })] )
-              .range([that.para_height, 0])
-          }
-
-          // Build the X scale -> it find the best position for each Y axis
-          let x = d3.scalePoint()
-            .range([0, that.para_width])
-            .domain(dimensions);
-
-            // Highlight the specie that is hovered
-          var highlight = function(d){
-            let selected_specie = d.cluster
-            // first every group turns grey
-            d3.selectAll(".paraline")
-              .transition().duration(200)
-              .style("stroke", "lightgrey")
-              .style("opacity", "0")
-            // Second the hovered specie takes its color
-            d3.selectAll(".paraline-" + selected_specie)
-              .transition().duration(200)
-              .style("stroke", color(selected_specie))
-              .style("opacity", "1")
-          }
-
-          // Unhighlight
-          var doNotHighlight = function(d){
-            d3.selectAll(".paraline")
-              .transition().duration(200).delay(1000)
-              .style("stroke", function(d){ return( color(d.cluster))} )
-              .style("opacity", "1")
-          }
-
-          // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
-          function path(d) {
-              return d3.line()(dimensions.map(function(p) { return [x(p), y[p](d[p])]; }));
-          }
-
-          // Draw the lines
-          svg
-            .selectAll("myPath")
-            .data(config.data)
-            .enter()
-            .append("path")
-              .attr("class", function (d) {return "paraline paraline-" + d.cluster } ) // 2 class for each line: 'line' and the group name
-              .attr("d",  path)
-              .style("fill", "none" )
-              .style("stroke", function(d){ return( color(d.cluster))} )
-              .style("opacity", 0.5)
-              .on("mouseover", highlight)
-              .on("mouseleave", doNotHighlight )
-
-          // Draw the axis:
-          svg.selectAll("myAxis")
-            // For each dimension of the dataset I add a 'g' element:
-            .data(dimensions).enter()
-            .append("g")
-            .attr("class", "axis")
-            // I translate this element to its right position on the x axis
-            .attr("transform", function(d) { return "translate(" + x(d) + ")"; })
-            // And I build the axis with the call function
-            .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d])); })
-            // Add axis title
-            .append("text")
-              .style("text-anchor", "middle")
-              .attr("y", -9)
-              .text(function(d) { return d; })
-              .style("fill", "rgb(170, 170, 170)")
-
-
-          svg.append('text')
-            .attr('id', 'para_title')
-            .attr('x', () => {return (that.para_width / 2.5)})
-            .attr('y', () => {return - (+that.para_height * 0.14)})
-            .attr('font-size', '15px')
-            .attr('font-weight', 'bold')
-            .attr('fill', 'rgb(170, 170, 170)')
-            .text('特征统计')
-      },
-      handle_highlight(linenum){
-        let that = this
-        var highlight = function(num){
-            let selected_specie = num
-            // first every group turns grey
-            d3.selectAll(".paraline")
-              .transition().duration(200)
-              .style("stroke", "lightgrey")
-              .style("opacity", "0")
-            // Second the hovered specie takes its color
-            d3.selectAll(".paraline-" + selected_specie)
-              .transition().duration(200)
-              .style("stroke", (d => {return that.para_color(d.cluster) }))
-              .style("opacity", "1")
-          }
-
-        var doNotHighlight = function(num){
-            d3.selectAll(".paraline")
-              .transition().duration(200).delay(2000)
-              .style("stroke", function(d){ return( that.para_color(d.cluster))} )
-              .style("opacity", "1")
-          }
-        doNotHighlight(linenum)
-        highlight(linenum)
-        
-
-      }
-
-    },
-    mounted(){
-      // this.init_heatmap() //previous
-       calendar.init_heatmap()
-    //   calendar.adddata()
-    //   this.init_piechart()
-      this.handle_linechart({
-        'status': '0',
-        'config': {
-          'legend': ['运输需求量'],
-          'legend_val': [0],
-          'unit': 'All'
-        }
-        //'config': ''
-      })
-      this.handle_paraline({
-        'status':3,
-        'table': 'vector_day'
-      })
     }
-  }
 </script>
 <style>
-.funcbar2_warp {
-  position: absolute;
-  z-index: 1;
-  width: 98%;
-  max-height: 90%;
-  transform: translate(1%, -5%);
-  height: 22%;
-  bottom: 0;
-  overflow: hidden;
-  border-radius: 0.3em;
-  box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
+  .funcbar2_warp {
+    position: absolute;
+    z-index: 1;
+    width: 98%;
+    max-height: 90%;
+    transform: translate(1%, -5%);
+    height: 22%;
+    bottom: 0;
+    overflow: hidden;
+    border-radius: 0.3em;
+    box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.3) inset,
     0 0.5em 1em rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
 
-rect.bordered {
-  stroke: #e6e6e6;
-  stroke-width: 2px;
-}
+  .carousel_bottom{
+    position: absolute;
+    right: 0;
+    width: 24%;
+    height: 100%;
+  }
 
-text.mono {
-  font-size: 9pt;
-  font-family: Consolas, courier;
-  fill: #aaa;
-}
+  rect.bordered {
+    stroke: #e6e6e6;
+    stroke-width: 2px;
+  }
 
-text.axis-workweek {
-  fill: #000;
-}
+  text.mono {
+    font-size: 9pt;
+    font-family: Consolas, courier;
+    fill: #aaa;
+  }
 
-text.axis-worktime {
-  fill: #000;
-}
+  text.axis-workweek {
+    fill: #000;
+  }
 
-/*line chart*/
-.line {
-}
+  text.axis-worktime {
+    fill: #000;
+  }
 
-.overlay {
-  fill: none;
-  pointer-events: all;
-}
+  /*line chart*/
+  .line {
+  }
 
-/* Style the dots by assigning a fill and stroke */
-.dot {
-  fill: rgb(34, 94, 168);
-  stroke: #fff;
-  stroke-width: 2;
-}
+  .overlay {
+    fill: none;
+    pointer-events: all;
+  }
 
-.focus circle {
-  fill: none;
-  stroke: steelblue;
-}
+  /* Style the dots by assigning a fill and stroke */
+  .dot {
+    fill: rgb(34, 94, 168);
+    stroke: #fff;
+    stroke-width: 2;
+  }
 
-.axis {
-  color: rgb(170, 170, 170);
-}
+  .focus circle {
+    fill: none;
+    stroke: steelblue;
+  }
 
-.tick {
-  font-size: 9pt;
-  font-family: Consolas, courier;
-  fill: #aaa;
-}
+  .axis {
+    color: rgb(170, 170, 170);
+  }
 
-.legend_text {
-  fill:rgb(170, 170, 170);
-  font-family: initial;
-  font-size: 12px;
-}
+  .tick {
+    font-size: 9pt;
+    font-family: Consolas, courier;
+    fill: #aaa;
+  }
 
-.weatherRect_select {
-  z-index: -1;
-  stroke: yellow;
-  stroke-width: 2px;
-}
+  .legend_text {
+    fill:rgb(170, 170, 170);
+    font-family: initial;
+    font-size: 12px;
+  }
 
-.weatherRect_disselect {
-  z-index: -1;
-  stroke: none;
-  fill: #007ACC;
-  stroke-width: 0;
-}
+  .weatherRect_select {
+    z-index: -1;
+    stroke: yellow;
+    stroke-width: 2px;
+  }
 
-.holiRect{
-  z-index: -1;
-  stroke: none;
-  fill: yellow;
-  stroke-width: 0;
-}
+  .weatherRect_disselect {
+    z-index: -1;
+    stroke: none;
+    fill: #007ACC;
+    stroke-width: 0;
+  }
 
-.legend_feature_weather_rect0{
-  stroke: rgb(22,52,72);
-  fill: none;
-  stroke-width: 1px;
-}
+  .holiRect{
+    z-index: -1;
+    stroke: none;
+    fill: yellow;
+    stroke-width: 0;
+  }
 
-.legend_feature_weather_rect1{
-  stroke: rgb(22,52,72);
-  fill: rgb(22,52,72);
-  stroke-width: 1px;
-}
+  .legend_feature_weather_rect0{
+    stroke: rgb(22,52,72);
+    fill: none;
+    stroke-width: 1px;
+  }
 
-.legend_feature_holi_rect0{
-  stroke: yellow;
-  fill: none;
-  stroke-width: 1px;
-}
+  .legend_feature_weather_rect1{
+    stroke: rgb(22,52,72);
+    fill: rgb(22,52,72);
+    stroke-width: 1px;
+  }
 
-.legend_feature_holi_rect1{
-  stroke: yellow;
-  fill: yellow;
-  stroke-width: 1px;
-}
+  .legend_feature_holi_rect0{
+    stroke: yellow;
+    fill: none;
+    stroke-width: 1px;
+  }
 
-.legend_feature_text_0{
-  fill: rgb(170, 170, 170);
-  font-family: initial;
-  font-size: 12px;
-}
+  .legend_feature_holi_rect1{
+    stroke: yellow;
+    fill: yellow;
+    stroke-width: 1px;
+  }
 
-.legend_feature_text_1{
-  fill: rgb(170, 170, 170);
-  font-family: initial;
-  font-size: 12px;
-}
+  .legend_feature_text_0{
+    fill: rgb(170, 170, 170);
+    font-family: initial;
+    font-size: 12px;
+  }
 
-.rect-1{
-  fill: yellow;
-}
+  .legend_feature_text_1{
+    fill: rgb(170, 170, 170);
+    font-family: initial;
+    font-size: 12px;
+  }
+
+  .rect-1{
+    fill: yellow;
+  }
 </style>

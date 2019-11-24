@@ -492,8 +492,8 @@
              * ////起点热点区域 | 终点热点区域////
             /-----------------------------------------*/
             geohash_init(){
-
-                let default_bbox = ngeohash.decode_bbox('w7w3y9');
+                let curr_geohash = 'w7w3y9',
+                    default_bbox = ngeohash.decode_bbox(curr_geohash)
 
                 this.map.on('load',  () =>{
 
@@ -599,7 +599,7 @@
                     });
 
                     //初始化OD
-                    //this.geohash_update();
+                    this.geohash_update(curr_geohash);
                     this.draw_all_od();
                 });
 
@@ -670,7 +670,6 @@
 
                     }}).then((res) => {
                     update(res.body);
-                    console.log(res.body)
                 });
 
                 //更新OD

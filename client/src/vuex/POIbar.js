@@ -22,15 +22,12 @@ const POIData = {
     POI();
   },
   initchart() {
-    (margin = { top: 20, right: 30, bottom: 30, left: 30 }),
-      (width =
-        document.getElementById("barchart").clientWidth -
-        margin.left -
-        margin.right),
-      (height =
-        document.getElementById("barchart").clientHeight -
-        margin.top -
-        margin.bottom);
+      width =  document.getElementById("parabarchart").clientWidth
+      height = document.getElementById("parabarchart").clientHeight
+      margin = { top: height * 0.1, right: width * 0.1, bottom: height * 0.1, left: width * 0.1 }
+      width = width - margin.left - margin.right
+      height = height - margin.top - margin.bottom
+
     x = d3.scaleLinear().range([0, width-margin.left/2]);
 
     y = d3.scaleBand().rangeRound([0, height-margin.bottom], 0.1);
@@ -41,12 +38,13 @@ const POIData = {
       .scale(y)
       .tickSize(0)
       .tickPadding(6);
-    // d3.select("#barchart").select("svg").remove();
+    // d3.select("#parabarchart").select("svg").remove();
+    console.log(width, height, margin)
     svg = d3
-      .select("#barchart")
+      .select("#parabarchart")
       .append("svg")
-      .attr("width", width + margin.left)
-      .attr("height", height + 2*margin.top);
+      .attr("width", width)
+      .attr("height", height)
   },
   /*
 =================
@@ -131,24 +129,22 @@ name为所点击方块的geohash值,OrderType为订单类型数据
         return d.name;
       })
     );
-    d3.select("#barchart")
+    d3.select("#parabarchart")
       .select("svg")
       .select(".bars")
       .remove();
-    d3.select("#barchart")
+    d3.select("#parabarchart")
       .select("svg")
       .select("text")
       .remove();
+
     svg = d3
-      .select("#barchart")
+      .select("#parabarchart")
       .select("svg");
-    svg.append("text").attr("x",(width + margin.left)/4).attr("y",margin.bottom/2).text("POI")
+    svg.append("text").style('fill', 'rgb(170, 170, 170)').style('font-weight', 'bold').attr("x",(width/2.4)).attr("y",margin.top/1.33).text("POI")
     svg=  svg.append("g")
       .attr("class", "bars")
-      .attr(
-        "transform",
-        "translate(" + 0+ "," + margin.top / 5 + ")"
-      ).attr("heigth",height);
+      .attr("heigth",height);
     svg
       .selectAll(".bar")
       .data(result)

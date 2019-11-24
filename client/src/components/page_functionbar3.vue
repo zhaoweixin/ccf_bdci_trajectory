@@ -85,8 +85,6 @@
             //this.block_bar_chart2('3','1','出发时间',"geo_h_time");
             //this.block_bar_chart2('4','1','出行距离',"geo_h_distance");
 
-            //this.block_line_chart('4','1','出行距离',"geo_distance");
-
             document.querySelectorAll("h5")[4].innerHTML=`其他辅助信息`;
             //this.draw_buses_info(this.buses_data);
         },
@@ -235,8 +233,12 @@
 
                 let draw = dataset => {
                     //console.log(dataset);
-                    let pie_width = 256;
-                    let pie_height = 180;
+                    let pie_width = document.getElementById("angle_ring").clientWidth,
+                        pie_height = document.getElementById("angle_ring").clientHeight,
+                        pie_margin = {top: pie_height*0.1 , right: pie_width*0.1, bottom: pie_height*0.15, left: pie_width*0.1};
+                    pie_width = pie_width - pie_margin.left - pie_margin.right
+                    pie_height = pie_height - pie_margin.top - pie_margin.bottom
+
                     //pie_width = pie_height < pie_width ? pie_height : pie_width;
                     //let dataset = [100,200,300,0,1100,1000,900,800,700,600,500,400];
                     let rdata = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -653,7 +655,6 @@
                 }
                 document.querySelector("#app > div.information > p").innerHTML=text;
                 //document.querySelector("#page_functionbar3\\.vue > div:nth-child(2) > h5").innerHTML=text;
-
             },
             drawbarchart() {
                 let geoh = this.$store.state.geohash_state.geohash;
@@ -1303,13 +1304,7 @@
                     //this.draw_poi_ring(this.geohash);
                     //this.draw_buses_info(this.buses_data);
                     this.drawbarchart();
-                    this.changehead();
-                },
-                deep: true
-            },
-            "$store.state.calendar_legend_state": {
-                handler(type) {
-                    this.block_bar_chart('d',type);
+                    
                 },
                 deep: true
             },
