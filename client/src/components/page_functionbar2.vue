@@ -12,6 +12,9 @@
 
     <Carousel class="carousel_bottom" v-model="value2" arrow="never" loop>
       <CarouselItem>
+        <div class="demo-h-carousel" id="parallel_coordinates"></div>
+      </CarouselItem>
+      <CarouselItem>
         <div class="demo-h-carousel" id="view1"></div>
       </CarouselItem>
       <CarouselItem>
@@ -104,9 +107,9 @@
             AllDayHour_change_state() {
                 return this.$store.state.AllDayHour_state
             },
-            // highlight_paraline_state(){
-            //   return this.$store.state.calendar_legend_state
-            // }
+            highlight_paraline_state(){
+              return this.$store.state.calendar_legend_state
+            }
         },
         watch:{
             operater_state: function(val, oldVal){
@@ -133,21 +136,21 @@
                 if((val === 1||val=== 0)&&oldVal === 2) calendar.drawday();
                 if(val===2) calendar.drawhour();
 
-                // if(val == 2){
-                //   this.handle_paraline({
-                //     'status': 3,
-                //     'table': 'vector'
-                //   })
-                // } else if(val == 1 || val == 0){
-                //   this.handle_paraline({
-                //     'status': 3,
-                //     'table': 'vector_day'
-                //   })
-                // }
+                if(val === 2){
+                  this.handle_paraline({
+                    'status': 3,
+                    'table': 'vector'
+                  })
+                } else if(val === 1 || val === 0){
+                  this.handle_paraline({
+                    'status': 3,
+                    'table': 'vector_day'
+                  })
+                }
             },
-            // highlight_paraline_state(val, oldVal){
-            //   this.handle_highlight(val)
-            // }
+            highlight_paraline_state(val, oldVal){
+              this.handle_highlight(val)
+            },
             "$store.state.calendar_legend_state": {
                 handler(type) {
                     if(this.all_day_hour === 'all'){
@@ -165,7 +168,7 @@
 
                 },
                 deep: true
-            },
+            }
         },
         methods:{
             init_heatmap(){
@@ -1235,11 +1238,11 @@
                 }
             },
             init_paraline(config){
-                if(d3.select('#parallel_coordinates').attr('flag')){
-                    d3.select('#parallel_coordinates').select('svg').remove()
+                if(d3.select('#parallel_coordinates')){
+                    d3.select('#parallel_coordinates').select('*').remove()
                 }
-                this.para_FullWidth = document.getElementById('parallel').clientWidth,
-                    this.para_FullHeight = document.getElementById('parallel').clientHeight,
+                this.para_FullWidth = 400,
+                    this.para_FullHeight = 200,
                     this.para_margin = { top: this.para_FullHeight*0.2, right: this.para_FullWidth*0.1, bottom: this.para_FullHeight*0.1, left: this.para_FullWidth*0.1 },
                     this.para_width = this.para_FullWidth - this.para_margin.left - this.para_margin.right,
                     this.para_height = this.para_FullHeight - this.para_margin.top - this.para_margin.bottom
@@ -1945,20 +1948,15 @@
                     'unit': 'All'
                 }
                 //'config': ''
-            })
-            // this.handle_paraline({
-            //   'status':3,
-            //   'table': 'vector_day'
-            // })
+            });
+            this.handle_paraline({
+              'status':3,
+              'table': 'vector_day'
+            });
             this.block_bar_chart('2','1','出发区域',"view1");
             this.block_bar_chart('1','1','到达区域',"view2");
             this.block_bar_chart('3','1','出发时间',"view3");
             this.block_bar_chart('4','1','出行距离',"view4");
-
-            // this.block_bar_chart2('2','1','出发区域',"view1");
-            // this.block_bar_chart2('1','1','到达区域',"view2");
-            // this.block_bar_chart2('3','1','出发时间',"view3");
-            // this.block_bar_chart2('4','1','出行距离',"view4");
         }
     }
 </script>
