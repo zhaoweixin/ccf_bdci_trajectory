@@ -1305,6 +1305,7 @@
                     //this.draw_buses_info(this.buses_data);
                     this.drawbarchart();
                     
+                    this.changehead();
                 },
                 deep: true
             },
