@@ -5,7 +5,7 @@
     <page_information></page_information>
     <AppMap></AppMap>
     <page_functionbar2></page_functionbar2>
-    <page_functionbar3></page_functionbar3>
+    <!-- <page_functionbar3></page_functionbar3> -->
     <page_functionbar4></page_functionbar4>
   </div>
 </template>

@@ -26,7 +26,6 @@ const mutation = {
   //   //console.log(state.date_state);
   // },
   geohash_state(state, payload) {
-    console.log('geohash_state', payload)
     state.geohash_state = JSON.parse(JSON.stringify(payload));
     //console.log(state.geohash_state);
   },
