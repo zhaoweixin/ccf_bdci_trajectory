@@ -1502,7 +1502,7 @@
                                         offset: 1,
                                         color: 'rgba(0,77,167,1)' // 100% 处的颜色
                                     }], false),
-                                    barBorderRadius: [30, 30, 30, 30],
+                                    //barBorderRadius: [30, 30, 30, 30],
                                     shadowColor: 'rgba(0,160,221,1)',
                                     shadowBlur: 4,
                                 }
@@ -1762,6 +1762,8 @@
 
                 let that = this;
 
+                let echarts = this.$echarts;
+
                 document.getElementById(container).style.width = 400 + 'px';
                 document.getElementById(container).style.height = 230 + 'px';
 
@@ -1788,19 +1790,24 @@
                     }
                 });
 
-                function draw(dataset) {
-                    //console.log(dataset);
-                    let data = dataset.map(d=>d.ordercount);
-                    let xdata = dataset.map(d=>d[Object.keys(d)[1]]);
+                function draw(data) {
+                    let xAxisData = [];
+                    let data1 = [];
+                    for (let i = 0; i < data.length; i++) {
+                        xAxisData.push(data[i][Object.keys(data[i])[1]]);
+                        data1.push(data[i].ordercount);
+                    }
+
+                    myChart.on('click', (params) => {
+                        //console.log(params.name);
+                        that.$store.commit('bar_geohash_state', params.name);
+                    });
+
                     let option = {
-                        //backgroundColor: "#ea5a25",
-                        tooltip: {
-                            trigger: "item",
-                            show: true
-                        },
+                        //backgroundColor: '#0d235e',
                         title: {
+                            text: `时段 ${cluster_type + title}流量TOP20`,
                             y:'10px',
-                            text: `时段 ${cluster_type+title}流量TOP20`,
                             x: 'center',
                             textStyle: {
                                 //文字颜色
@@ -1815,29 +1822,25 @@
                                 fontSize: 12
                             },
                         },
-                        grid: {
-                            left: "5%",
-                            top: "15%",
-                            bottom: "15%",
-                            right: "5%",
-                            containLabel: true
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            }
                         },
-                        xAxis: {
-                            data: xdata,
-                            formatter: "",
+                        grid: {
+                            top: '15%',
+                            right: '5%',
+                            left: '15%',
+                            bottom: '12%'
+                        },
+                        xAxis: [{
                             type: 'category',
-                            splitLine: {
-                                show: true,
-                                lineStyle: {
-                                    color: '#fff' ,
-                                    width:.1
-                                }
-                            },
+                            data: xAxisData,
                             axisLine: {
-                                show: false
-                            },
-                            axisTick: {
-                                show: false
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
                             },
                             axisLabel: {
                                 show: false,
@@ -1847,62 +1850,85 @@
                                     fontSize: 14
                                 },
                             },
-                        },
-                        yAxis: {
-                            type: 'value',
-                            //splitNumber: 4,
-                            //interval: 50,
                             splitLine: {
                                 show: true,
                                 lineStyle: {
-                                    color: '#fff' ,
-                                    width:.1
-                                },
-
-                            },
-                            axisLine: {
-                                show: false,
-                            },
-                            axisTick: {
-                                show: false
-                            },
-                            axisLabel: {
-                                color: '#fff',
-                                fontSize: 10
-                            }
-                        },
-                        series: [{
-                            type: 'bar',
-                            animation: true,
-                            barWidth: 4,
-                            data: data,
-                            tooltip: {
-                                show: false
-                            },
-                            itemStyle: {
-                                color: "#f2fec3"
-                            },
-                        },
-                            {
-                                type: 'scatter',
-                                data: data,
-                                symbolSize: 8,
-                                itemStyle: {
-                                    borderWidth: 0,
-                                    opacity: 1,
-                                    color: "#f2fec3"
+                                    color: 'rgba(255,255,255,0.12)'
                                 }
                             }
-
-                        ]
+                        }],
+                        yAxis: [{
+                            axisLabel: {
+                                color: '#e2e9ff',
+                                textStyle: {
+                                    fontSize: 10
+                                },
+                                formatter: function (d) {
+                                    return d / 1000 + 'k';
+                                },
+                            },
+                            axisLine: {},
+                            splitLine: {
+                                show: true,
+                                lineStyle: {
+                                    color: 'rgba(255,255,255,0.12)'
+                                }
+                            }
+                        }],
+                        series: [{
+                            type: 'bar',
+                            data: data1,
+                            itemStyle: {
+                                normal: {
+                                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                                        offset: 0,
+                                        color: 'rgba(0,244,255,1)' // 0% 处的颜色
+                                    }, {
+                                        offset: 1,
+                                        color: 'rgba(0,77,167,1)' // 100% 处的颜色
+                                    }], false),
+                                    //barBorderRadius: [30, 30, 30, 30],
+                                    shadowColor: 'rgba(0,160,221,1)',
+                                    shadowBlur: 4,
+                                }
+                            },
+                            label: {
+                                normal: {
+                                    show: false,
+                                    lineHeight: 30,
+                                    width: 80,
+                                    height: 30,
+                                    backgroundColor: 'rgba(0,160,221,0.1)',
+                                    borderRadius: 200,
+                                    position: ['-8', '-60'],
+                                    distance: 1,
+                                    formatter: [
+                                        '    {d|●}',
+                                        ' {a|{c}}   \n',
+                                        '    {b|}'
+                                    ].join(','),
+                                    rich: {
+                                        d: {
+                                            color: '#3CDDCF',
+                                        },
+                                        a: {
+                                            color: '#fff',
+                                            align: 'center',
+                                        },
+                                        b: {
+                                            width: 1,
+                                            height: 30,
+                                            borderWidth: 1,
+                                            borderColor: '#234e6c',
+                                            align: 'left'
+                                        },
+                                    }
+                                }
+                            }
+                        }]
                     };
 
                     myChart.setOption(option);
-
-                    myChart.on('click', (params) => {
-                        //console.log(params.name);
-                        that.$store.commit('bar_geohash_state', params.name);
-                    });
                 }
             }
         },
