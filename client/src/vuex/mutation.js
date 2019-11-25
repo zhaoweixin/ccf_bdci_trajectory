@@ -50,6 +50,9 @@ const mutation = {
   },
   change_OD_state(state, payload) {
     state.OD_state = JSON.parse(JSON.stringify(payload));
+  },
+  buses_route(state, payload) {
+    state.buses_route = JSON.parse(JSON.stringify(payload));
   }
 };
 

@@ -17,6 +17,7 @@ const store = new Vuex.Store({
     map_state: {}, //地图图层操作
 
     buses_routes_state: {}, //公交路线
+    buses_route:{},
 
     operater_state: {
       checkedNames: [],

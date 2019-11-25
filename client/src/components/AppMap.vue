@@ -796,13 +796,10 @@
 
                 //公交路线
                 this.$store.commit('buses_routes_state',{routes:routes.map(d=>parseInt(d)+'路')});
-
                 //console.log(routes);
                 let data = this.buses_data.filter(d=>{
                     return routes.includes(d.name);
                 });
-
-                //console.log(data);
 
                 let feature_buslines = [];
                 let feature_buspoints = [];
@@ -859,6 +856,76 @@
                 //});
 
             },
+            draw_one_buses(route_name){
+
+                // this.map.getSource('geo_stations_source').setData({
+                //     "type": "FeatureCollection",
+                //     "features":[]
+                // });
+                //
+                // this.map.getSource('geo_routes_source').setData({
+                //     "type": "FeatureCollection",
+                //     "features": []
+                // });
+                let data = this.buses_data.filter(d=>{
+                    return d.route === route_name;
+                });
+
+                let feature_buslines = [];
+                let feature_buspoints = [];
+                let stations = [];
+
+                data.forEach(d=>{
+                    d.stations.forEach(s=>{
+                        if(stations.indexOf(s.name) === -1){
+                            stations.push(s.name);
+                            feature_buspoints.push({
+                                "type": "Feature",
+                                "properties": {
+                                    "color": '#ff4f6a',
+                                    "opacity":0.5,
+                                    "radius":2
+                                },
+                                "geometry": {
+                                    "type": "Point",
+                                    "coordinates": this.coordtrans_bdtowgs84(s.position)
+                                }
+                            });
+                        }
+                        else {
+                        }
+                    });
+                    //buses line data
+                    feature_buslines.push({
+                        "type": "Feature",
+                        "properties": {
+                            color:'#ffeb3d',
+                            name:parseInt(d.name)+'路'
+                        },
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": d.path.map(s =>{
+                                let bd09togcj02=coordtrans.bd09togcj02(s[0],s[1]);
+                                return coordtrans.gcj02towgs84(bd09togcj02[0],bd09togcj02[1])
+                            })
+                        }
+                    });
+                });
+
+                //this.map.on('load',  ()=>{
+                this.map.getSource('geo_stations_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buspoints
+                });
+
+                this.map.getSource('geo_routes_source').setData({
+                    "type": "FeatureCollection",
+                    "features": feature_buslines
+                });
+                //});
+
+
+            },
 
             coordtrans_bdtowgs84(lnglat){
                 let bd09togcj02 = coordtrans.bd09togcj02(lnglat[0], lnglat[1]);
@@ -866,6 +933,14 @@
             },
         },
         watch:{
+            "$store.state.buses_route":{
+                handler(route){
+                    console.log('Update --- $store.state.buses_route');
+                    console.log(route);
+                    this.draw_one_buses(route);
+                },
+                deep:true
+            },
             '$store.state.bar_geohash_state':{
                 handler(newValue){
                     let ngeo = ngeohash.decode(newValue);
@@ -918,7 +993,6 @@
                 },
                 deep:true
             },
-
             "$store.state.AllDayHour_state":{
                 handler(type){
                     console.log('Update --- $store.state.AllDayHour_state');
