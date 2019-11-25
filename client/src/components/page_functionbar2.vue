@@ -38,7 +38,25 @@
     import var_config from '../assets/var_config.js'
     import calendar from "@/vuex/Calendar.js"
     import $ from 'jquery'
-
+    
+    //console.log(pr)
+    var predictLineData=null;
+    d3.csv("../../static/predict_line.csv").then(function(data) {
+            var date=data[0].date;
+            date=date.split('[')[1].split(']')[0].split(',')
+            console.log(date)
+            var predict=data[0].predict,low=data[0].low,high=data[0].high;
+            predict=predict.split('[')[1].split(']')[0].split(',')
+            low=low.split('[')[1].split(']')[0].split(',')
+            high=high.split('[')[1].split(']')[0].split(',')
+            predictLineData={
+                predict:predict,
+                date:date,
+                low:low,
+                high:high
+            }
+            console.log(predictLineData)
+  });
     Date.prototype.yyyymmdd = function() {
         var mm = this.getMonth() + 1; // getMonth() is zero-based
         var dd = this.getDate();
@@ -69,6 +87,7 @@
                 lc_xScaleText_arr:[], //存储线图中不同线段的x对应真实数值的比例尺 0-1 / datamin-datamax
                 lc_yScaleText_arr: [], //存储线图中不同线段的y对应真实数值的比例尺 0-1 / datamin-datamax
                 lc_line_generator:{},
+                lc_yscalpredict:undefined,//预测数据比列尺
                 lc_line: undefined,  //初始线段生成器
                 lc_svg: undefined, //legend and svg container
                 lc_svg_g: undefined, // axis and path container
@@ -94,6 +113,9 @@
                 para_height:0,
                 value2:0,
                 calendar_color: ["#3E5948", "#66425A", "#495270","#706C49","#664C42","#57534A","#63A67C","#AC4C1E"],
+                prdicline:[],
+                lowline:[],
+                heighline:[]
             }
         },
         components: {
@@ -474,7 +496,7 @@
                     // 5. X scale will use the index of our data
                     this.lc_xScale = d3.scaleLinear().domain([0, 1]).range([0, that.lc_width])
                     this.lc_yScale = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0])
-
+                    
                     //if type == date timeScale
                     //else type == other scaleLinear
 
@@ -517,12 +539,14 @@
                         this.lc_yScaleAxis = d3.scaleLinear()
                             .domain([yScaleMin, yScaleMax]) // input
                             .range([that.lc_height, 0]); // output
+                        
 
                     } else if(opt.config.unit == 'All'){
                         this.lc_xScaleLine  = d3.scaleTime().domain(d3.extent(opt.data[0].values, (d) => {return d.x})).range([0, that.lc_width])
                         this.lc_yScaleLine = d3.scaleLinear().domain([0, 1]).range([that.lc_height, 0]); // output
                         this.lc_xScaleAxis = d3.scaleTime().domain([xScaleMin, xScaleMax]).range([0, that.lc_width])
                         this.lc_yScaleAxis = d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([that.lc_height, 0])
+                        this.lc_yscalpredict=d3.scaleLinear().domain([yScaleMin, yScaleMax]).range([0, 1])
                     }
 
                     // 7. d3's line generator
@@ -545,7 +569,7 @@
                     this.lc_svg = d3.select("#line_chart").append("svg")
                         .attr("width", that.lc_width + that.lc_margin.left + that.lc_margin.right)
                         .attr("height", that.lc_height + that.lc_margin.top + that.lc_margin.bottom)
-
+                   
                     // Add the g to contain legend
                     this.lc_legend = this.lc_svg.append('g')
                         .attr('id', 'line_chart_legend')
@@ -588,6 +612,32 @@
 
                     // 9. Append the path, bind the data, and call the line generator
 
+                      //=========================================================================
+                   
+                    for(var i=0;i<predictLineData.date.length;i++)
+                    {
+                        var pdate=new Date(predictLineData.date[i])
+                        this.prdicline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.predict[i]))});
+                        this.lowline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.low[i]))});
+                        this.heighline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.high[i]))});
+                    }
+                    let prelines=[this.prdicline,this.lowline,this.heighline]
+                for(var i=0;i<prelines.length;i++){
+                   
+                   this.lc_svg_g.append("path")
+                            .data(prelines[i]) // 10. Binds data to the line
+                            .attr("d", that.lc_line_generator[opt.config.unit].generator(prelines[i])) // 11. Calls the line generator
+                            .attr('num', i)
+                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                            .style('fill', 'red')
+                            .style('stroke', that.lc_linecolor[i])
+                            .style("stroke-width", '1px')
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(1500)
+                            .style('opacity', 1)
+                }
+                    //===========================================================================
                     // 12. Appends a circle for each datapoint
                     this.lc_pathcount = opt.data.length
                     for(var i=0; i<opt.data.length; i++){
@@ -599,10 +649,10 @@
 
                         this.lc_xScaleText_arr = []
                         this.lc_yScaleText_arr = []
-
+                        
                         this.lc_xScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([xScaleMin, xScaleMax]))
                         this.lc_yScaleText_arr.push(d3.scaleLinear().domain([0, 1]).range([yScaleMin, yScaleMax]))
-
+                        
                         this.lc_svg_g.append("path")
                             .data(draw_data) // 10. Binds data to the line
                             .attr("d", that.lc_line_generator[opt.config.unit].generator(draw_data)) // 11. Calls the line generator
@@ -690,8 +740,38 @@
 
                     d3.selectAll('#lc_title').transition()
                         .duration(300).remove()
-
-
+                    //==============================================================
+                    console.log(opt)
+                    var isys=false;
+                    
+                    for(var i=0;i<opt.config.legend.length;i++){
+                        if(opt.config.legend[i]=="运输需求量")
+                        {
+                            isys=true;
+                        }
+                        else{
+                            false;
+                        }
+                    }
+                    if(opt.config.unit=="All"&&isys){
+                         let prelines=[this.prdicline,this.lowline,this.heighline]
+                    for(var i=0;i<prelines.length;i++){
+                        this.lc_svg_g.append("path")
+                            .data(prelines[i]) // 10. Binds data to the line
+                            .attr("d", that.lc_line_generator[opt.config.unit].generator(prelines[i])) // 11. Calls the line generator
+                            .attr('num', i)
+                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
+                            .style('fill', 'red')
+                            .style('stroke', that.lc_linecolor[i])
+                            .style("stroke-width", '1px')
+                            .style('opacity', 0)
+                            .transition()
+                            .duration(1500)
+                            .style('opacity', 1)
+                    }
+                    }
+                   
+                    //==============================================================
 
                     this.lc_svg_g.append("g")
                         .attr("class", "x axis")
