@@ -728,14 +728,14 @@ export default {
                         label: {
                             normal: {
                                 show: true,
-                                color: '#FFF',
+                                color: '#AAA',
                                 position: 'right'
                             }
                         },
                         symbolSize: 20,
                         itemStyle: {
                             normal: {
-                                color: "#c96b2b",
+                                color: "#00ECFB",
                             }
                         },
                         data: data.map((d, i) => {
