@@ -36,10 +36,7 @@ module.exports = {
             
             connection.query(sql, function(err, result) {
                 if(err){
-                    console.log('111')
-                    console.log(req.query);
                     console.log('query->', sql)
-                    console.log(err);
                     res.send(err)
                 };
                 //console.log(result);
@@ -152,7 +149,6 @@ module.exports = {
                     dataType.forEach((d,i) => {
                         sql = sql + 'select * from ' + unit + typeDict[d]['halftable'] + '; '
                     })
-                    console.log(sql)
                     connection.query(sql, function(err, result){
                         if(err){
                             res.send(err);

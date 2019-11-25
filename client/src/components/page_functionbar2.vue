@@ -41,22 +41,7 @@
     
     //console.log(pr)
     var predictLineData=null;
-    d3.csv("../../static/predict_line.csv").then(function(data) {
-            var date=data[0].date;
-            date=date.split('[')[1].split(']')[0].split(',')
-            console.log(date)
-            var predict=data[0].predict,low=data[0].low,high=data[0].high;
-            predict=predict.split('[')[1].split(']')[0].split(',')
-            low=low.split('[')[1].split(']')[0].split(',')
-            high=high.split('[')[1].split(']')[0].split(',')
-            predictLineData={
-                predict:predict,
-                date:date,
-                low:low,
-                high:high
-            }
-            console.log(predictLineData)
-  });
+    
     Date.prototype.yyyymmdd = function() {
         var mm = this.getMonth() + 1; // getMonth() is zero-based
         var dd = this.getDate();
@@ -441,14 +426,15 @@
 
                     //forbidden reload error
                     if(requestInfo.config.legend.length != 0){
+                        console.log('requestInfo', requestInfo)
                         DataManager.getLineChartData(requestInfo).then((res) => {
-
-                            requestInfo.config.legend_val.forEach((d,i) => {
+                            console.log('requestInfo res', res)
+                                requestInfo.config.legend_val.forEach((d,i) => {
                                 let dataName = requestInfo.config.unit + d
                                 if(!that.$store.state.DATA_STORE.hasOwnProperty(dataName)){
                                     that.$store.commit('UPDATE_DATA_STORE', {'name': dataName, 'data': res.data[i]})
-                                }
-                            })
+                                    }
+                                })
 
                             requestInfo.config.legend_val.forEach((v,j) => {
                                 info.config.legend.push(requestInfo.config.legend[j])
@@ -613,30 +599,45 @@
                     // 9. Append the path, bind the data, and call the line generator
 
                       //=========================================================================
-                   
-                    for(var i=0;i<predictLineData.date.length;i++)
-                    {
-                        var pdate=new Date(predictLineData.date[i])
-                        this.prdicline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.predict[i]))});
-                        this.lowline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.low[i]))});
-                        this.heighline.push({x:pdate,y:this.lc_yscalpredict(parseFloat(predictLineData.high[i]))});
-                    }
-                    let prelines=[this.prdicline,this.lowline,this.heighline]
-                for(var i=0;i<prelines.length;i++){
-                   
-                   this.lc_svg_g.append("path")
+
+                    d3.csv("../../static/predict_line.csv").then(function(data) {
+                        var date=data[0].date;
+                        date=date.split('[')[1].split(']')[0].split(',')
+                        var predict=data[0].predict,low=data[0].low,high=data[0].high;
+                        predict=predict.split('[')[1].split(']')[0].split(',')
+                        low=low.split('[')[1].split(']')[0].split(',')
+                        high=high.split('[')[1].split(']')[0].split(',')
+                        let predictLineData={
+                            predict:predict,
+                            date:date,
+                            low:low,
+                            high:high
+                        }
+
+                        for(var i=0;i<predictLineData.date.length;i++)
+                            {
+                                var pdate=new Date(predictLineData.date[i])
+                                that.prdicline.push({x:pdate,y:that.lc_yscalpredict(parseFloat(predictLineData.predict[i]))});
+                                that.lowline.push({x:pdate,y:that.lc_yscalpredict(parseFloat(predictLineData.low[i]))});
+                                that.heighline.push({x:pdate,y:that.lc_yscalpredict(parseFloat(predictLineData.high[i]))});
+                            }
+                        let prelines=[that.prdicline,that.lowline,that.heighline]
+                        for(var i=0;i<prelines.length;i++){
+                        that.lc_svg_g.append("path")
                             .data(prelines[i]) // 10. Binds data to the line
                             .attr("d", that.lc_line_generator[opt.config.unit].generator(prelines[i])) // 11. Calls the line generator
                             .attr('num', i)
-                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-                            .style('fill', 'red')
-                            .style('stroke', that.lc_linecolor[i])
+                            .attr('class', 'prdicline') // Assign a class for styling
+                            .style('stroke', 'grey')
                             .style("stroke-width", '1px')
                             .style('opacity', 0)
                             .transition()
                             .duration(1500)
                             .style('opacity', 1)
-                }
+                        }
+
+                    });
+                    
                     //===========================================================================
                     // 12. Appends a circle for each datapoint
                     this.lc_pathcount = opt.data.length
@@ -725,6 +726,7 @@
                     d3.selectAll('.dot').transition().duration(1000).style('opacity', 0).remove()
                     d3.selectAll('.legend_text').transition().duration(1500).style('opacity', 0).remove()
                     d3.selectAll('.legend_line').transition().duration(1500).style('opacity', 0).remove()
+                    d3.selectAll('.prdicline').transition().duration(1500).style('opacity', 0).remove()
 
                     this.lc_pathcount = opt.data.length
                     this.lc_xScaleText_arr = []
@@ -741,34 +743,27 @@
                     d3.selectAll('#lc_title').transition()
                         .duration(300).remove()
                     //==============================================================
-                    console.log(opt)
-                    var isys=false;
-                    
-                    for(var i=0;i<opt.config.legend.length;i++){
-                        if(opt.config.legend[i]=="运输需求量")
-                        {
-                            isys=true;
-                        }
-                        else{
-                            false;
-                        }
+                    //画趋势线
+                    let drawtrand = false;
+                    if(opt.config.legend[0] == "运输需求量" && opt.config.legend.length == 1){
+                        drawtrand = true
                     }
-                    if(opt.config.unit=="All"&&isys){
-                         let prelines=[this.prdicline,this.lowline,this.heighline]
-                    for(var i=0;i<prelines.length;i++){
+                    if(opt.config.unit=="All" && drawtrand == true){
+                        let prelines=[this.prdicline,this.lowline,this.heighline]
+
+                        for(var i=0;i<prelines.length;i++){
                         this.lc_svg_g.append("path")
                             .data(prelines[i]) // 10. Binds data to the line
                             .attr("d", that.lc_line_generator[opt.config.unit].generator(prelines[i])) // 11. Calls the line generator
                             .attr('num', i)
-                            .attr('class', () => {return 'line-' + i + ' line'}) // Assign a class for styling
-                            .style('fill', 'red')
-                            .style('stroke', that.lc_linecolor[i])
+                            .attr('class', 'prdicline') // Assign a class for styling
+                            .style('stroke', 'grey')
                             .style("stroke-width", '1px')
                             .style('opacity', 0)
                             .transition()
                             .duration(1500)
                             .style('opacity', 1)
-                    }
+                        }
                     }
                    
                     //==============================================================
